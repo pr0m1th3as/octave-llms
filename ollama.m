@@ -24,6 +24,7 @@ classdef ollama
     activeModel = '';
     readTimeout = 300;
     writeTimeout = 300;
+    options = struct ();
   endproperties
 
   methods (GetAccess = public)
@@ -80,6 +81,142 @@ classdef ollama
       endif
     endfunction
 
+    function this = setOptions (this, varargin)
+      if (mod (numel (varargin), 2) != 0)
+        error ("ollama.setOptions: 'options' must be in Name-Value pairs.");
+      endif
+      while (! isempty (varargin))
+        name = varargin{1};
+        value = varargin{2};
+        if (! ischar (name))
+          error ("ollama.setOptions: NAME must be a character vector.");
+        endif
+        if (! (isscalar (value) && (isnumeric (value) || islogical (value))))
+          error ("ollama.setOptions: VALUE must be a numeric or logical scalar.");
+        endif
+        switch (name)
+          case 'num_keep'
+            if (fix (value) == value && value >= 0)
+              this.options.num_keep = value;
+            else
+              error ("ollama.setOptions: 'num_keep' must be a non-negative integer.");
+            endif
+          case 'seed'
+            if (fix (value) == value && value >= 0)
+              this.options.seed = value;
+            else
+              error ("ollama.setOptions: 'seed' must be a non-negative integer.");
+            endif
+          case 'num_predict'
+            if (fix (value) == value && value >= 0)
+              this.options.num_predict = value;
+            else
+              error ("ollama.setOptions: 'num_predict' must be a non-negative integer.");
+            endif
+          case 'top_k'
+            if (fix (value) == value && value >= 0)
+              this.options.top_k = value;
+            else
+              error ("ollama.setOptions: 'top_k' must be a non-negative integer.");
+            endif
+          case 'top_p'
+            if (value >= 0 && value <= 1)
+              this.options.top_p = value;
+            else
+              error ("ollama.setOptions: 'top_p' must be between 0 and 1.");
+            endif
+          case 'min_p'
+            if (value >= 0 && value <= 1)
+              this.options.min_p = value;
+            else
+              error ("ollama.setOptions: 'min_p' must be between 0 and 1.");
+            endif
+          case 'typical_p'
+            if (value >= 0 && value <= 1)
+              this.options.typical_p = value;
+            else
+              error ("ollama.setOptions: 'typical_p' must be between 0 and 1.");
+            endif
+          case 'repeat_last_n'
+            if (fix (value) == value && value >= 0)
+              this.options.repeat_last_n = value;
+            else
+              error ("ollama.setOptions: 'repeat_last_n' must be a non-negative integer.");
+            endif
+          case 'temperature'
+            if (value >= 0 && value <= 2)
+              this.options.temperature = value;
+            else
+              error ("ollama.setOptions: 'temperature' must be between 0 and 1.");
+            endif
+          case 'repeat_penalty'
+            if (value >= 0)
+              this.options.repeat_penalty = value;
+            else
+              error ("ollama.setOptions: 'repeat_penalty' must be positive.");
+            endif
+          case 'frequency_penalty'
+            if (value >= 0)
+              this.options.frequency_penalty = value;
+            else
+              error ("ollama.setOptions: 'frequency_penalty' must be positive.");
+            endif
+          case 'penalize_newline'
+            if (islogical (value))
+              this.options.penalize_newline = value;
+            else
+              error ("ollama.setOptions: 'penalize_newline' must be logical.");
+            endif
+          case 'numa'
+            if (islogical (value))
+              this.options.numa = value;
+            else
+              error ("ollama.setOptions: 'numa' must be logical.");
+            endif
+          case 'num_ctx'
+            if (fix (value) == value && value >= 0)
+              this.options.num_ctx = value;
+            else
+              error ("ollama.setOptions: 'num_ctx' must be a non-negative integer.");
+            endif
+          case 'num_batch'
+            if (fix (value) == value && value >= 0)
+              this.options.num_batch = value;
+            else
+              error ("ollama.setOptions: 'num_batch' must be a non-negative integer.");
+            endif
+          case 'num_gpu'
+            if (fix (value) == value && value >= 0)
+              this.options.num_gpu = value;
+            else
+              error ("ollama.setOptions: 'num_gpu' must be a non-negative integer.");
+            endif
+          case 'main_gpu'
+            if (fix (value) == value && value >= 0)
+              this.options.main_gpu = value;
+            else
+              error ("ollama.setOptions: 'main_gpu' must be a non-negative integer.");
+            endif
+          case 'use_mmap'
+            if (islogical (value))
+              this.options.use_mmap = value;
+            else
+              error ("ollama.setOptions: 'use_mmap' must be logical.");
+            endif
+          case 'num_thread'
+            if (fix (value) == value && value >= 0)
+              this.options.num_thread = value;
+            else
+              error ("ollama.setOptions: 'num_thread' must be a non-negative integer.");
+            endif
+          otherwise
+            error ("ollama.setOptions: invalid NAME for custom option.");
+        endswitch
+        ## Remove parsed arguments
+        varargin(1:2) = [];
+      endwhile
+    endfunction
+
     function txt = generate (this, varargin)
       if (nargin < 2)
         error ("ollama.generate: too few input arguments.");
@@ -113,7 +250,8 @@ classdef ollama
       [out, err] = __ollama__ ('model', model, 'prompt', prompt, ...
                                'serverURL', this.serverURL, ...
                                'readTimeout', this.readTimeout, ...
-                               'writeTimeout', this.writeTimeout);
+                               'writeTimeout', this.writeTimeout, ...
+                               'options', this.options);
       if (err)
         msg = strcat ("If you get a time out error, try to increase the", ...
                       " 'readTimeout' and 'writeTimeout' parameters\n", ...
@@ -181,6 +319,8 @@ classdef ollama
               out = this.readTimeout;
             case 'writeTimeout'
               out = this.writeTimeout;
+            case 'options'
+              out = this.options;
             otherwise
               error ("ollama.subsref: unrecongized property: '%s'", s.subs);
           endswitch
@@ -231,6 +371,13 @@ classdef ollama
               else
                 error (strcat ("ollama.subsref: 'writeTimeout' must be", ...
                                " a scalar with positive integer value."));
+              endif
+            case 'options'
+              if (iscell (val) && numel (val) == 2)
+                this = setOptions (this, val{1}, val{2});
+              else
+                error (strcat ("ollama.subsref: 'options' must be", ...
+                               " a 2-element cell array."));
               endif
             otherwise
               error ("ollama.subsasgn: unrecongized property: %s", s.subs);

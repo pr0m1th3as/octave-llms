@@ -335,46 +335,65 @@ A compiled interface for ollama server. \n\
       // "repeat_penalty" -> double        "num_thread"        -> integer
       octave_scalar_map opt = args(p+1).scalar_map_value ();
       if (opt.isfield ("num_keep")) {
-        options["num_keep"] = opt.contents ("num_keep").int_value (); }
+        options["num_keep"] = opt.contents ("num_keep").int_value ();
+        has_options = true; }
       if (opt.isfield ("seed")) {
-        options["seed"] = opt.contents ("seed").int_value (); }
+        options["seed"] = opt.contents ("seed").int_value ();
+        has_options = true; }
       if (opt.isfield ("num_predict")) {
-        options["num_predict"] = opt.contents ("num_predict").int_value (); }
+        options["num_predict"] = opt.contents ("num_predict").int_value ();
+        has_options = true; }
       if (opt.isfield ("top_k")) {
-        options["top_k"] = opt.contents ("top_k").int_value (); }
+        options["top_k"] = opt.contents ("top_k").int_value ();
+        has_options = true; }
       if (opt.isfield ("top_p")) {
-        options["top_p"] = opt.contents ("top_p").double_value (); }
+        options["top_p"] = opt.contents ("top_p").double_value ();
+        has_options = true; }
       if (opt.isfield ("min_p")) {
-        options["min_p"] = opt.contents ("min_p").double_value (); }
+        options["min_p"] = opt.contents ("min_p").double_value ();
+        has_options = true; }
       if (opt.isfield ("typical_p")) {
-        options["typical_p"] = opt.contents ("typical_p").double_value (); }
+        options["typical_p"] = opt.contents ("typical_p").double_value ();
+        has_options = true; }
       if (opt.isfield ("repeat_last_n")) {
-        options["repeat_last_n"] = opt.contents ("repeat_last_n").int_value (); }
+        options["repeat_last_n"] = opt.contents ("repeat_last_n").int_value ();
+        has_options = true; }
       if (opt.isfield ("temperature")) {
-        options["temperature"] = opt.contents ("temperature").double_value (); }
+        options["temperature"] = opt.contents ("temperature").double_value ();
+        has_options = true; }
       if (opt.isfield ("repeat_penalty")) {
-        options["repeat_penalty"] = opt.contents ("repeat_penalty").double_value (); }
+        options["repeat_penalty"] = opt.contents ("repeat_penalty").double_value ();
+        has_options = true; }
       if (opt.isfield ("presence_penalty")) {
-        options["presence_penalty"] = opt.contents ("presence_penalty").double_value (); }
+        options["presence_penalty"] = opt.contents ("presence_penalty").double_value ();
+        has_options = true; }
       if (opt.isfield ("frequency_penalty")) {
-        options["frequency_penalty"] = opt.contents ("frequency_penalty").double_value (); }
+        options["frequency_penalty"] = opt.contents ("frequency_penalty").double_value ();
+        has_options = true; }
       if (opt.isfield ("penalize_newline")) {
-        options["penalize_newline"] = opt.contents ("penalize_newline").bool_value (); }
+        options["penalize_newline"] = opt.contents ("penalize_newline").bool_value ();
+        has_options = true; }
       if (opt.isfield ("numa")) {
-        options["numa"] = opt.contents ("numa").bool_value (); }
+        options["numa"] = opt.contents ("numa").bool_value ();
+        has_options = true; }
       if (opt.isfield ("num_ctx")) {
-        options["num_ctx"] = opt.contents ("num_ctx").int_value (); }
+        options["num_ctx"] = opt.contents ("num_ctx").int_value ();
+        has_options = true; }
       if (opt.isfield ("num_batch")) {
-        options["num_batch"] = opt.contents ("num_batch").int_value (); }
+        options["num_batch"] = opt.contents ("num_batch").int_value ();
+        has_options = true; }
       if (opt.isfield ("num_gpu")) {
-        options["num_gpu"] = opt.contents ("num_gpu").int_value (); }
+        options["num_gpu"] = opt.contents ("num_gpu").int_value ();
+        has_options = true; }
       if (opt.isfield ("main_gpu")) {
-        options["main_gpu"] = opt.contents ("main_gpu").int_value (); }
+        options["main_gpu"] = opt.contents ("main_gpu").int_value ();
+        has_options = true; }
       if (opt.isfield ("use_mmap")) {
-        options["use_mmap"] = opt.contents ("use_mmap").bool_value (); }
+        options["use_mmap"] = opt.contents ("use_mmap").bool_value ();
+        has_options = true; }
       if (opt.isfield ("num_thread")) {
-        options["num_thread"] = opt.contents ("num_thread").int_value (); }
-      has_options = true;
+        options["num_thread"] = opt.contents ("num_thread").int_value ();
+        has_options = true; }
     }
   }
 
