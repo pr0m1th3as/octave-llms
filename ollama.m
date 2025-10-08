@@ -58,7 +58,7 @@ classdef ollama
       endif
       [out, err] = __ollama__ ('loadModel', model, 'serverURL', this.serverURL);
       if (err)
-        error ("ollama.loadModel: %s:", out);
+        error ("ollama.loadModel: %s", out);
       else
         this.activeModel = model;
       endif
@@ -70,7 +70,11 @@ classdef ollama
       endif
       [out, err] = __ollama__ ('pullModel', model, 'serverURL', this.serverURL);
       if (err)
-        error ("ollama.loadModel: %s:", out);
+        msg = strcat ("If you get a time out error, try to increase the", ...
+                      " 'readTimeout' and 'writeTimeout' parameters\n", ...
+                      "   to allow more time for ollama server to download", ...
+                      " the requested model.");
+        error ("ollama.loadModel: %s\n   %s", out, msg);
       else
         this.availableModels = [this.availableModels model];
       endif
@@ -111,7 +115,10 @@ classdef ollama
                                'readTimeout', this.readTimeout, ...
                                'writeTimeout', this.writeTimeout);
       if (err)
-        error ("ollama.generate: %s:", out);
+        msg = strcat ("If you get a time out error, try to increase the", ...
+                      " 'readTimeout' and 'writeTimeout' parameters\n", ...
+                      "   to allow more time for ollama server to respond.");
+        error ("ollama.generate: %s\n   %s", out, msg);
       else
         ## Save active model
         this.activeModel = model;
@@ -124,6 +131,28 @@ classdef ollama
   endmethods
 
   methods (Hidden)
+
+    ## Class specific display methods
+    function display (this)
+      in_name = inputname (1);
+      if (! isempty (in_name))
+        fprintf ('%s =\n', in_name);
+      endif
+      disp (this);
+    endfunction
+
+    function disp (this)
+        fprintf ("\n  ollama interface connected at: %s\n\n", this.serverURL);
+        fprintf ("%+25s: '%s'\n", 'activeModel', this.activeModel);
+        fprintf ("%+25s: %d (sec)\n", 'readTimeout', this.readTimeout);
+        fprintf ("%+25s: %d (sec)\n\n", 'writeTimeout', this.writeTimeout);
+        if (! isempty (this.availableModels))
+          fprintf ("     There are %d available models on this server.\n\n", ...
+                   numel (this.availableModels));
+        else
+          fprintf ("     No available models on this server!\n\n");
+        endif
+    endfunction
 
     ## Class specific subscripted reference
     function varargout = subsref (this, s)
