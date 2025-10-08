@@ -555,7 +555,7 @@ A compiled interface for ollama server. \n\
     }
     return retval;
   }
-ollama::show_requests(true);
+
   // Start inference
   if (model.empty ())
   {
