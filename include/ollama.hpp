@@ -4,6 +4,7 @@
 /*  MIT License
 
     Copyright (c) 2025 James Montgomery (jmont)
+    Copyright (c) 2025 Andreas Bertsatos (pr0m1th3as)
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +23,13 @@
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
+*/
+
+/*  About this library:
+
+    This library is a modified version of the header-only C++ library written by
+	James Montgomery adapted to the needs of interfacing GNU Octave with an ollama
+    server.
 */
 
 /*  About this software:
@@ -508,6 +516,18 @@ class Ollama
         return false;                
     }
 
+    bool unload_model(const std::string& model)
+    {
+        json request;
+        request["model"] = model;
+        request["keep_alive"] = 0;
+        std::string request_string = request.dump();
+        auto res = this->cli->Post("/api/generate", request_string, "application/json");
+		json response = json::parse(res->body);
+		if (response.contains ("done")) {return response["done"];}
+        return false;                
+    }
+
     bool is_running()
     {
         auto res = cli->Get("/");
@@ -829,6 +849,11 @@ namespace ollama
     }
 
     inline bool load_model(const std::string& model)
+    {
+        return ollama.load_model(model);
+    }
+
+    inline bool unload_model(const std::string& model)
     {
         return ollama.load_model(model);
     }
