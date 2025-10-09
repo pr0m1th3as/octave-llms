@@ -67,6 +67,7 @@ A compiled interface for ollama server. \n\
   bool do_pullModel = false;
   bool do_copyModel = false;
   bool do_deleteModel = false;
+  bool do_unloadModel = false;
   string modelInfoName = "";
   bool do_modelInfo = false;
   bool do_listModels = false;
@@ -161,9 +162,9 @@ A compiled interface for ollama server. \n\
       {
         error ("__ollama__: 'loadModel' value must be a character vector.");
       }
-      if (do_pullModel || do_copyModel || do_deleteModel)
+      if (do_pullModel || do_copyModel || do_deleteModel || do_unloadModel)
       {
-        error ("__ollama__: either load, pull, copy, or delete a model.");
+        error ("__ollama__: either load, pull, copy, delete, or unload a model.");
       }
       source = args(p+1).string_value ();
       do_loadModel = true;
@@ -174,9 +175,9 @@ A compiled interface for ollama server. \n\
       {
         error ("__ollama__: 'pullModel' value must be a character vector.");
       }
-      if (do_loadModel || do_copyModel || do_deleteModel)
+      if (do_loadModel || do_copyModel || do_deleteModel || do_unloadModel)
       {
-        error ("__ollama__: either load, pull, copy, or delete a model.");
+        error ("__ollama__: either load, pull, copy, delete, or unload a model.");
       }
       source = args(p+1).string_value ();
       do_pullModel = true;
@@ -187,9 +188,9 @@ A compiled interface for ollama server. \n\
       {
         error ("__ollama__: 'copyModel' value must be a cellstring with two elements.");
       }
-      if (do_loadModel || do_pullModel || do_deleteModel)
+      if (do_loadModel || do_pullModel || do_deleteModel || do_unloadModel)
       {
-        error ("__ollama__: either load, pull, copy, or delete a model.");
+        error ("__ollama__: either load, pull, copy, delete, or unload a model.");
       }
       Cell fnames = args(p+1).cell_value ();
       source = fnames(0).string_value ();
@@ -202,12 +203,25 @@ A compiled interface for ollama server. \n\
       {
         error ("__ollama__: 'deleteModel' value must be a character vector.");
       }
-      if (do_loadModel || do_pullModel || do_copyModel)
+      if (do_loadModel || do_pullModel || do_copyModel || do_unloadModel)
       {
-        error ("__ollama__: either load, pull, copy, or delete a model.");
+        error ("__ollama__: either load, pull, copy, delete, or unload a model.");
       }
       source = args(p+1).string_value ();
       do_deleteModel = true;
+    }
+    else if (args(p).string_value () == "unloadModel")
+    {
+      if (! args(p+1).is_string ())
+      {
+        error ("__ollama__: 'loadModel' value must be a character vector.");
+      }
+      if (do_loadModel || do_pullModel || do_copyModel || do_deleteModel)
+      {
+        error ("__ollama__: either load, pull, copy, delete, or unload a model.");
+      }
+      source = args(p+1).string_value ();
+      do_unloadModel = true;
     }
     else if (args(p).string_value () == "modelInfo")
     {
@@ -471,6 +485,13 @@ A compiled interface for ollama server. \n\
       retval(0) = errmsg;
       retval(1) = true;
     }
+    return retval;
+  }
+  if (do_unloadModel)
+  {
+    bool model_unloaded = ollama::unload_model (source);
+    retval(0) = model_unloaded;
+    retval(1) = ! model_unloaded;
     return retval;
   }
   if (do_modelInfo)

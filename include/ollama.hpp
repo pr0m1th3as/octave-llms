@@ -855,7 +855,7 @@ namespace ollama
 
     inline bool unload_model(const std::string& model)
     {
-        return ollama.load_model(model);
+        return ollama.unload_model(model);
     }
 
     inline std::string get_version()
