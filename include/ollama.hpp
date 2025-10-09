@@ -419,62 +419,11 @@ class Ollama
         return response;        
     }
 
-    bool generate(const std::string& model,const std::string& prompt, ollama::response& context, std::function<bool(const ollama::response&)> on_receive_token, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>())
-    {
-        ollama::request request(model, prompt, options, true, images);
-        if ( context.as_json().contains("context") ) request["context"] = context.as_json()["context"];
-        return generate(request, on_receive_token);
-    }
-
-    bool generate(const std::string& model,const std::string& prompt, std::function<bool(const ollama::response&)> on_receive_token, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>())
-    {
-        ollama::request request(model, prompt, options, true, images);
-        return generate(request, on_receive_token);
-    }
-
-
-    // Generate a streaming reply where a user-defined callback function is invoked when each token is received.
-    bool generate(ollama::request& request, std::function<bool(const ollama::response&)> on_receive_token)
-    {
-        request["stream"] = true;
-
-        std::string request_string = request.dump();
-        if (ollama::log_requests) std::cout << request_string << std::endl;
-
-        std::shared_ptr<std::vector<std::string>> partial_responses = std::make_shared<std::vector<std::string>>();
-
-        auto stream_callback = [on_receive_token, partial_responses](const char *data, size_t data_length)->bool{
-            
-            std::string message(data, data_length);
-            bool continue_stream = true;
-
-            if (ollama::log_replies) std::cout << message << std::endl;
-            try 
-            {   
-                partial_responses->push_back(message);
-                std::string total_response = std::accumulate(partial_responses->begin(), partial_responses->end(), std::string(""));                
-                ollama::response response(total_response);
-                partial_responses->clear();  
-                continue_stream = on_receive_token(response); 
-            }
-            catch (const ollama::invalid_json_exception& e) { /* Partial response was received. Will do nothing and attempt to concatenate with the next response. */ }
-            
-            return continue_stream;
-        };
-
-        if (auto res = this->cli->Post("/api/generate", request_string, "application/json", stream_callback)) { return true; }
-        else if (res.error()==httplib::Error::Canceled) { /* Request cancelled by user. */ return true; }        
-        else { if (ollama::use_exceptions) throw ollama::exception( "No response from server returned at URL "+this->server_url+" Error: "+httplib::to_string( res.error() ) ); } 
-
-        return false;
-    }
-
     ollama::response chat(const std::string& model, const ollama::messages& messages, json options=nullptr, const std::string& format="json", const std::string& keep_alive_duration="5m")
     {
         ollama::request request(model, messages, options, false, format, keep_alive_duration);
         return chat(request);
     }
-
 
     // Generate a non-streaming reply as a string.
     ollama::response chat(ollama::request& request)
@@ -499,51 +448,6 @@ class Ollama
         }
 
         return response;
-    }
-
-    bool chat(const std::string& model, const ollama::messages& messages, std::function<bool(const ollama::response&)> on_receive_token, const json& options=nullptr, const std::string& format="json", const std::string& keep_alive_duration="5m")
-    {
-        ollama::request request(model, messages, options, true, format, keep_alive_duration);
-        return chat(request, on_receive_token);
-    }
-
-
-    bool chat(ollama::request& request, std::function<bool(const ollama::response&)> on_receive_token)
-    {
-        ollama::response response;        
-        request["stream"] = true;
-
-        std::string request_string = request.dump();
-        if (ollama::log_requests) std::cout << request_string << std::endl;      
-
-        std::shared_ptr<std::vector<std::string>> partial_responses = std::make_shared<std::vector<std::string>>();
-
-        auto stream_callback = [on_receive_token, partial_responses](const char *data, size_t data_length)->bool{
-            
-            std::string message(data, data_length);
-            bool continue_stream = true;
-
-            if (ollama::log_replies) std::cout << message << std::endl;
-            try 
-            {   
-                partial_responses->push_back(message);
-                std::string total_response = std::accumulate(partial_responses->begin(), partial_responses->end(), std::string(""));                
-                ollama::response response(total_response, ollama::message_type::chat);
-                partial_responses->clear();  
-
-                if ( response.has_error() ) { if (ollama::use_exceptions) throw ollama::exception("Ollama response returned error: "+response.get_error() ); }
-                continue_stream = on_receive_token(response);
-            }
-            catch (const ollama::invalid_json_exception& e) { /* Partial response was received. Will do nothing and attempt to concatenate with the next response. */ }
-
-            return continue_stream;
-        };
-
-        if (auto res = this->cli->Post("/api/chat", request_string, "application/json", stream_callback)) { return true; }
-        else if (res.error()==httplib::Error::Canceled) { /* Request cancelled by user. */ return true; }
-        else { if (ollama::use_exceptions) throw ollama::exception( "No response from server returned at URL"+this->server_url+" Error: "+httplib::to_string( res.error() ) ); }
-
-        return false;
     }
 
     bool create_model(const std::string& modelName, const std::string& modelFile, bool loadFromFile=true)
@@ -598,21 +502,9 @@ class Ollama
         json request;
         request["model"] = model;
         std::string request_string = request.dump();
-        if (ollama::log_requests) std::cout << request_string << std::endl;
-
-        // Send a blank request with the model name to instruct ollama to load the model into memory.
-        if (auto res = this->cli->Post("/api/generate", request_string, "application/json"))
-        {
-            if (ollama::log_replies) std::cout << res->body << std::endl;
-            json response = json::parse(res->body);
-            return response["done"];        
-        }
-        else
-        { 
-            if (ollama::use_exceptions) throw ollama::exception("No response returned from server when loading model: "+httplib::to_string( res.error() ) ); 
-        }
-
-        // If we didn't get a response from the server indicating the model was created, return false.        
+        auto res = this->cli->Post("/api/generate", request_string, "application/json");
+		json response = json::parse(res->body);
+		if (response.contains ("done")) {return response["done"];}
         return false;                
     }
 
@@ -916,21 +808,6 @@ namespace ollama
         return ollama.generate(request);
     }
 
-    inline bool generate(const std::string& model,const std::string& prompt, std::function<bool(const ollama::response&)> on_receive_response, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>())
-    {
-        return ollama.generate(model, prompt, on_receive_response, options, images);
-    }
-
-    inline bool generate(const std::string& model,const std::string& prompt, ollama::response& context, std::function<bool(const ollama::response&)> on_receive_response, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>())
-    {
-        return ollama.generate(model, prompt, context, on_receive_response, options, images);
-    }
-
-    inline bool generate(ollama::request& request, std::function<bool(const ollama::response&)> on_receive_response)
-    {
-        return ollama.generate(request, on_receive_response);
-    }
-
     inline ollama::response chat(const std::string& model, const ollama::messages& messages, const json& options=nullptr, const std::string& format="json", const std::string& keep_alive_duration="5m")
     {
         return ollama.chat(model, messages, options, format, keep_alive_duration);
@@ -939,16 +816,6 @@ namespace ollama
     inline ollama::response chat(ollama::request& request)
     {
         return ollama.chat(request);
-    }
-
-    inline bool chat(const std::string& model, const ollama::messages& messages, std::function<bool(const ollama::response&)> on_receive_response, const json& options=nullptr, const std::string& format="json", const std::string& keep_alive_duration="5m")
-    {
-        return ollama.chat(model, messages, on_receive_response, options, format, keep_alive_duration);
-    }
-
-    inline bool chat(ollama::request& request, std::function<bool(const ollama::response&)> on_receive_response)
-    {
-        return ollama.chat(request, on_receive_response);
     }
 
     inline bool create(const std::string& modelName, const std::string& modelFile, bool loadFromFile=true)
