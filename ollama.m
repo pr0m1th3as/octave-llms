@@ -22,7 +22,7 @@ classdef ollama < handle
   properties (GetAccess = public, Protected = true)
     serverURL = '';
     availableModels = {''};
-    genResponse = struct ();
+    queryStats = struct ();
     chatHistory = {};
   endproperties
 
@@ -323,30 +323,49 @@ classdef ollama < handle
       endwhile
     endfunction
 
-    function txt = generate (this, varargin)
+    function txt = query (this, varargin)
       ## Check active model exists
       if (isempty (this.activeModel))
-        error ("ollama.generate: no model has been loaded yet.");
+        error ("ollama.query: no model has been loaded yet.");
       endif
       if (nargin < 2)
-        error ("ollama.generate: too few input arguments.");
+        error ("ollama.query: too few input arguments.");
       endif
       ## Validate user prompt
       if (nargin > 1)
         prompt = varargin{1};
         if (! (isvector (prompt) && ischar (prompt)))
-          error ("ollama.generate: PROMPT must be a character vector.");
+          error ("ollama.query: PROMPT must be a character vector.");
         endif
         args = {'prompt', prompt};
       endif
       ## Validate any images
       if (nargin > 2)
         image = varargin{2};
-        if (! ischar (image) && ! iscellstr (image))
-          error (strcat ("ollama.generate: IMAGE must be either a character", ...
+        if (! ischar (image) && ! iscellstr (image) && ! isvector (image))
+          error (strcat ("ollama.query: IMAGE must be either a character", ...
                          " vector or a cell array of character vectors."));
         endif
-        args = [args, {'images', image}];
+        ## Check for either imageFile or imageBase64 strings
+        if (ischar (image))
+          if (any ('.' == image))
+            type = 'imageFile';
+          else
+            type = 'imageBase64';
+          endif
+        else  # cellstr
+          fcn = @(x) any ('.' == x);
+          TF = cellfun (fcn, image);
+          if (all (TF))
+            type = 'imageFile';
+          elseif (! any (TF))
+            type = 'imageBase64';
+          else
+            error (strcat ("ollama.query: IMAGE must either contain", ...
+                           " file names or base64_encoded strings."));
+          endif
+        endif
+        args = [args, {'imageFile', image}];
       endif
       ## Validate prompt
       ## Run inference
@@ -359,13 +378,12 @@ classdef ollama < handle
         msg = strcat ("If you get a time out error, try to increase the", ...
                       " 'readTimeout' and 'writeTimeout' parameters\n", ...
                       "   to allow more time for ollama server to respond.");
-        error ("ollama.generate: %s\n   %s", out, msg);
-      else
-        ## Decode json output
-        this.genResponse = jsondecode (out);
-        ## Return response text
-        txt = this.genResponse.response;
+        error ("ollama.query: %s\n   %s", out, msg);
       endif
+      ## Decode json output
+      this.queryStats = jsondecode (out);
+      ## Return response text
+      txt = this.queryStats.response;
     endfunction
   endmethods
 
@@ -381,17 +399,37 @@ classdef ollama < handle
     endfunction
 
     function disp (this)
-        fprintf ("\n  ollama interface connected at: %s\n\n", this.serverURL);
-        fprintf ("%+25s: '%s'\n", 'activeModel', this.activeModel);
-        fprintf ("%+25s: %d (sec)\n", 'readTimeout', this.readTimeout);
-        fprintf ("%+25s: %d (sec)\n\n", 'writeTimeout', this.writeTimeout);
-        if (! isempty (this.availableModels))
-          fprintf ("     There are %d available models on this server.\n", ...
-                   numel (this.availableModels));
-          fprintf ("     Use the 'listModels' method for more information.\n\n");
-        else
-          fprintf ("     No available models on this server!\n\n");
-        endif
+      fprintf ("\n  ollama interface connected at: %s\n\n", this.serverURL);
+      fprintf ("%+25s: '%s'\n", 'activeModel', this.activeModel);
+      fprintf ("%+25s: %d (sec)\n", 'readTimeout', this.readTimeout);
+      fprintf ("%+25s: %d (sec)\n\n", 'writeTimeout', this.writeTimeout);
+      if (! isempty (this.availableModels))
+        fprintf ("     There are %d available models on this server.\n", ...
+                 numel (this.availableModels));
+        fprintf ("     Use the 'listModels' method for more information.\n\n");
+      else
+        fprintf ("     No available models on this server!\n\n");
+      endif
+    endfunction
+
+    ## Display stats from last query
+    function showStats (this)
+      QS = this.queryStats;
+      if (isempty (fieldnames (QS)))
+        disp ("No stats to show. Make a query first or start a chat.");
+        return;
+      endif
+      fprintf ("\n  Query answered by '%s' at: %s\n\n", ...
+               QS.model, QS.created_at);
+      fprintf ("%+25s: %0.2f (sec)\n", 'Total duration', ...
+               round (QS.total_duration / 1e+7) / 100);
+      fprintf ("%+25s: %0.2f (sec)\n", 'Load duration', ...
+               round (QS.load_duration / 1e+7) / 100);
+      fprintf ("%+25s: %0.2f (sec)\n\n", 'Evaluation duration', ...
+               round (QS.eval_duration / 1e+7) / 100);
+      fprintf ("%+25s: %d (tokens)\n", 'Prompt count', ...
+               QS.prompt_eval_count);
+      fprintf ("%+25s: %d (tokens)\n\n", 'Evaluation count', QS.eval_count);
     endfunction
 
     ## Class specific subscripted reference
@@ -400,8 +438,19 @@ classdef ollama < handle
       chain_s = s(2:end);
       s = s(1);
       switch (s.type)
-        case '()'
-          error ("ollama.subsref: '()' invalid indexing for ollama object.");
+        case '()' # Use this syntax for making a query
+          if (isempty (s.subs))
+            varargout{1} = this;
+          else
+            out = query (this, s.subs{:});
+            if (nargout == 0)
+              disp ("Response:\n");
+              disp (out);
+            else
+              varargout{1} = out;
+            endif
+            return;
+          endif
 
         case '{}'
           error ("ollama.subsref: '{}' invalid indexing for ollama object.");
@@ -418,8 +467,8 @@ classdef ollama < handle
                                        'serverURL', this.serverURL);
             case 'availableModels'
               out = this.availableModels;
-            case 'genResponse'
-              out = this.genResponse;
+            case 'queryStats'
+              out = this.queryStats;
             case 'chatHistory'
               out = this.chatHistory;
             case 'activeModel'
@@ -467,8 +516,8 @@ classdef ollama < handle
               error ("ollama.subsref: 'runningModels' is read only.");
             case 'availableModels'
               error ("ollama.subsref: 'availableModels' is read only.");
-            case 'genResponse'
-              error ("ollama.subsref: 'genResponse' is read only.");
+            case 'queryStats'
+              error ("ollama.subsref: 'queryStats' is read only.");
             case 'chatHistory'
               error ("ollama.subsref: 'chatHistory' is read only.");
             case 'activeModel'
