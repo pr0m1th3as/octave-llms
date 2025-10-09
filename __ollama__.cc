@@ -49,9 +49,6 @@ A compiled interface for ollama server. \n\
   // Check server is running
   bool running = ollama::is_running ();
   retval(1) = ! running;
-  // Increase default timeout values
-  ollama::setReadTimeout (300);
-  ollama::setWriteTimeout (300);
   // Initialize variables for inference
   string model = "";
   string prompt = "";
@@ -420,19 +417,9 @@ A compiled interface for ollama server. \n\
   }
   if (do_loadModel)
   {
-    bool model_loaded = false;
-    try
-    {
-      model_loaded = ollama::load_model (source);
-      retval(0) = model_loaded;
-      retval(1) = false;
-    }
-    catch (ollama::exception& err)
-    {
-      string errmsg = err.what ();
-      retval(0) = errmsg;
-      retval(1) = true;
-    }
+    bool model_loaded = ollama::load_model (source);
+    retval(0) = model_loaded;
+    retval(1) = ! model_loaded;
     return retval;
   }
   if (do_pullModel)
@@ -518,10 +505,10 @@ A compiled interface for ollama server. \n\
       {
         vector<string> models = ollama::list_models ();
         size_t model_num = models.size ();
-        Cell model_names (1, model_num);
+        Cell model_names (model_num, 1);
         for (int m = 0; m < model_num; m++)
         {
-          model_names(0, m) = models[m];
+          model_names(m, 0) = models[m];
         }
         retval(0) = model_names;
         retval(1) = false;
@@ -550,10 +537,10 @@ A compiled interface for ollama server. \n\
       {
         vector<string> models = ollama::list_running_models ();
         size_t model_num = models.size ();
-        Cell model_names (1, model_num);
+        Cell model_names (model_num, 1);
         for (int m = 0; m < model_num; m++)
         {
-          model_names(0, m) = models[m];
+          model_names(m, 0) = models[m];
         }
         retval(0) = model_names;
         retval(1) = false;
