@@ -15,9 +15,12 @@
 
 classdef ollama < handle
 
+  properties (Dependent = true)
+    runningModels
+  endproperties
+
   properties (GetAccess = public, Protected = true)
     serverURL = '';
-    runningModels = {''};
     availableModels = {''};
     genResponse = struct ();
     chatHistory = {};
@@ -144,8 +147,6 @@ classdef ollama < handle
         error ("ollama.loadModel: MODEL could not be loaded.");
       else
         this.activeModel = model;
-        [this.runningModels, err] = __ollama__ ('listRunningModels', 'cellstr', ...
-                                                'serverURL', this.serverURL);
       endif
     endfunction
 
@@ -166,8 +167,6 @@ classdef ollama < handle
         error ("ollama.unloadModel: MODEL not found.");
       else
         this.activeModel = model;
-        [this.runningModels, err] = __ollama__ ('listRunningModels', 'cellstr', ...
-                                                'serverURL', this.serverURL);
       endif
     endfunction
 
@@ -415,7 +414,8 @@ classdef ollama < handle
             case 'serverURL'
               out = this.serverURL;
             case 'runningModels'
-              out = this.runningModels;
+              [out, err] = __ollama__ ('listRunningModels', 'cellstr', ...
+                                       'serverURL', this.serverURL);
             case 'availableModels'
               out = this.availableModels;
             case 'genResponse'
@@ -463,8 +463,8 @@ classdef ollama < handle
           switch (s.subs)
             case 'serverURL'
               error ("ollama.subsref: 'serverURL' is set a construction.");
-            case 'A.runningModels'
-              error ("ollama.subsref: 'A.runningModels' is read only.");
+            case 'runningModels'
+              error ("ollama.subsref: 'runningModels' is read only.");
             case 'availableModels'
               error ("ollama.subsref: 'availableModels' is read only.");
             case 'genResponse'
