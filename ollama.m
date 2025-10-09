@@ -13,11 +13,14 @@
 ## You should have received a copy of the GNU General Public License along with
 ## this program; if not, see <http://www.gnu.org/licenses/>.
 
-classdef ollama
+classdef ollama < handle
 
   properties (GetAccess = public, Protected = true)
     serverURL = '';
+    runningModels = {''};
     availableModels = {''};
+    genResponse = struct ();
+    chatHistory = {};
   endproperties
 
   properties (GetAccess = public)
@@ -48,26 +51,129 @@ classdef ollama
       endif
     endfunction
 
-    function this = loadModel (this, model)
-      if (isnumeric (model))
-        if (model <= numel (this.availableModels))
-          model = this.availableModels{model};
-        endif
-      elseif (! ischar (model))
-        error (strcat ("ollama.loadModel: MODEL must be a character vector or", ...
-                       " a number indexing the 'availableModels' properties."));
-      endif
-      [out, err] = __ollama__ ('loadModel', model, 'serverURL', this.serverURL);
+    function [varargout] = listModels (this, mode = 'cellstr')
+      [list, err] = do_list_models (this, mode, 'listModels');
       if (err)
-        error ("ollama.loadModel: %s", out);
+        error (err);
+      endif
+      if (nargout > 0)
+        varargout{1} = list;
+      elseif (any (strcmp (mode, {'cellstr', 'table'})))
+        disp ("The following models are available in this ollama server:");
+        disp (list);
       else
-        this.activeModel = model;
+        error ("ollama.listModels: output argument is required for 'json'.");
       endif
     endfunction
 
-    function this = pullModel (this, model)
+    function [varargout] = listRunningModels (this, mode = 'cellstr')
+      [list, err] = do_list_models (this, mode, 'listRunningModels');
+      if (err)
+        error (err);
+      endif
+      if (nargout > 0)
+        varargout{1} = list;
+      elseif (any (strcmp (mode, {'cellstr', 'table'})))
+        disp ("The following models are available in this ollama server:");
+        disp (list);
+      else
+        error ("ollama.listRunningModels: output argument is required for 'json'.");
+      endif
+    endfunction
+
+    function copyModel (this, model, newmodel)
+      if (isnumeric (model))
+        if (model <= numel (this.availableModels))
+          model = this.availableModels{model};
+        else
+          error (strcat ("ollama.copyModel: index to 'availableModels'", ...
+                         " property is out of range."));
+        endif
+      elseif (! ischar (model) || isempty (model))
+        error (strcat ("ollama.copyModel: MODEL must be a character", ...
+                       " vector or an index to 'availableModels'."));
+      endif
+      if (! ischar (newmodel) || isempty (newmodel))
+        error ("ollama.copyModel: NEWMODEL must be a character vector.");
+      endif
+      [out, err] = __ollama__ ('copyModel', {model, newmodel}, ...
+                               'serverURL', this.serverURL);
+      if (err)
+        error ("ollama.loadModel: MODEL could not be copied.");
+      else
+        [this.availableModels, err] = __ollama__ ('listModels', 'cellstr', ...
+                                                  'serverURL', this.serverURL);
+      endif
+    endfunction
+
+    function deleteModel (this, model)
+      if (isnumeric (model))
+        if (model <= numel (this.availableModels))
+          model = this.availableModels{model};
+        else
+          error (strcat ("ollama.deleteModel: index to 'availableModels'", ...
+                         " property is out of range."));
+        endif
+      elseif (! ischar (model) || isempty (model))
+        error (strcat ("ollama.deleteModel: MODEL must be a character", ...
+                       " vector or an index to 'availableModels'."));
+      endif
+      [out, err] = __ollama__ ('deleteModel', model, 'serverURL', this.serverURL);
+      if (err)
+        error ("ollama.loadModel: MODEL could not be deleted.");
+      else
+        [this.availableModels, err] = __ollama__ ('listModels', 'cellstr', ...
+                                                  'serverURL', this.serverURL);
+      endif
+    endfunction
+
+    function loadModel (this, model)
+      if (isnumeric (model))
+        if (model <= numel (this.availableModels))
+          model = this.availableModels{model};
+        else
+          error (strcat ("ollama.loadModel: index to 'availableModels'", ...
+                         " property is out of range."));
+        endif
+      elseif (! ischar (model) || isempty (model))
+        error (strcat ("ollama.loadModel: MODEL must be a character", ...
+                       " vector or an index to 'availableModels'."));
+      endif
+      [out, err] = __ollama__ ('loadModel', model, 'serverURL', this.serverURL);
+      if (err)
+        error ("ollama.loadModel: MODEL could not be loaded.");
+      else
+        this.activeModel = model;
+        [this.runningModels, err] = __ollama__ ('listRunningModels', 'cellstr', ...
+                                                'serverURL', this.serverURL);
+      endif
+    endfunction
+
+    function unloadModel (this, model)
+      if (isnumeric (model))
+        if (model <= numel (this.availableModels))
+          model = this.availableModels{model};
+        else
+          error (strcat ("ollama.unloadModel: index to 'availableModels'", ...
+                         " property is out of range."));
+        endif
+      elseif (! ischar (model) || isempty (model))
+        error (strcat ("ollama.unloadModel: MODEL must be a character", ...
+                       " vector or an index to 'availableModels'."));
+      endif
+      [out, err] = __ollama__ ('unloadModel', model, 'serverURL', this.serverURL);
+      if (err)
+        error ("ollama.unloadModel: MODEL not found.");
+      else
+        this.activeModel = model;
+        [this.runningModels, err] = __ollama__ ('listRunningModels', 'cellstr', ...
+                                                'serverURL', this.serverURL);
+      endif
+    endfunction
+
+    function pullModel (this, model)
       if (! ischar (model))
-        error ("ollama.loadModel: MODEL must be a character vector.");
+        error ("ollama.pullModel: MODEL must be a character vector.");
       endif
       [out, err] = __ollama__ ('pullModel', model, 'serverURL', this.serverURL);
       if (err)
@@ -75,13 +181,14 @@ classdef ollama
                       " 'readTimeout' and 'writeTimeout' parameters\n", ...
                       "   to allow more time for ollama server to download", ...
                       " the requested model.");
-        error ("ollama.loadModel: %s\n   %s", out, msg);
+        error ("ollama.pullModel: %s\n   %s", out, msg);
       else
-        this.availableModels = [this.availableModels model];
+        [this.availableModels, err] = __ollama__ ('listModels', 'cellstr', ...
+                                                  'serverURL', this.serverURL);
       endif
     endfunction
 
-    function this = setOptions (this, varargin)
+    function setOptions (this, varargin)
       if (mod (numel (varargin), 2) != 0)
         error ("ollama.setOptions: 'options' must be in Name-Value pairs.");
       endif
@@ -218,52 +325,47 @@ classdef ollama
     endfunction
 
     function txt = generate (this, varargin)
+      ## Check active model exists
+      if (isempty (this.activeModel))
+        error ("ollama.generate: no model has been loaded yet.");
+      endif
       if (nargin < 2)
         error ("ollama.generate: too few input arguments.");
-      elseif (nargin == 2)
-        if (isempty (this.activeModel))
-          error ("ollama.generate: no model has been loaded yet.");
-        endif
-        model = this.activeModel;
+      endif
+      ## Validate user prompt
+      if (nargin > 1)
         prompt = varargin{1};
-      else
-        model = varargin{1};
-        prompt = varargin{2};
-        ## Validate model
-        if (isnumeric (model) && fix (model) == model)
-          if (model <= numel (this.availableModels) && model > 0)
-            model = this.availableModels{model};
-          else
-            error ("ollama.generate: MODEL index out of range.");
-          endif
-        elseif (! (ischar (model) && isvector (model) &&
-                   any (strcmp (model, this.availableModels))))
-          error (strcat ("ollama.generate: MODEL must be a character vector", ...
-                         " or a number indexing the 'models' properties."));
+        if (! (isvector (prompt) && ischar (prompt)))
+          error ("ollama.generate: PROMPT must be a character vector.");
         endif
+        args = {'prompt', prompt};
+      endif
+      ## Validate any images
+      if (nargin > 2)
+        image = varargin{2};
+        if (! ischar (image) && ! iscellstr (image))
+          error (strcat ("ollama.generate: IMAGE must be either a character", ...
+                         " vector or a cell array of character vectors."));
+        endif
+        args = [args, {'images', image}];
       endif
       ## Validate prompt
-      if (! (isvector (prompt) && ischar (prompt)))
-        error ("ollama.generate: PROMPT must be a character vector.");
-      endif
       ## Run inference
-      [out, err] = __ollama__ ('model', model, 'prompt', prompt, ...
+      [out, err] = __ollama__ ('model', this.activeModel, ...
                                'serverURL', this.serverURL, ...
                                'readTimeout', this.readTimeout, ...
                                'writeTimeout', this.writeTimeout, ...
-                               'options', this.options);
+                               'options', this.options, args{:});
       if (err)
         msg = strcat ("If you get a time out error, try to increase the", ...
                       " 'readTimeout' and 'writeTimeout' parameters\n", ...
                       "   to allow more time for ollama server to respond.");
         error ("ollama.generate: %s\n   %s", out, msg);
       else
-        ## Save active model
-        this.activeModel = model;
         ## Decode json output
-        jsn = jsondecode (out);
+        this.genResponse = jsondecode (out);
         ## Return response text
-        txt = jsn.response;
+        txt = this.genResponse.response;
       endif
     endfunction
   endmethods
@@ -285,8 +387,9 @@ classdef ollama
         fprintf ("%+25s: %d (sec)\n", 'readTimeout', this.readTimeout);
         fprintf ("%+25s: %d (sec)\n\n", 'writeTimeout', this.writeTimeout);
         if (! isempty (this.availableModels))
-          fprintf ("     There are %d available models on this server.\n\n", ...
+          fprintf ("     There are %d available models on this server.\n", ...
                    numel (this.availableModels));
+          fprintf ("     Use the 'listModels' method for more information.\n\n");
         else
           fprintf ("     No available models on this server!\n\n");
         endif
@@ -311,8 +414,14 @@ classdef ollama
           switch (s.subs)
             case 'serverURL'
               out = this.serverURL;
+            case 'runningModels'
+              out = this.runningModels;
             case 'availableModels'
               out = this.availableModels;
+            case 'genResponse'
+              out = this.genResponse;
+            case 'chatHistory'
+              out = this.chatHistory;
             case 'activeModel'
               out = this.activeModel;
             case 'readTimeout'
@@ -354,10 +463,16 @@ classdef ollama
           switch (s.subs)
             case 'serverURL'
               error ("ollama.subsref: 'serverURL' is set a construction.");
+            case 'A.runningModels'
+              error ("ollama.subsref: 'A.runningModels' is read only.");
             case 'availableModels'
-              error ("ollama.subsref: 'availableModels' are read only.");
+              error ("ollama.subsref: 'availableModels' is read only.");
+            case 'genResponse'
+              error ("ollama.subsref: 'genResponse' is read only.");
+            case 'chatHistory'
+              error ("ollama.subsref: 'chatHistory' is read only.");
             case 'activeModel'
-              this = loadModel (this, val);
+              loadModel (this, val);
             case 'readTimeout'
               if (isscalar (val) && val > 0 && fix (val) == val)
                 this.readTimeout = val;
@@ -386,6 +501,84 @@ classdef ollama
 
     endfunction
 
+  endmethods
+
+  methods (Access = private)
+
+    function [list, err] = do_list_models (this, mode, operation)
+      if (! any (strcmp (mode, {'cellstr', 'json', 'table'})))
+        err = sprintf ("ollama.%s: MODE can be either 'cellstr' or 'json'.", ...
+                       operation);
+      endif
+      if (strcmp (mode, 'table'))
+        fcn = @(x) strcmp (x.name, 'datatypes') && x.loaded;
+        if (! any (cellfun (fcn, pkg ('list'))))
+          err = sprintf ("ollama.%s: the 'datatypes' package is required.", ...
+                         operation);
+        endif
+        mode = 'json';
+        return_table = true;
+      else
+        return_table = false;
+      endif
+      [list, err] = __ollama__ (operation, mode, 'serverURL', this.serverURL);
+      if (err)
+        this = [];
+        err = sprintf ("ollama.%s: server is inaccessible at %s.", ...
+                       operation, serverURL);
+      else
+        if (strcmp (mode, 'cellstr'))
+          if (strcmp (operation, 'listModels'))
+            this.availableModels = list;
+          else    # listRunningModels
+            this.runningModels = list;
+          endif
+        else
+          list = jsondecode (list);
+          if (strcmp (operation, 'listModels'))
+            if (isempty (list.models))
+              this.availableModels = {''};
+            else
+              this.availableModels = {list.models.model}';
+            endif
+          else    # listRunningModels
+            if (isempty (list.models))
+              this.runningModels = {''};
+            else
+              this.runningModels = {list.models.model}';
+            endif
+          endif
+        endif
+        ## Create table if requested
+        if (return_table)
+          if (isempty (list.models))
+            list = table ('Size', [0, 5], 'VariableTypes', {'cellstr', ...
+                          'cellstr', 'cellstr', 'cellstr', 'double'}, ...
+                          'VariableNames', {'family', 'format', 'parameter', ...
+                          'quantization', 'size'});
+            if (strcmp (operation, 'listModels'))
+              this.availableModels = {''};
+            else    # listRunningModels
+              this.runningModels = {''};
+            endif
+          else
+            T = struct2table (list.models);
+            T = removevars (T, {'digest', 'name'});
+            list = struct2table (T.details, 'AsArray', true);
+            list = removevars (list, {'families', 'parent_model'});
+            list = renamevars (list, 'quantization_level', 'quantization');
+            list = renamevars (list, 'parameter_size', 'parameter');
+            list = addvars (list, T.size, 'NewVariableNames', 'size');
+            list.Properties.RowNames = T.model;
+            if (strcmp (operation, 'listModels'))
+              this.availableModels = T.model;
+            else    # listRunningModels
+              this.runningModels = T.model;
+            endif
+          endif
+        endif
+      endif
+    endfunction
   endmethods
 
 endclassdef
