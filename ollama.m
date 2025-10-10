@@ -20,9 +20,10 @@ classdef ollama < handle
   endproperties
 
   properties (GetAccess = public, Protected = true)
+    mode = 'query';
     serverURL = '';
     availableModels = {''};
-    queryStats = struct ();
+    responseStats = struct ();
     chatHistory = {};
   endproperties
 
@@ -62,7 +63,7 @@ classdef ollama < handle
       if (nargout > 0)
         varargout{1} = list;
       elseif (any (strcmp (mode, {'cellstr', 'table'})))
-        disp ("The following models are available in this ollama server:");
+        disp ("The following models are available in the ollama server:");
         disp (list);
       else
         error ("ollama.listModels: output argument is required for 'json'.");
@@ -77,7 +78,7 @@ classdef ollama < handle
       if (nargout > 0)
         varargout{1} = list;
       elseif (any (strcmp (mode, {'cellstr', 'table'})))
-        disp ("The following models are available in this ollama server:");
+        disp ("The following models are running in the ollama server:");
         disp (list);
       else
         error ("ollama.listRunningModels: output argument is required for 'json'.");
@@ -323,12 +324,16 @@ classdef ollama < handle
       endwhile
     endfunction
 
-    function txt = query (this, varargin)
+    function [varargout] = query (this, varargin)
       ## Check active model exists
       if (isempty (this.activeModel))
         error ("ollama.query: no model has been loaded yet.");
       endif
-      if (nargin < 2)
+      ## Allow mode selection
+      if (nargin < 2 && nargout == 0)
+        this.mode = 'query';
+        return;
+      elseif (nargin < 2)
         error ("ollama.query: too few input arguments.");
       endif
       ## Validate user prompt
@@ -365,9 +370,8 @@ classdef ollama < handle
                            " file names or base64_encoded strings."));
           endif
         endif
-        args = [args, {'imageFile', image}];
+        args = [args, {type, image}];
       endif
-      ## Validate prompt
       ## Run inference
       [out, err] = __ollama__ ('model', this.activeModel, ...
                                'serverURL', this.serverURL, ...
@@ -381,10 +385,159 @@ classdef ollama < handle
         error ("ollama.query: %s\n   %s", out, msg);
       endif
       ## Decode json output
-      this.queryStats = jsondecode (out);
+      this.responseStats = jsondecode (out);
       ## Return response text
-      txt = this.queryStats.response;
+      if (nargout > 0)
+        varargout{1} = this.responseStats.response;
+      endif
     endfunction
+
+    function txt = chat (this, varargin)
+      ## Check active model exists
+      if (isempty (this.activeModel))
+        error ("ollama.chat: no model has been loaded yet.");
+      endif
+      ## Allow mode selection
+      if (nargin < 2 && nargout == 0)
+        this.mode = 'chat';
+        return;
+      elseif (nargin < 2)
+        error ("ollama.chat: too few input arguments.");
+      endif
+      ## Initialize new chat or use previous history
+      message = {'', {'', ''}, ''};
+      if (! isempty (this.chatHistory))
+        message = [this.chatHistory; message];
+      endif
+      ## Validate user prompt
+      if (nargin > 1)
+        prompt = varargin{1};
+        if (! (isvector (prompt) && ischar (prompt)))
+          error ("ollama.chat: PROMPT must be a character vector.");
+        endif
+        message(end, 1) = prompt;
+      endif
+      ## Validate any images
+      if (nargin > 2)
+        image = varargin{2};
+        if (! ischar (image) && ! iscellstr (image) && ! isvector (image))
+          error (strcat ("ollama.chat: IMAGE must be either a character", ...
+                         " vector or a cell array of character vectors."));
+        endif
+        ## Check for either imageFile or imageBase64 strings
+        if (ischar (image))
+          if (any ('.' == image))
+            message{end, 2}(1) = 'imageFile';
+          else
+            message{end, 2}(1) = 'imageBase64';
+          endif
+          message{end, 2}(2) = image;
+        else  # cellstr
+          fcn = @(x) any ('.' == x);
+          TF = cellfun (fcn, image);
+          for img = 1:numel (TF)
+            if (TF(img))
+              message{end, 2}(img, 1) = 'imageFile';
+            else
+              message{end, 2}(img, 1) = 'imageBase64';
+            endif
+            message{end, 2}(img, 2) = image{img};
+          endfor
+        endif
+      endif
+      ## Run inference
+      [out, err] = __ollama__ ('model', this.activeModel, ...
+                               'serverURL', this.serverURL, ...
+                               'readTimeout', this.readTimeout, ...
+                               'writeTimeout', this.writeTimeout, ...
+                               'options', this.options, ...
+                               'message', message);
+      if (err)
+        msg = strcat ("If you get a time out error, try to increase the", ...
+                      " 'readTimeout' and 'writeTimeout' parameters\n", ...
+                      "   to allow more time for ollama server to respond.");
+        error ("ollama.chat: %s\n   %s", out, msg);
+      endif
+      ## Decode json output
+      this.responseStats = jsondecode (out);
+      ## Return response text
+      txt = this.responseStats.message.content;
+      ## Add response to chat history
+      message(end,3) = txt;
+      this.chatHistory = message;
+    endfunction
+
+    ## Display stats from last query
+    function showStats (this)
+      RS = this.responseStats;
+      if (isempty (fieldnames (RS)))
+        disp ("No stats to show. Make a query first or start a chat.");
+        return;
+      endif
+      fprintf ("\n  Query answered by '%s' at: %s\n\n", ...
+               RS.model, RS.created_at);
+      fprintf ("%+25s: %0.2f (sec)\n", 'Total duration', ...
+               round (RS.total_duration / 1e+7) / 100);
+      fprintf ("%+25s: %0.2f (sec)\n", 'Load duration', ...
+               round (RS.load_duration / 1e+7) / 100);
+      fprintf ("%+25s: %0.2f (sec)\n\n", 'Evaluation duration', ...
+               round (RS.eval_duration / 1e+7) / 100);
+      fprintf ("%+25s: %d (tokens)\n", 'Prompt count', ...
+               RS.prompt_eval_count);
+      fprintf ("%+25s: %d (tokens)\n\n", 'Evaluation count', RS.eval_count);
+    endfunction
+
+    function showHistory (this, idx = 'all')
+      H = this.chatHistory;
+      if (isempty (H))
+        disp ("No chat history to show. Start a chat first.");
+        return;
+      endif
+      ## Get history length
+      Hidx = rows (H);
+      if (strcmp (idx, 'all'))
+        index = [1:Hidx];
+      elseif (strcmp (idx, 'first'))
+        index = 1;
+      elseif (strcmp (idx, 'last'))
+        index = Hidx;
+      elseif (isnumeric (idx) && isvector (idx) && all (diff (idx) == 0) &&
+              all (fix (idx) == idx) && all (idx > 0) && all (idx <= Hidx))
+        index = idx;
+      else
+        error ("ollama.showHistory: invalid IDX input.");
+      endif
+      for idx = index
+        fprintf ("\n User:\n %s\n", H{idx,1});
+        if (! isempty (H{idx,2}{1}))
+          img = H{idx,2};
+          TFi = cellfun (@(x)strcmp (x, 'imageFile'), q(:,1));
+          isfile = sum (TFi);
+          isbase = sum (! TFi);
+          temp_s = repmat (" '%s',", 1, isfile)(1:end-1);
+          ss = '';
+          if (isfile)
+            if (isfile > 1)
+              ss = 's';
+            endif
+            fprintf (strcat ("\n User supplied image file%s:", temp_s, "\n"), ...
+                     ss, img{TFi,2});
+          endif
+          if (isbase)
+            if (isbase > 1)
+              ss = 's';
+            endif
+            fprintf ("\n User supplied %d Base64 image%s.\n", ss, isbase);
+          endif
+        endif
+        fprintf ("\n Assistant:\n %s\n", H{idx,3});
+      endfor
+    endfunction
+
+    function clearHistory (this)
+      this.chatHistory = {};
+    endfunction
+
   endmethods
 
   methods (Hidden)
@@ -399,10 +552,16 @@ classdef ollama < handle
     endfunction
 
     function disp (this)
-      fprintf ("\n  ollama interface connected at: %s\n\n", this.serverURL);
+      fprintf ("\n  ollama interface in '%s' mode connected at: %s\n\n", ...
+               this.mode, this.serverURL);
       fprintf ("%+25s: '%s'\n", 'activeModel', this.activeModel);
       fprintf ("%+25s: %d (sec)\n", 'readTimeout', this.readTimeout);
-      fprintf ("%+25s: %d (sec)\n\n", 'writeTimeout', this.writeTimeout);
+      fprintf ("%+25s: %d (sec)\n", 'writeTimeout', this.writeTimeout);
+      if (numel (fieldnames (this.options)))
+        fprintf ("%+25s: %s\n\n", 'options', 'custom');
+      else
+        fprintf ("%+25s: %s\n\n", 'options', 'default');
+      endif
       if (! isempty (this.availableModels))
         fprintf ("     There are %d available models on this server.\n", ...
                  numel (this.availableModels));
@@ -410,26 +569,6 @@ classdef ollama < handle
       else
         fprintf ("     No available models on this server!\n\n");
       endif
-    endfunction
-
-    ## Display stats from last query
-    function showStats (this)
-      QS = this.queryStats;
-      if (isempty (fieldnames (QS)))
-        disp ("No stats to show. Make a query first or start a chat.");
-        return;
-      endif
-      fprintf ("\n  Query answered by '%s' at: %s\n\n", ...
-               QS.model, QS.created_at);
-      fprintf ("%+25s: %0.2f (sec)\n", 'Total duration', ...
-               round (QS.total_duration / 1e+7) / 100);
-      fprintf ("%+25s: %0.2f (sec)\n", 'Load duration', ...
-               round (QS.load_duration / 1e+7) / 100);
-      fprintf ("%+25s: %0.2f (sec)\n\n", 'Evaluation duration', ...
-               round (QS.eval_duration / 1e+7) / 100);
-      fprintf ("%+25s: %d (tokens)\n", 'Prompt count', ...
-               QS.prompt_eval_count);
-      fprintf ("%+25s: %d (tokens)\n\n", 'Evaluation count', QS.eval_count);
     endfunction
 
     ## Class specific subscripted reference
@@ -442,7 +581,11 @@ classdef ollama < handle
           if (isempty (s.subs))
             varargout{1} = this;
           else
-            out = query (this, s.subs{:});
+            if (strcmp (this.mode, 'query'))
+              out = query (this, s.subs{:});
+            else  # chat mode
+              out = chat (this, s.subs{:});
+            endif
             if (nargout == 0)
               disp ("Response:\n");
               disp (out);
@@ -460,6 +603,8 @@ classdef ollama < handle
             error ("ollama.subsref: '.' indexing requires a character vector.");
           endif
           switch (s.subs)
+            case 'mode'
+              out = this.mode;
             case 'serverURL'
               out = this.serverURL;
             case 'runningModels'
@@ -467,8 +612,8 @@ classdef ollama < handle
                                        'serverURL', this.serverURL);
             case 'availableModels'
               out = this.availableModels;
-            case 'queryStats'
-              out = this.queryStats;
+            case 'responseStats'
+              out = this.responseStats;
             case 'chatHistory'
               out = this.chatHistory;
             case 'activeModel'
@@ -510,14 +655,16 @@ classdef ollama < handle
             error ("ollama.subsref: '.' indexing requires a character vector.");
           endif
           switch (s.subs)
+            case 'mode'
+              error ("ollama.subsref: 'mode' is read only.");
             case 'serverURL'
               error ("ollama.subsref: 'serverURL' is set a construction.");
             case 'runningModels'
               error ("ollama.subsref: 'runningModels' is read only.");
             case 'availableModels'
               error ("ollama.subsref: 'availableModels' is read only.");
-            case 'queryStats'
-              error ("ollama.subsref: 'queryStats' is read only.");
+            case 'responseStats'
+              error ("ollama.subsref: 'responseStats' is read only.");
             case 'chatHistory'
               error ("ollama.subsref: 'chatHistory' is read only.");
             case 'activeModel'

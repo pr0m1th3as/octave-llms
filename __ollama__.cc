@@ -52,6 +52,7 @@ A compiled interface for ollama server. \n\
   // Initialize variables for inference
   string model = "";
   string prompt = "";
+  bool has_prompt = false;
   ollama::images images;
   bool has_images = false;
   ollama::options options;
@@ -99,6 +100,13 @@ A compiled interface for ollama server. \n\
     }
     else if (args(p).string_value () == "prompt")
     {
+      // Check for conflicting parameter
+      if (has_messages)
+      {
+        error ("__ollama__: specify either 'prompt' or 'message'.");
+      }
+      has_prompt = true;
+      // Check parameter value
       if (! args(p+1).is_string ())
       {
         error ("__ollama__: 'prompt' value must be a character vector.");
@@ -406,6 +414,78 @@ A compiled interface for ollama server. \n\
         options["num_thread"] = opt.contents ("num_thread").int_value ();
         has_options = true; }
     }
+    else if (args(p).string_value () == "message")
+    {
+      // Check for conflicting parameter
+      if (has_prompt)
+      {
+        error ("__ollama__: specify either 'prompt' or 'message'.");
+      }
+      has_messages = true;
+      // Check parameter value
+      if (! args(p+1).iscell ())
+      {
+        error ("__ollama__: 'messages' name must be a cell array.");
+      }
+      // Get contents and size
+      Cell msg = args(p+1).cell_value ();
+      if (msg.columns () != 3)
+      {
+        error ("__ollama__: 'messages' cell array must have 3 columns.");
+      }
+      // Each row contains user prompt, images, and previous response
+      // msg(m,0) -> character vector (cannot be empty)
+      // msg(m,1) -> N-by-2 cellstr array (can be empty)
+      //             1st column specifies either "imageFile" or "imageBase64"
+      //             2nd column specifies the image itself
+      // msg(m,2) -> character vector (empty for m = 0)
+      for (octave_idx_type mrows = 0; mrows < msg.rows (); mrows++)
+      {
+        // Get user prompt
+        string user = msg(mrows,0).string_value ();
+        // Get any images first
+        if (! msg(mrows,1).iscell () || msg(mrows,1).columns () != 2)
+        {
+          error ("__ollama__: second column in 'messages' name must be a 2-column cell array.");
+        }
+        Cell img = msg(mrows,1).cell_value ();
+        vector<ollama::image> msg_images;
+        bool has_msg_images = false;
+        for (octave_idx_type irows = 0; irows < img.rows (); irows++)
+        {
+          if (img(irows,0).string_value () == "imageFile")
+          {
+            ollama::image image = ollama::image::from_file (img(irows,1).string_value ());
+            msg_images.push_back (image);
+            has_msg_images = true;
+          }
+          else if (img(irows,0).string_value () == "imageBase64")
+          {
+            ollama::image image = ollama::image::from_base64_string (img(irows,1).string_value ());
+            msg_images.push_back (image);
+            has_msg_images = true;
+          }
+        }
+        // Create user message (with images, if any)
+        if (has_msg_images)
+        {
+          ollama::message msg_with_images("user", user, msg_images);
+          messages.push_back (msg_with_images);
+        }
+        else
+        {
+          ollama::message msg_no_images("user", user);
+          messages.push_back (msg_no_images);
+        }
+        // Get previous response (if any)
+        string assistant = msg(mrows,2).string_value ();
+        if (assistant.size () > 0)
+        {
+          ollama::message msg_prev_resp("assistant", assistant);
+          messages.push_back (msg_prev_resp);
+        }
+      }
+    }
   }
 
   // Start communication with ollama server
@@ -586,17 +666,13 @@ A compiled interface for ollama server. \n\
   // Start inference
   if (model.empty ())
   {
-    error ("__ollama: 'model' is required.");
+    error ("__ollama: 'model' parameter is required.");
   }
-  if (prompt.empty () && messages.size () == 0)
+  if (! has_prompt && ! has_messages)
   {
-    error ("__ollama: either 'prompt' or 'message' paired argument is required.");
+    error ("__ollama: either 'prompt' or 'messages' parameter is required.");
   }
-  else if (! prompt.empty () && messages.size () != 0)
-  {
-    error ("__ollama: either 'prompt' or 'message' paired argument can be specified.");
-  }
-  else if (! prompt.empty ())   // default to generate
+  if (has_prompt)   // use generate
   {
     try
     {
@@ -620,7 +696,7 @@ A compiled interface for ollama server. \n\
       retval(1) = true;
     }
   }
-  else  // messages must be specified: default to chat
+  else  // messages must be specified: use chat
   {
     try
     {
