@@ -429,10 +429,12 @@ classdef ollama < handle
       ## Return response text
       if (nargout > 0)
         varargout{1} = this.responseStats.response;
+      else
+        __disp__ (this.responseStats.response);
       endif
     endfunction
 
-    function txt = chat (this, varargin)
+    function [varargout] = chat (this, varargin)
       ## Check active model exists
       if (isempty (this.activeModel))
         error ("ollama.chat: no model has been loaded yet.");
@@ -500,11 +502,15 @@ classdef ollama < handle
       endif
       ## Decode json output
       this.responseStats = jsondecode (out);
-      ## Return response text
-      txt = this.responseStats.message.content;
       ## Add response to chat history
-      message(end,3) = txt;
+      message(end,3) = this.responseStats.message.content;
       this.chatHistory = message;
+      ## Return response text
+      if (nargout > 0)
+        varargout{1} = this.responseStats.message.content;
+      else
+        __disp__ (this.responseStats.message.content);
+      endif
     endfunction
 
     ## Display stats from last query
@@ -548,7 +554,9 @@ classdef ollama < handle
         error ("ollama.showHistory: invalid IDX input.");
       endif
       for idx = index
-        fprintf ("\n User:\n %s\n", H{idx,1});
+        #fprintf ("\n User:\n %s\n", H{idx,1});
+        disp ("User:");
+        __disp__ (H{idx,1});
         if (! isempty (H{idx,2}{1}))
           img = H{idx,2};
           TFi = cellfun (@(x)strcmp (x, 'imageFile'), q(:,1));
@@ -570,7 +578,9 @@ classdef ollama < handle
             fprintf ("\n User supplied %d Base64 image%s.\n", ss, isbase);
           endif
         endif
-        fprintf ("\n Assistant:\n %s\n", H{idx,3});
+        #fprintf ("\n Assistant:\n %s\n", H{idx,3});
+        disp ("User:");
+        __disp__ (H{idx,3});
       endfor
     endfunction
 
@@ -633,8 +643,8 @@ classdef ollama < handle
               out = chat (this, s.subs{:});
             endif
             if (nargout == 0)
-              disp ("Response:\n");
-              disp (out);
+              disp ("Response:");
+              __disp__ (out);
             else
               varargout{1} = out;
             endif
@@ -824,3 +834,28 @@ classdef ollama < handle
   endmethods
 
 endclassdef
+
+## Private function for printing inference text output within the screen's limit
+function out = __disp__ (txt)
+  ## Get screen size to trim lines to
+  cols = terminal_size ()(2) - 4;
+  ## Split text by paragraphs
+  ptxt = strsplit (txt, "\n");
+  for i = 1:numel (ptxt)
+    ## Split text by whitespaces and print in each line as many words as they
+    ## can fit without exceeding the screen size and push the remaining words
+    ## into the next line.
+    wtxt = strsplit (strtrim (ptxt{i}));
+    wlen = cellfun (@(x) numel (x) + 1, wtxt);
+    while (! isempty (find (cumsum (wlen) >= cols, 1)))
+      sidx = find (cumsum (wlen) >= cols, 1) - 1;
+      disp (strjoin (wtxt(1:sidx)));
+      wtxt(1:sidx) = [];
+      wlen = cellfun (@(x) numel (x) + 1, wtxt);
+    endwhile
+    if (numel (wtxt) > 0)
+      disp (strjoin (wtxt));
+    endif
+    disp ('');
+  endfor
+endfunction
