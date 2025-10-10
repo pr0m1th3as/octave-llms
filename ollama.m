@@ -203,115 +203,153 @@ classdef ollama < handle
         endif
         switch (name)
           case 'num_keep'
-            if (fix (value) == value && value >= 0)
+            if (isfield (this.options, 'num_keep') && isempty (value))
+              this.options = rmfield (this.options, 'num_keep');
+            elseif (fix (value) == value && value >= 0)
               this.options.num_keep = value;
             else
               error ("ollama.setOptions: 'num_keep' must be a non-negative integer.");
             endif
           case 'seed'
-            if (fix (value) == value && value >= 0)
+            if (isfield (this.options, 'seed') && isempty (value))
+              this.options = rmfield (this.options, 'seed');
+            elseif (fix (value) == value && value >= 0)
               this.options.seed = value;
             else
               error ("ollama.setOptions: 'seed' must be a non-negative integer.");
             endif
           case 'num_predict'
-            if (fix (value) == value && value >= 0)
+            if (isfield (this.options, 'num_predict') && isempty (value))
+              this.options = rmfield (this.options, 'num_predict');
+            elseif (fix (value) == value && value >= 0)
               this.options.num_predict = value;
             else
               error ("ollama.setOptions: 'num_predict' must be a non-negative integer.");
             endif
           case 'top_k'
-            if (fix (value) == value && value >= 0)
+            if (isfield (this.options, 'top_k') && isempty (value))
+              this.options = rmfield (this.options, 'top_k');
+            elseif (fix (value) == value && value >= 0)
               this.options.top_k = value;
             else
               error ("ollama.setOptions: 'top_k' must be a non-negative integer.");
             endif
           case 'top_p'
-            if (value >= 0 && value <= 1)
+            if (isfield (this.options, 'top_p') && isempty (value))
+              this.options = rmfield (this.options, 'top_p');
+            elseif (value >= 0 && value <= 1)
               this.options.top_p = value;
             else
               error ("ollama.setOptions: 'top_p' must be between 0 and 1.");
             endif
           case 'min_p'
-            if (value >= 0 && value <= 1)
+            if (isfield (this.options, 'min_p') && isempty (value))
+              this.options = rmfield (this.options, 'min_p');
+            elseif (value >= 0 && value <= 1)
               this.options.min_p = value;
             else
               error ("ollama.setOptions: 'min_p' must be between 0 and 1.");
             endif
           case 'typical_p'
-            if (value >= 0 && value <= 1)
+            if (isfield (this.options, 'typical_p') && isempty (value))
+              this.options = rmfield (this.options, 'typical_p');
+            elseif (value >= 0 && value <= 1)
               this.options.typical_p = value;
             else
               error ("ollama.setOptions: 'typical_p' must be between 0 and 1.");
             endif
           case 'repeat_last_n'
-            if (fix (value) == value && value >= 0)
+            if (isfield (this.options, 'repeat_last_n') && isempty (value))
+              this.options = rmfield (this.options, 'repeat_last_n');
+            elseif (fix (value) == value && value >= 0)
               this.options.repeat_last_n = value;
             else
               error ("ollama.setOptions: 'repeat_last_n' must be a non-negative integer.");
             endif
           case 'temperature'
-            if (value >= 0 && value <= 2)
+            if (isfield (this.options, 'temperature') && isempty (value))
+              this.options = rmfield (this.options, 'temperature');
+            elseif (value >= 0 && value <= 2)
               this.options.temperature = value;
             else
               error ("ollama.setOptions: 'temperature' must be between 0 and 1.");
             endif
           case 'repeat_penalty'
-            if (value >= 0)
+            if (isfield (this.options, 'repeat_penalty') && isempty (value))
+              this.options = rmfield (this.options, 'repeat_penalty');
+            elseif (value >= 0)
               this.options.repeat_penalty = value;
             else
               error ("ollama.setOptions: 'repeat_penalty' must be positive.");
             endif
           case 'frequency_penalty'
-            if (value >= 0)
+            if (isfield (this.options, 'frequency_penalty') && isempty (value))
+              this.options = rmfield (this.options, 'frequency_penalty');
+            elseif (value >= 0)
               this.options.frequency_penalty = value;
             else
               error ("ollama.setOptions: 'frequency_penalty' must be positive.");
             endif
           case 'penalize_newline'
-            if (islogical (value))
+            if (isfield (this.options, 'penalize_newline') && isempty (value))
+              this.options = rmfield (this.options, 'penalize_newline');
+            elseif (islogical (value))
               this.options.penalize_newline = value;
             else
               error ("ollama.setOptions: 'penalize_newline' must be logical.");
             endif
           case 'numa'
-            if (islogical (value))
+            if (isfield (this.options, 'numa') && isempty (value))
+              this.options = rmfield (this.options, 'numa');
+            elseif (islogical (value))
               this.options.numa = value;
             else
               error ("ollama.setOptions: 'numa' must be logical.");
             endif
           case 'num_ctx'
-            if (fix (value) == value && value >= 0)
+            if (isfield (this.options, 'num_ctx') && isempty (value))
+              this.options = rmfield (this.options, 'num_ctx');
+            elseif (fix (value) == value && value >= 0)
               this.options.num_ctx = value;
             else
               error ("ollama.setOptions: 'num_ctx' must be a non-negative integer.");
             endif
           case 'num_batch'
-            if (fix (value) == value && value >= 0)
+            if (isfield (this.options, 'num_batch') && isempty (value))
+              this.options = rmfield (this.options, 'num_batch');
+            elseif (fix (value) == value && value >= 0)
               this.options.num_batch = value;
             else
               error ("ollama.setOptions: 'num_batch' must be a non-negative integer.");
             endif
           case 'num_gpu'
-            if (fix (value) == value && value >= 0)
+            if (isfield (this.options, 'num_gpu') && isempty (value))
+              this.options = rmfield (this.options, 'num_gpu');
+            elseif (fix (value) == value && value >= 0)
               this.options.num_gpu = value;
             else
               error ("ollama.setOptions: 'num_gpu' must be a non-negative integer.");
             endif
           case 'main_gpu'
-            if (fix (value) == value && value >= 0)
+            if (isfield (this.options, 'main_gpu') && isempty (value))
+              this.options = rmfield (this.options, 'main_gpu');
+            elseif (fix (value) == value && value >= 0)
               this.options.main_gpu = value;
             else
               error ("ollama.setOptions: 'main_gpu' must be a non-negative integer.");
             endif
           case 'use_mmap'
-            if (islogical (value))
+            if (isfield (this.options, 'use_mmap') && isempty (value))
+              this.options = rmfield (this.options, 'use_mmap');
+            elseif (islogical (value))
               this.options.use_mmap = value;
             else
               error ("ollama.setOptions: 'use_mmap' must be logical.");
             endif
           case 'num_thread'
-            if (fix (value) == value && value >= 0)
+            if (isfield (this.options, 'num_thread') && isempty (value))
+              this.options = rmfield (this.options, 'num_thread');
+            elseif (fix (value) == value && value >= 0)
               this.options.num_thread = value;
             else
               error ("ollama.setOptions: 'num_thread' must be a non-negative integer.");
