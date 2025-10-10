@@ -198,8 +198,10 @@ classdef ollama < handle
         if (! ischar (name))
           error ("ollama.setOptions: NAME must be a character vector.");
         endif
-        if (! (isscalar (value) && (isnumeric (value) || islogical (value))))
-          error ("ollama.setOptions: VALUE must be a numeric or logical scalar.");
+        if (! isempty (value))
+          if (! (isscalar (value) && (isnumeric (value) || islogical (value))))
+            error ("ollama.setOptions: VALUE must be a numeric or logical scalar.");
+          endif
         endif
         switch (name)
           case 'num_keep'
@@ -601,11 +603,17 @@ classdef ollama < handle
         fprintf ("%+25s: %s\n\n", 'options', 'default');
       endif
       if (! isempty (this.availableModels))
-        fprintf ("     There are %d available models on this server.\n", ...
+        fprintf ("    There are %d available models on this server.\n", ...
                  numel (this.availableModels));
-        fprintf ("     Use the 'listModels' method for more information.\n\n");
+        fprintf (strcat ("    Use 'listModels' and 'listRunningModels'", ...
+                         " methods for more information.\n"));
+        if (isempty (this.activeModel))
+          fprintf ("    Use 'loadModel' to set an active model for inference.\n");
+
+        endif
       else
-        fprintf ("     No available models on this server!\n\n");
+        fprintf ("    No available models on this server!\n");
+        fprintf ("    Use 'pullModel' to download a model from the Ollama library.\n\n");
       endif
     endfunction
 
