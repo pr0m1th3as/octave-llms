@@ -36,8 +36,12 @@ classdef ollama < handle
 
   methods (GetAccess = public)
 
-    function this = ollama (serverURL = [], model = '')
-      ## Parse input
+    function this = ollama (serverURL = [], model = '', mode = 'query')
+      ## Parse inputs
+      if (! any (strcmpi (mode, {'query', 'chat'})))
+        error ("ollama: unsupported mode option '%s'.", mode);
+      endif
+      this.mode = tolower (mode);
       if (isempty (serverURL))
         serverURL = "http://localhost:11434";
       elseif (ischar (serverURL))
