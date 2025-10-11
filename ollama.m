@@ -36,7 +36,7 @@ classdef ollama < handle
 
   methods (GetAccess = public)
 
-    function this = ollama (serverURL = [])
+    function this = ollama (serverURL = [], model = '')
       ## Parse input
       if (isempty (serverURL))
         serverURL = "http://localhost:11434";
@@ -45,6 +45,7 @@ classdef ollama < handle
       else
         error ("ollama: invalid serverURL input.");
       endif
+      ## Get list of available models
       [out, err] = __ollama__ ('listModels', 'cellstr', 'serverURL', serverURL);
       if (err)
         this = [];
@@ -52,6 +53,15 @@ classdef ollama < handle
       else
         this.availableModels = out;
         this.serverURL = serverURL;
+      endif
+      ## Make a model active (if requested AND if available)
+      if (! isempty (model) && ischar (model) && isvector (model))
+        [out, err] = __ollama__ ('loadModel', model, 'serverURL', this.serverURL);
+        if (err)
+          warning ("ollama: model '%s' is not available.", model);
+        else
+          this.activeModel = model;
+        endif
       endif
     endfunction
 
