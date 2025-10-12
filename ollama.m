@@ -180,8 +180,8 @@ classdef ollama < handle
       [out, err] = __ollama__ ('unloadModel', model, 'serverURL', this.serverURL);
       if (err)
         error ("ollama.unloadModel: MODEL not found.");
-      else
-        this.activeModel = model;
+      elseif (strcmp (this.activeModel, model))
+        this.activeModel = '';
       endif
     endfunction
 
