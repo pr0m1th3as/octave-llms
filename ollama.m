@@ -14,6 +14,25 @@
 ## this program; if not, see <http://www.gnu.org/licenses/>.
 
 classdef ollama < handle
+  ## -*- texinfo -*-
+  ## @deftp {ollama} ollama
+  ##
+  ## An ollama object interface with a running ollama server.
+  ##
+  ## @qcode{ollama} is a scalar handle class object, which allows communication
+  ## with an ollama server running either locally or across a network.  The
+  ## heavy lifting, interfacing with the ollama API, is done by the compiled
+  ## @code{__ollama__} function, which should not be called directly.
+  ##
+  ## An ollama interface object should be considered as a session to the ollama
+  ## server by holding any user defined settings along with the chat history (if
+  ## opted) and other custom parameters to be parsed to the LLM model during
+  ## inference.  You can initialize several ollama interface objects pointing to
+  ## the same ollama server and use them concurently to implement more complex
+  ## schemes such as RAG, custom tooling, etc.
+  ##
+  ## @seealso{calendarDuration, datetime}
+  ## @end deftp
 
   properties (Dependent = true)
     runningModels
@@ -36,6 +55,40 @@ classdef ollama < handle
 
   methods (GetAccess = public)
 
+    ## -*- texinfo -*-
+    ## @deftypefn  {ollama} {@var{llm} =} ollama (@var{serverURL})
+    ## @deftypefnx {ollama} {@var{llm} =} ollama (@var{serverURL}, @var{model})
+    ## @deftypefnx {ollama} {@var{llm} =} ollama (@var{serverURL}, @var{model}, @var{mode})
+    ##
+    ## Create an ollama interface object.
+    ##
+    ## @code{@var{llm} = ollama (@var{serverURL})} creates an ollama interface
+    ## object, which allows communication with an ollama server accesible at
+    ## @var{serverURL}, which must be a character vector specifying a uniform
+    ## resource locator (URL).  If @var{serverURL} is empty or @qcode{ollama} is
+    ## called without any input arguments, then it defaults to
+    ## @code{http://localhost:11434}.
+    ##
+    ## @code{@var{llm} = ollama (@var{serverURL}, @var{model})} also specifies
+    ## the active model of the ollama interface @var{llm} which will be used for
+    ## inference.  @var{model} must be a character vector specifying an existing
+    ## model at the ollama server.  If the requested model is not available, a
+    ## warning is emitted and no model is set active, which is the default
+    ## behavior when @code{ollama} is called with fewer arguments.  An active
+    ## model is mandatory before starting any communication with the ollama
+    ## server.  Use the @code{listModels} class method to see the all models
+    ## available in the server instance that @var{llm} is interfacings with.
+    ##
+    ## @code{@var{llm} = ollama (@var{serverURL}, @var{model}, @var{mode})} also
+    ## specifies the inference mode of the ollama interface.  @var{mode} can be
+    ## specified as @qcode{'query'}, for generating responses to single prompts,
+    ## @qcode{'chat'}, for starting a conversation with a model by retaining the
+    ## entire chat history during inference, and @qcode{'embed'} (unimplemented)
+    ## for generating embedings for given prompts.  By default, the
+    ## @code{ollama} interface is initialized in query mode.
+    ##
+    ## @seealso{fig2base64}
+    ## @end deftypefn
     function this = ollama (serverURL = [], model = '', mode = 'query')
       ## Parse inputs
       if (! any (strcmpi (mode, {'query', 'chat'})))
@@ -69,14 +122,14 @@ classdef ollama < handle
       endif
     endfunction
 
-    function [varargout] = listModels (this, mode = 'cellstr')
-      [list, err] = do_list_models (this, mode, 'listModels');
+    function [varargout] = listModels (this, outtype = 'cellstr')
+      [list, err] = do_list_models (this, outtype, 'listModels');
       if (err)
         error (err);
       endif
       if (nargout > 0)
         varargout{1} = list;
-      elseif (any (strcmp (mode, {'cellstr', 'table'})))
+      elseif (any (strcmp (outtype, {'cellstr', 'table'})))
         disp ("The following models are available in the ollama server:");
         disp (list);
       else
@@ -84,14 +137,14 @@ classdef ollama < handle
       endif
     endfunction
 
-    function [varargout] = listRunningModels (this, mode = 'cellstr')
-      [list, err] = do_list_models (this, mode, 'listRunningModels');
+    function [varargout] = listRunningModels (this, outtype = 'cellstr')
+      [list, err] = do_list_models (this, outtype, 'listRunningModels');
       if (err)
         error (err);
       endif
       if (nargout > 0)
         varargout{1} = list;
-      elseif (any (strcmp (mode, {'cellstr', 'table'})))
+      elseif (any (strcmp (outtype, {'cellstr', 'table'})))
         disp ("The following models are running in the ollama server:");
         disp (list);
       else
