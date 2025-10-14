@@ -122,6 +122,42 @@ classdef ollama < handle
       endif
     endfunction
 
+    ## -*- texinfo -*-
+    ## @deftypefn  {ollama} {@var{list} =} listModels (@var{llm})
+    ## @deftypefnx {ollama} {@var{list} =} listModels (@var{llm}, @var{outtype})
+    ## @deftypefnx {ollama} {} listModels (@dots{})
+    ##
+    ## List available models in ollama server.
+    ##
+    ## @code{@var{list} = listModels (@var{llm})} returns a cell array of
+    ## character vectors in @var{list} with the names of the models, which are
+    ## available on the ollama server that @var{llm} interfaces with.  This is
+    ## equivalent to accessing the @qcode{availableModels} property with the
+    ## syntax @code{@var{list} = @var{llm}.availableModels}.
+    ##
+    ## @code{@var{list} = listModels (@var{lllm}, @var{outtype})} also specifies
+    ## the data type of the output argument @var{list}.  @var{outtype} must be a
+    ## character vector with any of the following options:
+    ##
+    ## @itemize
+    ## @item @qcode{'cellstr'} (default) returns @var{list} as a cell array of
+    ## character vectors.  Use this option to see available models for selecting
+    ## an active model for inference.
+    ## @item @qcode{'json'} returns @var{list} as a character vector containing
+    ## the json string response returned from the ollama server.  Use this
+    ## option if you want to access all the details about the models available
+    ## in the ollama server.
+    ## @item @qcode{'table'} returns @var{list} as a table with the most
+    ## important information about the available models in specific table
+    ## variables.
+    ## @end itemize
+    ##
+    ## @code{listModels (@dots{})} will display the output requested according
+    ## to the previous syntaxes to the standard output instead of returning it
+    ## to an output argument.  This syntax is not valid for the @qcode{'json'}
+    ## option, which requires an output argument.
+    ##
+    ## @end deftypefn
     function [varargout] = listModels (this, outtype = 'cellstr')
       [list, err] = do_list_models (this, outtype, 'listModels');
       if (err)
@@ -137,6 +173,42 @@ classdef ollama < handle
       endif
     endfunction
 
+    ## -*- texinfo -*-
+    ## @deftypefn  {ollama} {@var{list} =} listRunningModels (@var{llm})
+    ## @deftypefnx {ollama} {@var{list} =} listRunningModels (@var{llm}, @var{outtype})
+    ## @deftypefnx {ollama} {} listRunningModels (@dots{})
+    ##
+    ## List currently running models in ollama server.
+    ##
+    ## @code{@var{list} = listRunningModels (@var{llm})} returns a cell array of
+    ## character vectors in @var{list} with the names of the models, which are
+    ## currently loaded in memory at the ollama server that @var{llm} interfaces
+    ## with.  This is equivalent to accessing the @qcode{runningModels} property
+    ## with the syntax @code{@var{list} = @var{llm}.runningModels}.
+    ##
+    ## @code{@var{list} = listRunningModels (@var{lllm}, @var{outtype})} also
+    # specifies# the data type of the output argument @var{list}.  @var{outtype}
+    ## must be a character vector with any of the following options:
+    ##
+    ## @itemize
+    ## @item @qcode{'cellstr'} (default) returns @var{list} as a cell array of
+    ## character vectors.  Use this option to see which models are currently
+    ## running on the ollama server for better memory management.
+    ## @item @qcode{'json'} returns @var{list} as a character vector containing
+    ## the json string response returned from the ollama server.  Use this
+    ## option if you want to access all the details about currnently running
+    ## models.
+    ## @item @qcode{'table'} returns @var{list} as a table with the most
+    ## important information about the currently running models in specific
+    ## table variables.
+    ## @end itemize
+    ##
+    ## @code{listModels (@dots{})} will display the output requested according
+    ## to the previous syntaxes to the standard output instead of returning it
+    ## to an output argument.  This syntax is not valid for the @qcode{'json'}
+    ## option, which requires an output argument.
+    ##
+    ## @end deftypefn
     function [varargout] = listRunningModels (this, outtype = 'cellstr')
       [list, err] = do_list_models (this, outtype, 'listRunningModels');
       if (err)
