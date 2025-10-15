@@ -201,13 +201,20 @@ datetime
                   </h4>
                 </div>
                 <div class="col-8">
-undocumented
+Display running models.
                 </div>
               </div>
           </div>
           <div class="collapse multi-collapse" id="collapseProperty1">
             <div class="border-bottom py-2">
-<b><code>ollama.runningModels</code></b> is not documented.
+
+
+<p> </p>
+<p> Displays the models that are currently loaded in ollama server&rsquo;s memory.
+</p>
+
+
+
             </div>
           </div>
         </div>
@@ -224,13 +231,22 @@ undocumented
                   </h4>
                 </div>
                 <div class="col-8">
-undocumented
+Inference mode.
                 </div>
               </div>
           </div>
           <div class="collapse multi-collapse" id="collapseProperty2">
             <div class="border-bottom py-2">
-<b><code>ollama.mode</code></b> is not documented.
+
+
+<p> </p>
+<p> Specifies the inference mode that the ollama interface object will use
+ to send requests to the ollama server.  Currently, only <code>'query'</code>
+ and <code>'chat'</code> modes are implemented.
+</p>
+
+
+
             </div>
           </div>
         </div>
@@ -247,13 +263,21 @@ undocumented
                   </h4>
                 </div>
                 <div class="col-8">
-undocumented
+URL of the ollama server.
                 </div>
               </div>
           </div>
           <div class="collapse multi-collapse" id="collapseProperty3">
             <div class="border-bottom py-2">
-<b><code>ollama.serverURL</code></b> is not documented.
+
+
+<p> </p>
+<p> Specifies the network IP address and the port at which the ollama
+ interface object is connected to.
+</p>
+
+
+
             </div>
           </div>
         </div>
@@ -270,13 +294,20 @@ undocumented
                   </h4>
                 </div>
                 <div class="col-8">
-undocumented
+Display available models.
                 </div>
               </div>
           </div>
           <div class="collapse multi-collapse" id="collapseProperty4">
             <div class="border-bottom py-2">
-<b><code>ollama.availableModels</code></b> is not documented.
+
+
+<p> </p>
+<p> Displays the models that are currently available in ollama server.
+</p>
+
+
+
             </div>
           </div>
         </div>
@@ -293,13 +324,21 @@ undocumented
                   </h4>
                 </div>
                 <div class="col-8">
-undocumented
+Response Statistics of LLM.
                 </div>
               </div>
           </div>
           <div class="collapse multi-collapse" id="collapseProperty5">
             <div class="border-bottom py-2">
-<b><code>ollama.responseStats</code></b> is not documented.
+
+
+<p> </p>
+<p> Contains various metrics about the last processed request and the
+ response returned from the ollama server.
+</p>
+
+
+
             </div>
           </div>
         </div>
@@ -316,13 +355,26 @@ undocumented
                   </h4>
                 </div>
                 <div class="col-8">
-undocumented
+Chat history of current session.
                 </div>
               </div>
           </div>
           <div class="collapse multi-collapse" id="collapseProperty6">
             <div class="border-bottom py-2">
-<b><code>ollama.chatHistory</code></b> is not documented.
+
+
+<p> </p>
+<p> Contains an <math>N&times;3</math> cell array with the history of user prompts,
+ images (if any), and models response for a given chat session. The first
+ column contains character vectors with the user&rsquo;s prompts, the second
+ column contains a nested cell array with any images attached to the
+ corresponding user prompt (otherwise it is empty), and the third column
+ contains the model&rsquo;s responses.  By default, <code>chatHistory</code> is an
+ empty cell array, and it is only populated while in  <code>'chat'</code> mode.
+</p>
+
+
+
             </div>
           </div>
         </div>
@@ -339,13 +391,22 @@ undocumented
                   </h4>
                 </div>
                 <div class="col-8">
-undocumented
+The model to be used for any user request for inference.
                 </div>
               </div>
           </div>
           <div class="collapse multi-collapse" id="collapseProperty7">
             <div class="border-bottom py-2">
-<b><code>ollama.activeModel</code></b> is not documented.
+
+
+<p> </p>
+<p> The name of the model that will be used for generating the response to
+ the next user request.  This is empty upon construction and it must be
+ specified before requesting any inference from the ollama server.
+</p>
+
+
+
             </div>
           </div>
         </div>
@@ -362,13 +423,21 @@ undocumented
                   </h4>
                 </div>
                 <div class="col-8">
-undocumented
+Network read timeout.
                 </div>
               </div>
           </div>
           <div class="collapse multi-collapse" id="collapseProperty8">
             <div class="border-bottom py-2">
-<b><code>ollama.readTimeout</code></b> is not documented.
+
+
+<p> </p>
+<p> The time in seconds that the ollama interface object will wait for a
+ server response before closing the connection with an error.
+</p>
+
+
+
             </div>
           </div>
         </div>
@@ -385,13 +454,22 @@ undocumented
                   </h4>
                 </div>
                 <div class="col-8">
-undocumented
+Network write timeout.
                 </div>
               </div>
           </div>
           <div class="collapse multi-collapse" id="collapseProperty9">
             <div class="border-bottom py-2">
-<b><code>ollama.writeTimeout</code></b> is not documented.
+
+
+<p> </p>
+<p> The time in seconds that the ollama interface object will wait for a
+ request to be successfully sent to the server before closing the
+ connection with an error.
+</p>
+
+
+
             </div>
           </div>
         </div>
@@ -408,13 +486,25 @@ undocumented
                   </h4>
                 </div>
                 <div class="col-8">
-undocumented
+Custom options.
                 </div>
               </div>
           </div>
           <div class="collapse multi-collapse" id="collapseProperty10">
             <div class="border-bottom py-2">
-<b><code>ollama.options</code></b> is not documented.
+
+
+<p> </p>
+<p> A structure containing fields as optional parameters to be passed to a
+ model for inference at runtime.  By default, this is an empty structure,
+ in which case the model utilizes its default parameters as specified in
+ the respective model file in the ollama server.  See the
+ <code>setOptions</code> method for more information about the custom parameters
+ you can specify.
+</p>
+
+
+
             </div>
           </div>
         </div>
