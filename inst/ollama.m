@@ -124,7 +124,7 @@ classdef ollama < handle
     ## -*- texinfo -*-
     ## @deftp {ollama} {property} readTimeout
     ##
-    ## Network read timeout
+    ## Network read timeout.
     ##
     ## The time in seconds that the ollama interface object will wait for a
     ## server response before closing the connection with an error.
@@ -135,7 +135,7 @@ classdef ollama < handle
     ## -*- texinfo -*-
     ## @deftp {ollama} {property} writeTimeout
     ##
-    ## Network write timeout
+    ## Network write timeout.
     ##
     ## The time in seconds that the ollama interface object will wait for a
     ## request to be successfully sent to the server before closing the
@@ -143,6 +143,20 @@ classdef ollama < handle
     ##
     ## @end deftp
     writeTimeout = 300;
+
+    ## -*- texinfo -*-
+    ## @deftp {ollama} {property} options
+    ##
+    ## Custom options.
+    ##
+    ## A structure containing fields as optional parameters to be passed to a
+    ## model for inference at runtime.  By default, this is an empty structure,
+    ## in which case the model utilizes its default parameters as specified in
+    ## the respective model file in the ollama server.  See the
+    ## @code{setOptions} method for more information about the custom parameters
+    ## you can specify.
+    ##
+    ## @end deftp
     options = struct ();
   endproperties
 
