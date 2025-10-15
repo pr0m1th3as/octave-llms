@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Large Language Models for GNU Octave.: ollama</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
+    <script type="text/javascript" async
+      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML">
+    </script>
+    <script type="text/javascript">
+      window.addEventListener("load", () => {
+        for (let i of document.querySelectorAll(".collapse ul")) {
+          let tog = document.createElement("div");
+          tog.innerHTML = i.previousSibling.textContent;
+          tog.className = "toggle";
+          tog.onclick = () => tog.classList.toggle("show");
+          i.parentElement.removeChild(i.previousSibling);
+          i.parentElement.insertBefore(tog, i);
+        }
+      });
+    </script>
+    <style>
+    h5.fs {
+    margin-top: -0.15em;
+    margin-bottom: -0.15em;
+    }
+    h6:hover {
+      color: gray;
+    }
+    code {
+    font-family: Consolas, "Courier New", monospace;
+    border-radius: 0.3em;
+    white-space: nowrap;
+    color: gray;
+    }
+    code.description {
+    font-family: Consolas, "Courier New", monospace;
+    border-radius: 0.3em;
+    white-space: normal;
+    font-size:1.2em;
+    color: gray;
+    }
+    var {
+    font-family: Consolas, "Courier New", monospace;
+    border-radius: 0.3em;
+    font-style: normal;
+    font-weight: bold;
+    color: gray;
+    }
+    td {
+      vertical-align: top;
+    }
+    [id^="togList"],                        /* HIDE CHECKBOX */
+    [id^="togList"] ~ .list,                /* HIDE LIST */
+    [id^="togList"] + label  span + span,   /* HIDE "Collapse" */
+    [id^="togList"]:checked + label span{   /* HIDE "Expand" (IF CHECKED) */
+      display:none;
+    }
+    [id^="togList"]:checked + label span + span{
+      display:inline-block;                 /* SHOW "Collapse" (IF CHECKED) */
+    }
+    [id^="togList"]:checked ~ .list{
+      display:block;                        /* SHOW LIST (IF CHECKED) */
+    }
+    </style>
+  </head>
+  <body>
+    <div class="bg-dark">
+      <div class="container-xl">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+          <div class="container-fluid">
+            <a class="navbar-brand" href=index.html>
+              <img src="assets/octave-llms.png" alt="llms" class="d-inline-block align-top" width="25" height="25">
+              Large Language Models for GNU Octave.
+            </a>
+            <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+              <ul class="navbar-nav">
+                <li class="nav-item">
+                  <a class="nav-link" href="index.html#interface class">
+                    <i class="fas fa-list-alt"></i>
+                    interface class
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="https://gnu-octave.github.io/packages/">
+                  <img src="assets/octave-logo.svg" alt="GNU Octave logo" class="d-inline-block align-top" width="25" height="25">
+                    Octave Packages
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="https://www.octave.org">
+                    <i class="fas fa-home"></i>
+                    GNU Octave website
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </div>
+    <div class="container-xl my-4">
+      <div class="row flex-nowrap" style="min-height:0">
+        <div class="col-md-2 bg-light" style="overflow-y: scroll; width: 250px;">
+          <div class="p-2" style="text-align: center;">
+            <h3>Categories &</h3>
+            <h4 style="color: blue">Functions List</h4>
+          </div>
+			<div class="row">
+				<input id="togList1" type="checkbox" checked>
+				<label for="togList1">
+					<span><h6>interface class</h6></span>
+					<span><h6>interface class</h6></span>
+				</label>
+				<div class="list">
+				<ul style="list-style-type: none; padding-left: 20px;">
+					<li><a href="ollama.html" class="text-decoration-none font-monospace fw-bolder"><small>ollama</small></a></li>
+				</ul>
+				</div>
+			</div>
+			<div class="row">
+				<input id="togList2" type="checkbox">
+				<label for="togList2">
+					<span><h6>supplementary functions</h6></span>
+					<span><h6>supplementary functions</h6></span>
+				</label>
+				<div class="list">
+				<ul style="list-style-type: none; padding-left: 20px;">
+					<li><a href="fig2base64.html" class="text-decoration-none font-monospace"><small>fig2base64</small></a></li>
+				</ul>
+				</div>
+			</div>
+			<div class="row">
+				<input id="togList3" type="checkbox">
+				<label for="togList3">
+					<span><h6>backend functions</h6></span>
+					<span><h6>backend functions</h6></span>
+				</label>
+				<div class="list">
+				<ul style="list-style-type: none; padding-left: 20px;">
+					<li><a href="__ollama__.html" class="text-decoration-none font-monospace"><small>__ollama__</small></a></li>
+				</ul>
+				</div>
+			</div>
+
+			  </div>
+			  <div class="col-md-10">
+          <div class="card rounded">
+            <div class="card-header card-header-mod">
+              <div class="row d-flex flex-wrap align-items-center">
+                <h3 class="d-inline-block mr-2">
+                Class&nbsp;Definition: <b><code>ollama</code></b>
+                </h3>
+              </div>
+            </div>
+            <div class="card-body">
+<dl><code><h5 class="description">llms: ollama</h5></code></dl>
+
+<p> An ollama object interface with a running ollama server.
+</p>
+<div class="ms-5">
+<p> <code>ollama</code> is a scalar handle class object, which allows communication
+ with an ollama server running either locally or across a network.  The
+ heavy lifting, interfacing with the ollama API, is done by the compiled
+ <code>__ollama__</code> function, which should not be called directly.
+</p>
+<p> An ollama interface object should be considered as a session to the ollama
+ server by holding any user defined settings along with the chat history (if
+ opted) and other custom parameters to be parsed to the LLM model during
+ inference.  You can initialize several ollama interface objects pointing to
+ the same ollama server and use them concurently to implement more complex
+ schemes such as RAG, custom tooling, etc.
+</p>
+<p> <strong>See also: </strong>
+calendarDuration, 
+datetime
+</p>
+<p><strong>Source Code: </strong>
+  <a href="https://github.com/pr0m1th3as/octave-llms/tree/main/inst/ollama.m">ollama</a>
+</p>
+</div>
+        <h4 class="d-inline-block my-3">
+          Properties
+        </h4>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseProperty1"
+              aria-expanded="false" aria-controls="collapseProperty1">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>runningModels</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+undocumented
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseProperty1">
+            <div class="border-bottom py-2">
+<b><code>ollama.runningModels</code></b> is not documented.
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseProperty2"
+              aria-expanded="false" aria-controls="collapseProperty2">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>mode</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+undocumented
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseProperty2">
+            <div class="border-bottom py-2">
+<b><code>ollama.mode</code></b> is not documented.
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseProperty3"
+              aria-expanded="false" aria-controls="collapseProperty3">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>serverURL</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+undocumented
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseProperty3">
+            <div class="border-bottom py-2">
+<b><code>ollama.serverURL</code></b> is not documented.
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseProperty4"
+              aria-expanded="false" aria-controls="collapseProperty4">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>availableModels</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+undocumented
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseProperty4">
+            <div class="border-bottom py-2">
+<b><code>ollama.availableModels</code></b> is not documented.
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseProperty5"
+              aria-expanded="false" aria-controls="collapseProperty5">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>responseStats</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+undocumented
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseProperty5">
+            <div class="border-bottom py-2">
+<b><code>ollama.responseStats</code></b> is not documented.
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseProperty6"
+              aria-expanded="false" aria-controls="collapseProperty6">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>chatHistory</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+undocumented
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseProperty6">
+            <div class="border-bottom py-2">
+<b><code>ollama.chatHistory</code></b> is not documented.
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseProperty7"
+              aria-expanded="false" aria-controls="collapseProperty7">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>activeModel</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+undocumented
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseProperty7">
+            <div class="border-bottom py-2">
+<b><code>ollama.activeModel</code></b> is not documented.
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseProperty8"
+              aria-expanded="false" aria-controls="collapseProperty8">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>readTimeout</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+undocumented
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseProperty8">
+            <div class="border-bottom py-2">
+<b><code>ollama.readTimeout</code></b> is not documented.
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseProperty9"
+              aria-expanded="false" aria-controls="collapseProperty9">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>writeTimeout</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+undocumented
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseProperty9">
+            <div class="border-bottom py-2">
+<b><code>ollama.writeTimeout</code></b> is not documented.
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseProperty10"
+              aria-expanded="false" aria-controls="collapseProperty10">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>options</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+undocumented
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseProperty10">
+            <div class="border-bottom py-2">
+<b><code>ollama.options</code></b> is not documented.
+            </div>
+          </div>
+        </div>
+
+        <h4 class="d-inline-block my-3">
+          Methods
+        </h4>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#colapsibleConstructor"
+              aria-expanded="false" aria-controls="colapsibleConstructor">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>ollama</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Create an ollama interface object.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="colapsibleConstructor">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">ollama: <var>llm</var> = <b>ollama</b> (<var>serverURL</var>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <var>llm</var> = <b>ollama</b> (<var>serverURL</var>, <var>model</var>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <var>llm</var> = <b>ollama</b> (<var>serverURL</var>, <var>model</var>, <var>mode</var>)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code><var>llm</var> = ollama (<var>serverURL</var>)</code> creates an ollama interface
+ object, which allows communication with an ollama server accesible at
+ <var>serverURL</var>, which must be a character vector specifying a uniform
+ resource locator (URL).  If <var>serverURL</var> is empty or <code>ollama</code> is
+ called without any input arguments, then it defaults to
+ <code>http://localhost:11434</code>.
+</p>
+<p> <code><var>llm</var> = ollama (<var>serverURL</var>, <var>model</var>)</code> also specifies
+ the active model of the ollama interface <var>llm</var> which will be used for
+ inference.  <var>model</var> must be a character vector specifying an existing
+ model at the ollama server.  If the requested model is not available, a
+ warning is emitted and no model is set active, which is the default
+ behavior when <code>ollama</code> is called with fewer arguments.  An active
+ model is mandatory before starting any communication with the ollama
+ server.  Use the <code>listModels</code> class method to see the all models
+ available in the server instance that <var>llm</var> is interfacing with.  Use
+ the <code>loadModel</code> method to set an active model in an ollama interface
+ object that has been already created.
+</p>
+<p> <code><var>llm</var> = ollama (<var>serverURL</var>, <var>model</var>, <var>mode</var>)</code> also
+ specifies the inference mode of the ollama interface.  <var>mode</var> can be
+ specified as <code>'query'</code>, for generating responses to single prompts,
+ <code>'chat'</code>, for starting a conversation with a model by retaining the
+ entire chat history during inference, and <code>'embed'</code> (unimplemented)
+ for generating embedings for given prompts.  By default, the
+ <code>ollama</code> interface is initialized in query mode.
+</p>
+<p> <strong>See also: </strong>
+  <a href="fig2base64.html">fig2base64</a>
+</p>
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod1"
+              aria-expanded="false" aria-controls="collapseMethod1">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>listModels</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+List available models in ollama server.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseMethod1">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">ollama: <var>list</var> = <b>listModels</b> (<var>llm</var>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <var>list</var> = <b>listModels</b> (<var>llm</var>, <var>outtype</var>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <b>listModels</b> (&hellip;)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code><var>list</var> = listModels (<var>llm</var>)</code> returns a cell array of
+ character vectors in <var>list</var> with the names of the models, which are
+ available on the ollama server that <var>llm</var> interfaces with.  This is
+ equivalent to accessing the <code>availableModels</code> property with the
+ syntax <code><var>list</var> = <var>llm</var>.availableModels</code>.
+</p>
+<p> <code><var>list</var> = listModels (<var>lllm</var>, <var>outtype</var>)</code> also specifies
+ the data type of the output argument <var>list</var>.  <var>outtype</var> must be a
+ character vector with any of the following options:
+</p>
+ <ul>
+<li> <code>'cellstr'</code> (default) returns <var>list</var> as a cell array of
+ character vectors.  Use this option to see available models for selecting
+ an active model for inference.
+ </li><li> <code>'json'</code> returns <var>list</var> as a character vector containing
+ the json string response returned from the ollama server.  Use this
+ option if you want to access all the details about the models available
+ in the ollama server.
+ </li><li> <code>'table'</code> returns <var>list</var> as a table with the most
+ important information about the available models in specific table
+ variables.
+ </li></ul>
+
+<p> <code>listModels (&hellip;)</code> will display the output requested according
+ to the previous syntaxes to the standard output instead of returning it
+ to an output argument.  This syntax is not valid for the <code>'json'</code>
+ option, which requires an output argument.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod2"
+              aria-expanded="false" aria-controls="collapseMethod2">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>listRunningModels</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+List currently running models in ollama server.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseMethod2">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">ollama: <var>list</var> = <b>listRunningModels</b> (<var>llm</var>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <var>list</var> = <b>listRunningModels</b> (<var>llm</var>, <var>outtype</var>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <b>listRunningModels</b> (&hellip;)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code><var>list</var> = listRunningModels (<var>llm</var>)</code> returns a cell array of
+ character vectors in <var>list</var> with the names of the models, which are
+ currently loaded in memory at the ollama server that <var>llm</var> interfaces
+ with.  This is equivalent to accessing the <code>runningModels</code> property
+ with the syntax <code><var>list</var> = <var>llm</var>.runningModels</code>.
+</p>
+<p> <code><var>list</var> = listRunningModels (<var>lllm</var>, <var>outtype</var>)</code> also
+ specifies the data type of the output argument <var>list</var>.  <var>outtype</var>
+ must be a character vector with any of the following options:
+</p>
+ <ul>
+<li> <code>'cellstr'</code> (default) returns <var>list</var> as a cell array of
+ character vectors.  Use this option to see which models are currently
+ running on the ollama server for better memory management.
+ </li><li> <code>'json'</code> returns <var>list</var> as a character vector containing
+ the json string response returned from the ollama server.  Use this
+ option if you want to access all the details about currnently running
+ models.
+ </li><li> <code>'table'</code> returns <var>list</var> as a table with the most
+ important information about the currently running models in specific
+ table variables.
+ </li></ul>
+
+<p> <code>listModels (&hellip;)</code> will display the output requested according
+ to the previous syntaxes to the standard output instead of returning it
+ to an output argument.  This syntax is not valid for the <code>'json'</code>
+ option, which requires an output argument.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod3"
+              aria-expanded="false" aria-controls="collapseMethod3">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>copyModel</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Copy model in ollama server.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseMethod3">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">ollama: <b>copyModel</b> (<var>llm</var>, <var>source</var>, <var>target</var>)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code>copyModel (<var>llm</var>, <var>source</var>, <var>target</var>)</code> copies the model
+ specified by <var>source</var> into a new model named after <var>target</var> in
+ the ollama server interfaced by <var>llm</var>.  Both <var>source</var> and
+ <var>target</var> must be character vectors, and <var>source</var> must specify an
+ existing model in the ollama server.  If successful, the available models
+ in the <code><var>llm</var>.availableModels</code> property are updated, otherwise,
+ an error is returned.
+</p>
+<p> Alternatively, <var>source</var> may also be an integer scalar value indexing
+ an existing model in <code><var>llm</var>.availableModels</code>.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod4"
+              aria-expanded="false" aria-controls="collapseMethod4">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>deleteModel</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Delete model in ollama server.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseMethod4">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">ollama: <b>deleteModel</b> (<var>llm</var>, <var>target</var>)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code>deleteModel (<var>llm</var>, <var>target</var>)</code> deletes the model specified
+ by <var>target</var> in the ollama server interfaced by <var>llm</var>.
+ <var>source</var> can be either a character vector with the name of the model
+ or an integer scalar value indexing an existing model in
+ <code><var>llm</var>.availableModels</code>.  If successful, the available models
+ in the <code><var>llm</var>.availableModels</code> property are updated, otherwise,
+ an error is returned.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod5"
+              aria-expanded="false" aria-controls="collapseMethod5">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>loadModel</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Load model in ollama server.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseMethod5">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">ollama: <b>loadModel</b> (<var>llm</var>, <var>target</var>)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code>loadModel (<var>llm</var>, <var>target</var>)</code> loads the model specified by
+ <var>target</var> in the ollama server interfaced by <var>llm</var>.  This syntax
+ is equivalent to assigning a value to the <code>activeModel</code> property as
+ in <code><var>llm</var>.activeModel = <var>target</var></code>.  If successful,
+ the specified model is also set as the active model for inference in the
+ <code><var>llm</var>.activeModel</code> property.  <var>target</var> can be either a
+ character vector with the name of the model or an integer scalar value
+ indexing an existing model in <code><var>llm</var>.availableModels</code>.
+</p>
+<p> You can load multiple models conncurently and you are only limited by the
+ hardware specifications of the ollama server, which <var>llm</var> interfaces
+ with.  However, since each time a new model is loaded it is also set as
+ the active mode for inference, keep in mind that only a single model can
+ be set active at a time for a given ollama interface object.  The active
+ model for for inference will always be the latest loaded model.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod6"
+              aria-expanded="false" aria-controls="collapseMethod6">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>unloadModel</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Unload model in ollama server.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseMethod6">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">ollama: <b>unloadModel</b> (<var>llm</var>, <var>target</var>)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code>unloadModel (<var>llm</var>, <var>target</var>)</code> unloads the model specified
+ by <var>target</var> from memory of the ollama server interfaced by <var>llm</var>.
+ <var>target</var> can be either a character vector with the name of the model
+ or an integer scalar value indexing an existing model in
+ <code><var>llm</var>.availableModels</code>.  Use this method to free resources in
+ the ollama server.  By default, the ollama server unloads any idle model
+ from memory after five minutes, unless otherwise instructed.
+</p>
+<p> If the model you unload is also the active model in the ollama interface
+ object, then the <code>activeModel</code> property is also cleared.  You need
+ to set an active model before inference.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod7"
+              aria-expanded="false" aria-controls="collapseMethod7">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>pullModel</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Download model from the ollama library into ollama server.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseMethod7">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">ollama: <b>pullModel</b> (<var>llm</var>, <var>target</var>)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code>pullModel (<var>llm</var>, <var>target</var>)</code> downloads the model specified
+ by <var>target</var> from the ollama library into the ollama server interfaced
+ by <var>llm</var>.  If successful, the model is appended to list of available
+ models in the <code><var>llm</var>.availableModels</code> property.  <var>target</var>
+ must be a character vector.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod8"
+              aria-expanded="false" aria-controls="collapseMethod8">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>setOptions</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Set custom options for model inference.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseMethod8">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">ollama: <b>setOptions</b> (<var>llm</var>, <var>name</var>, <var>value</var>)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code>setOptions (<var>llm</var>, <var>name</var>, <var>value</var>)</code> sets custom
+ options to be parsed to the ollama server in order to tailor the
+ behavior of the model according to specific needs.  The options must be
+ specified as <var>name</var>, <var>value</var> paired arguments, where <var>name</var>
+ is a character vector naming the option to be customized, and <var>value</var>
+ can be either numeric or logical scalars depending on the values each
+ option requires.
+</p>
+<p> The following options may be customized in any order as paired input
+ arguments.
+</p>
+ <table>
+<thead><tr><th width="25%"><var>name</var></th><th width="2%"></th><th width="15%"><var>value</var></th><th width="2%"></th><th width="56%"><var>description</var></th></tr></thead>
+<tr><td width="25%"><code>'num_keep'</code></td><td width="2%"></td><td width="15%">integer</td><td width="2%"></td><td width="56%">Specifies how many
+ of the most recent tokens or responses should be kept in memory for
+ generating the next output.  Higher values can improve relevance of the
+ generated text by providing more context.</td></tr>
+<tr><td width="25%"><code>'seed'</code></td><td width="2%"></td><td width="15%">integer</td><td width="2%"></td><td width="56%">Controls the randomness
+ of token selection during text generation so that similar responses are
+ reproduced for the same requests.</td></tr>
+<tr><td width="25%"><code>'num_predict'</code></td><td width="2%"></td><td width="15%">integer</td><td width="2%"></td><td width="56%">Specifies the
+ maximum number of tokens to predict when geneerating text.</td></tr>
+<tr><td width="25%"><code>'top_k'</code></td><td width="2%"></td><td width="15%">integer</td><td width="2%"></td><td width="56%">Limits the number of
+ possible choices for each next token when generating responses by
+ specifying how many of the most likely options to consider.</td></tr>
+<tr><td width="25%"><code>'top_p'</code></td><td width="2%"></td><td width="15%">double</td><td width="2%"></td><td width="56%">Sets the cumulative
+ probability for nucleus sampling. It must be in the range <math>[0,1]</math>.</td></tr>
+<tr><td width="25%"><code>'min_p'</code></td><td width="2%"></td><td width="15%">double</td><td width="2%"></td><td width="56%">Adjusts the sampling
+ threshold in accordance with the model&rsquo;s confidence. Specifically, it
+ scales the probability threshold based on the top token&rsquo;s probability,
+ allowing the model to focus on high-confidence tokens when certain, and
+ to consider a broader range of tokens when less confident.  It must be in
+ the range <math>[0,1]</math>.</td></tr>
+<tr><td width="25%"><code>'typical_p'</code></td><td width="2%"></td><td width="15%">double</td><td width="2%"></td><td width="56%">Controls how
+ conventional or creative the responses from a language model will be.  A
+ higher typical_p value results in more expected and standard responses,
+ while a lower value allows for more unusual and creative outputs.  It
+ must be in the range <math>[0,1]</math>.</td></tr>
+<tr><td width="25%"><code>'repeat_last_n'</code></td><td width="2%"></td><td width="15%">integer</td><td width="2%"></td><td width="56%">Defines how far
+ back the model looks to avoid repetition.</td></tr>
+<tr><td width="25%"><code>'temperature'</code></td><td width="2%"></td><td width="15%">double</td><td width="2%"></td><td width="56%">Controls the
+ randomness of the generated out by determining how the model leverages
+ the raw likelihoods of the tokens under consideration for the next words
+ in a sequence.  It ranges from 0 to 2 with higher values corresponding to
+ more chaotic output.</td></tr>
+<tr><td width="25%"><code>'repeat_penalty'</code></td><td width="2%"></td><td width="15%">double</td><td width="2%"></td><td width="56%">Adjusts the
+ penalty for repeated phrases; higher values discourage repetition.</td></tr>
+<tr><td width="25%"><code>'presence_penalty'</code></td><td width="2%"></td><td width="15%">double</td><td width="2%"></td><td width="56%">Controls the
+ diversity of the generated text by penalizing new tokens based on whether
+ they appear in the text so far.</td></tr>
+<tr><td width="25%"><code>'frequency_penalty'</code></td><td width="2%"></td><td width="15%">double</td><td width="2%"></td><td width="56%">Controls how
+ often the same words should be repeated in the generated text.</td></tr>
+<tr><td width="25%"><code>'penalize_newline'</code></td><td width="2%"></td><td width="15%">logical</td><td width="2%"></td><td width="56%">Discourages
+ the model from generating newlines in its responses.</td></tr>
+<tr><td width="25%"><code>'numa'</code></td><td width="2%"></td><td width="15%">logical</td><td width="2%"></td><td width="56%">Allows for non-uniform
+ memory access to enhance performance.  This can significantly improve
+ processing speeds on multi-CPU systems.</td></tr>
+<tr><td width="25%"><code>'num_ctx'</code></td><td width="2%"></td><td width="15%">integer</td><td width="2%"></td><td width="56%">Sets the context
+ window length (in tokens) determining how much previous text the model
+ considers.  This should be kept in mind especially in chat seesions.</td></tr>
+<tr><td width="25%"><code>'num_batch'</code></td><td width="2%"></td><td width="15%">integer</td><td width="2%"></td><td width="56%">Controls the number
+ of input samples processed in a single batch during model inference.
+ Reducing this value can help prevent out-of-memory (OOM) errors when
+ working with large models.</td></tr>
+<tr><td width="25%"><code>'num_gpu'</code></td><td width="2%"></td><td width="15%">integer</td><td width="2%"></td><td width="56%">Specifies the number
+ of GPU devices to use for computation.</td></tr>
+<tr><td width="25%"><code>'main_gpu'</code></td><td width="2%"></td><td width="15%">integer</td><td width="2%"></td><td width="56%">Specified which GPU
+ device to use for inference.</td></tr>
+<tr><td width="25%"><code>'use_mmap'</code></td><td width="2%"></td><td width="15%">logical</td><td width="2%"></td><td width="56%">Allows for
+ memory-mapped file access, which can improve performance by enabling
+ faster loading of model weights from disk.</td></tr>
+<tr><td width="25%"><code>'num_thread'</code></td><td width="2%"></td><td width="15%">integer</td><td width="2%"></td><td width="56%">Specifies the
+ number of threads to use during model generation, allowing you to
+ optimize performance based on your CPU&rsquo;s capabilities.</td></tr>
+</table>
+
+<p> Specified customized options are preserved in the ollama interface object
+ for all subsequent requests for inference until they are altered or reset
+ to the model&rsquo;s default value by removing them.  To remove a custom option
+ pass an empty value to the <var>name</var>, <var>value</var> paired argument, as in
+ <code>setOptions (<var>llm</var>, 'seed', [])</code>.
+</p>
+<p> Use the <code>showOptions</code> method to display any custom options that may
+ be currently set in the ollama interface object.  Alternatively, you can
+ retrieve the custom options as a structure through the <code>options</code>
+ property as in <code><var>opts</var> = <var>llm</var>.options</code>, where each field in
+ <var>opts</var> refers to a custom property  If no custom options are set,
+ then <var>opts</var> is an empty structure.
+</p>
+<p> You can also set or clear a single custom option with direct assignment
+ to the <code>options</code> property of the ollama inteface object by passing
+ the <var>name</var>, <var>value</var> paired argument as a 2-element cell array.
+ The equivalent syntax of <code>setOptions (<var>llm</var>, 'seed', []</code> is
+ <code><var>llm</var>.options = {'seed', []}</code>.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod9"
+              aria-expanded="false" aria-controls="collapseMethod9">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>showOptions</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Show custom options.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseMethod9">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">ollama: <b>showOptions</b> (<var>llm</var>)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code>showOptions (<var>llm</var>)</code> displays any custom options that may be
+ specified in the ollama inteface object <var>llm</var>.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod10"
+              aria-expanded="false" aria-controls="collapseMethod10">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>query</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Query a model in ollama server.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseMethod10">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">ollama: <b>query</b> (<var>llm</var>, <var>prompt</var>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <b>query</b> (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <var>txt</var> = <b>query</b> (&hellip;)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <b>query</b> (<var>llm</var>)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code>query (<var>llm</var>, <var>prompt</var>)</code> uses the <code>&quot;api/generate&quot;</code>
+ API end point to make a request to the ollama server interfaced by
+ <var>llm</var> to generate text based on the user&rsquo;s input specified in
+ <var>prompt</var>, which must be a character vector.  When no output argument
+ is requested, <code>query</code> prints the response text in the standard
+ output (command window) with a custom display method so that words are
+ not split between lines depending on the terminal size.  If an output
+ argument is requested, the text is returned as a character vector and
+ nothing gets displayed in the terminal.
+</p>
+<p> <code>query (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code> also specifies an
+ image or multiple images to be passed to the model along with the user&rsquo;s
+ prompt.  For a single image, <var>image</var> must be a character vector
+ specifying either the filename of an image or a base64 encoded image.
+ <code>query</code> distinguishes between the two by scanning <var>image</var> for
+ a period character (<code>'.'</code>), which is commonly used as a separator
+ between base-filename and extension, but it is an invalid character for
+ base64 encoded strings.  For multiple images, <var>image</var> must be a cell
+ array of character vectors explicitly containing either multiple
+ filenames or mulitple base64 encoded string representations of images.
+</p>
+<p> <code><var>txt</var> = query (&hellip;)</code> returns the generated text to the
+ output argument <var>txt</var> instead of displaying it to the terminal for
+ any of the previous syntaxes.
+</p>
+<p> <code>query (<var>llm</var>)</code> does not make a request to the ollama server,
+ but it sets the <code>'mode'</code> property in the ollama interface object
+ <var>llm</var> to <code>'query'</code> for future requests.  Use this syntax to
+ switch from another inteface mode to query mode without making a request
+ to the server.
+</p>
+<p> An alternative method of calling the <code>query</code> method is by using
+ direct subscripted reference to the ollama interface object <var>llm</var> as
+ long as it already set in query mode. The table below lists the
+ equivalent syntaxes.
+</p>
+ <table>
+<thead><tr><th width="50%"><var>method calling</var></th><th width="2%"></th><th width="48%"><var>object subscripted reference</var></th></tr></thead>
+<tr><td width="50%"><code>query (<var>llm</var>, <var>prompt</var>)</code></td><td width="2%"></td><td width="48%"><code><var>llm</var>(<var>prompt</var>)</code></td></tr>
+<tr><td width="50%"><code>query (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></td><td width="2%"></td><td width="48%"><code><var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
+<tr><td width="50%"><code>query (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></td><td width="2%"></td><td width="48%"><code><var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
+<tr><td width="50%"><code><var>txt</var> = query (<var>llm</var>, <var>prompt</var>)</code></td><td width="2%"></td><td width="48%"><code><var>txt</var> = <var>llm</var>(<var>prompt</var>)</code></td></tr>
+<tr><td width="50%"><code><var>txt</var> = query (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></td><td width="2%"></td><td width="48%"><code><var>txt</var> = <var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
+</table>
+
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod11"
+              aria-expanded="false" aria-controls="collapseMethod11">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>chat</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Query a model in ollama server.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseMethod11">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">ollama: <b>chat</b> (<var>llm</var>, <var>prompt</var>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <b>chat</b> (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <var>txt</var> = <b>chat</b> (&hellip;)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <b>chat</b> (<var>llm</var>)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code>chat (<var>llm</var>, <var>prompt</var>)</code> uses the <code>&quot;api/chat&quot;</code> API
+ end point to make a request to the ollama server interfaced by
+ <var>llm</var> to generate text based on the user&rsquo;s input specified in
+ <var>prompt</var> along with all previous requests and responses, made by the
+ user and models during the same chat session, which is stored in the
+ <code>'chatHistory'</code> property of the ollama interface object <var>llm</var>.
+ <var>prompt</var> must be a character vector.  When no output argument
+ is requested, <code>chat</code> prints the response text in the standard output
+ (command window) with a custom display method so that words are not split
+ between lines depending on the terminal size.  If an output argument is
+ requested, the text is returned as a character vector and nothing gets
+ displayed in the terminal.  In either case, the response text is appended
+ to the history chat, which can be displayed with the <code>showHistory</code>
+ method or return as a cell array from <code><var>llm</var>.chatHistory</code>.  If
+ you want to start a new chat session, you can either clear the chat
+ history with the <code>clearHistory</code> method or create a new ollama
+ interface object.
+</p>
+<p> <code>chat (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code> also specifies an
+ image or multiple images to be passed to the model along with the user&rsquo;s
+ prompt.  For a single image, <var>image</var> must be a character vector
+ specifying either the filename of an image or a base64 encoded image.
+ <code>chat</code> distinguishes between the two by scanning <var>image</var> for
+ a period character (<code>'.'</code>), which is commonly used as a separator
+ between base-filename and extension, but it is an invalid character for
+ base64 encoded strings.  For multiple images, <var>image</var> must be a cell
+ array of character vectors, which can contain both multiple filenames and
+ mulitple base64 encoded string representations of images.  Any images
+ supplied along with a prompt during a chat session are also stored in the
+ chat history.
+</p>
+<p> <code><var>txt</var> = chat (&hellip;)</code> returns the generated text to the
+ output argument <var>txt</var> instead of displaying it to the terminal for
+ any of the previous syntaxes.
+</p>
+<p> <code>chat (<var>llm</var>)</code> does not make a request to the ollama server,
+ but it sets the <code>'mode'</code> property in the ollama interface object
+ <var>llm</var> to <code>'chat'</code> for future requests.  Use this syntax to
+ switch from another inteface mode to chat mode without making a request
+ to the server.  Switching to chat mode does not clear any existing chat
+ history in <var>llm</var>.
+</p>
+<p> An alternative method of calling the <code>chat</code> method is by using
+ direct subscripted reference to the ollama interface object <var>llm</var> as
+ long as it already set in chat mode. The table below lists the
+ equivalent syntaxes.
+</p>
+ <table>
+<thead><tr><th width="50%"><var>method calling</var></th><th width="2%"></th><th width="48%"><var>object subscripted reference</var></th></tr></thead>
+<tr><td width="50%"><code>chat (<var>llm</var>, <var>prompt</var>)</code></td><td width="2%"></td><td width="48%"><code><var>llm</var>(<var>prompt</var>)</code></td></tr>
+<tr><td width="50%"><code>chat (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></td><td width="2%"></td><td width="48%"><code><var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
+<tr><td width="50%"><code>chat (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></td><td width="2%"></td><td width="48%"><code><var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
+<tr><td width="50%"><code><var>txt</var> = chat (<var>llm</var>, <var>prompt</var>)</code></td><td width="2%"></td><td width="48%"><code><var>txt</var> = <var>llm</var>(<var>prompt</var>)</code></td></tr>
+<tr><td width="50%"><code><var>txt</var> = chat (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></td><td width="2%"></td><td width="48%"><code><var>txt</var> = <var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
+</table>
+
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod12"
+              aria-expanded="false" aria-controls="collapseMethod12">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>showStats</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Show response statistics.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseMethod12">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">ollama: <b>showStats</b> (<var>llm</var>)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code>showStats (<var>llm</var>)</code> displays the response statistics of the last
+ response returned from the ollama server intefaced by <var>llm</var>.  The
+ type of request (e.g. query, chat, embed) does not alter the displayed
+ statistics, which include the following parameters:
+</p>
+ <ul>
+<li> total duration: the total time in seconds to process the request
+ and return the response.
+ </li><li> load duration: the time in seconds to load the user&rsquo;s request into
+ the model.
+ </li><li> evaluation duration: the time in seconds for the model to generate
+ the response base on the user&rsquo;s request.
+ </li><li> prompt count: the number of tokens comprising the user&rsquo;s request.
+ </li><li> evaluation count: the number of tokens comprising the model&rsquo;s
+ response.
+ </li></ul>
+
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod13"
+              aria-expanded="false" aria-controls="collapseMethod13">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>showHistory</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Display chat history.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseMethod13">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">ollama: <b>showHistory</b> (<var>llm</var>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <b>showHistory</b> (<var>llm</var>, <code>'all'</code>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <b>showHistory</b> (<var>llm</var>, <code>'last'</code>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <b>showHistory</b> (<var>llm</var>, <code>'first'</code>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <b>showHistory</b> (<var>llm</var>, <var>idx</var>)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code>showHistory (<var>llm</var>)</code> displays the entire chat history stored in
+ the ollama interface object <var>llm</var>.  The chat history is displayed in
+ chronological order alternating between user&rsquo;s requests and the model&rsquo;s
+ responses.  For any user&rsquo;s request that contained images, the filenames
+ or the number of images (in case of base64 encoded images) are also
+ listed below the corresponding request and before the subsequent
+ response.
+</p>
+<p> <code>showHistory (<var>llm</var>), <code>'all'</code></code> is exactly the same as
+ <code>showHistory (<var>llm</var>)</code>.
+</p>
+<p> <code>showHistory (<var>llm</var>), <code>'last'</code></code> displays only the last
+ user-model interaction of the current chat session.
+</p>
+<p> <code>showHistory (<var>llm</var>), <code>'first'</code></code> displays only the first
+ user-model interaction of the current chat session.
+</p>
+<p> <code>showHistory (<var>llm</var>), <var>idx</var></code> displays the user-model
+ interactions specified by <var>idx</var>, which must be a scalar or a vector
+ of integer values indexing the rows of the <math>N&times;3</math> cell array
+ comprising the <code>chatHistory</code> property in <var>llm</var>.
+</p>
+<p> <code>showHistory</code> is explicitly used for displaying the chat history and
+ does not return any output argument.  If you want to retrieve the chat
+ history in a cell array, you can access the <code>chatHistory</code> property
+ directly, as in <code><var>hdata</var> = <var>llm</var>.chatHistory</code>.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod14"
+              aria-expanded="false" aria-controls="collapseMethod14">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>clearHistory</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Clear chat history.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseMethod14">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">ollama: <b>clearHistory</b> (<var>llm</var>)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code>clearHistory (<var>llm</var>)</code> deletes the entire chat history in the
+ ollama interface object <var>llm</var>.  Use this method to initialize a new
+ chat session.
+</p>
+<p> <code>clearHistory (<var>llm</var>), <code>'all'</code></code> is exactly the same as
+ <code>clearHistory (<var>llm</var>)</code>.
+</p>
+<p> <code>clearHistory (<var>llm</var>), <code>'last'</code></code> deletes the last
+ user-model interaction from the current chat session.  Use this option if
+ you want to rephrase or modify the last request without clear the entire
+ chat history.
+</p>
+<p> <code>showHistory (<var>llm</var>), <code>'first'</code></code> removes only the first
+ user-model interaction from the current chat session.  Use this option if
+ you want to discard the initial user-model interaction in order to
+ experiment with the model&rsquo;s context size.
+</p>
+<p> <code>showHistory (<var>llm</var>), <var>idx</var></code> deletes the user-model
+ interactions specified by <var>idx</var>, which must be a scalar or a vector
+ of integer values indexing the rows of the <math>N&times;3</math> cell array
+ comprising the <code>chatHistory</code> property in <var>llm</var>.
+</p>
+<p> Note that selectively deleting user-model interactions from the chat
+ history also removes any images that may be integrated with the selected
+ requests.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </body>
+</html>
