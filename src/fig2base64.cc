@@ -25,11 +25,11 @@ using namespace std;
 
 DEFMETHOD_DLD (fig2base64, interp, args, nargout,
            "-*- texinfo -*-\n\
- @deftypefn {} {@var{base64} =} fig2base64 (@var{hfig}) \n\
+ @deftypefn {llms} {@var{base64} =} fig2base64 (@var{hfig})\n\
 \n\
 \n\
 This function returns a PNG base64 encoded string from the figure specified by \
-graphics handle HFIG. \
+graphics handle HFIG. \n\
 \n\
 @end deftypefn")
 {

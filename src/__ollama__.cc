@@ -33,10 +33,10 @@ using json = nlohmann::json;
 
 DEFUN_DLD (__ollama__, args, nargout,
            "-*- texinfo -*-\n\
- @deftypefn {} {[@var{txt}, @{err}] =} __ollama__ (@var{Name}, @var{Value})\n\
+ @deftypefn {llms} {[@var{txt}, @{err}] =} __ollama__ (@var{Name}, @var{Value})\n\
 \n\
 \n\
-A compiled interface for ollama server. \n\
+Base fuction for ollama class. \n\
 \n\
 @end deftypefn")
 {
