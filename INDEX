@@ -1,0 +1,7 @@
+llms >> llms
+interface class
+ ollama
+supplementary functions
+ fig2base64
+backend functions
+ __ollama__
