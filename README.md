@@ -1,12 +1,48 @@
 # Large Language Models for GNU Octave
 
-**Not a package yet!** Just a playground for querying Large Language Models through our familiar Octave language.
-The included header-only libraries originate from James Montgomery's [@jmont-dev](https://github.com/jmont-dev) repository found [here](https://github.com/jmont-dev/ollama-hpp).
+**Content:**
 
-Download into a convenient folder and compile the `__ollama__` function with
+1. [About](#1-about)
+2. [Documentation](#2-documentation)
+3. [Installation](#3-installation)
+4. [Quick Guide](#4-quick-guide)
+
+## 1. About
+
+The **llms** package is a preliminary attempt to integrate support for LLM inference through the Octave language.  The package currently contains a single handle class which provides an interface to an Ollama server, which can be accessed either locally or over a network.  The handle class, named `ollama` (as one would guess), relies on a slightly modified version of the [`ollama.hpp`](https://github.com/jmont-dev/ollama-hpp) header only library writen by James Montgomery {[@jmont-dev](https://github.com/jmont-dev)}, the [`httplib`](https://github.com/yhirose/cpp-httplib) header library created by Yuji Hirose {[@yhirose](https://github.com/yhirose)}, the [`json.hpp`](https://github.com/nlohmann/json) header library written by Niels Lohmann {[@nlohmann](https://github.com/nlohmann)}, the [`Base64.hpp`](https://gist.github.com/tomykaira/f0fd86b6c73063283afe550bc5d77594) written by [@tomykaira](https://gist.github.com/tomykaira), and the [`fpng`](https://github.com/richgel999/fpng) library created by Rich Geldreich {[@richgel999](https://github.com/richgel999)}.
+
+This package requires a recent GNU Octave (>=9.1) and the [`datatypes (>=1.1.0)`](https://github.com/pr0m1th3as/datatypes) package.  Of course, it further requires an  [Ollama](https://ollama.org/) server to handle the inference. Besides the `ollama` class, the package also provides a function, namely `fig2base64`, to facilitate embedding Octave figures as images to the prompts send to vision-capable models. This is a work in progress, not every end point of the Ollama server's API has been implemented yet, but those already available work and have been tested with various models running either locally or over the network.
+
+## 2. Documentation
+All methods and properties of the `ollama` handle class are documented with [texinfo](https://www.gnu.org/software/texinfo/) format, which can be accessed from the Octave command with the `help` function.  Use dot notation to access the help of a particular method. For example:
 ```
-mkoctfile __ollama__.cc
+help ollama             # class
+help ollama.ollama      # constructor
+help ollama.mode        # property
+help ollama.listModels  # method
 ```
+
+You can also find the entire documentation of the **llms** package at [https://pr0m1th3as.github.io/octave-llms/](https://pr0m1th3as.github.io/octave-llms/). Alternatively, you can build the online documentation locally using the [`pkg-octave-doc`](https://github.com/gnu-octave/pkg-octave-doc) package. Assuming both packages are installed and loaded, browse to any directory of your choice with *write* permission and run:
+```
+package_texi2html ("llms")
+```
+
+
+## 3. Installation
+To install the latest release, you need Octave (>=9.1.0) installed on your system. Install it by typing:
+```
+pkg install -forge datatypes
+```
+Install the latest dev version from the Octave command prompt by typing
+```
+pkg install "https://github.com/pr0m1th3as/octave-llms/archive/refs/heads/main.zip"
+```
+Load the package by typing
+```
+pkg load datatypes
+```
+
+## 4. Quick Guide
 
 Make sure you have an ollama server instance running either locally
 ```
