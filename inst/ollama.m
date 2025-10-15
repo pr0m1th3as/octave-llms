@@ -1376,11 +1376,6 @@ classdef ollama < handle
                        operation);
       endif
       if (strcmp (mode, 'table'))
-        fcn = @(x) strcmp (x.name, 'datatypes') && x.loaded;
-        if (! any (cellfun (fcn, pkg ('list'))))
-          err = sprintf ("ollama.%s: the 'datatypes' package is required.", ...
-                         operation);
-        endif
         mode = 'json';
         return_table = true;
       else

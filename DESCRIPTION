@@ -6,6 +6,6 @@ Maintainer: Andreas Bertsatos <abertsatos@biol.uoa.gr>
 Title: Large Language Models for GNU Octave.
 Description: Large Language Models for GNU Octave.
 Categories: Datatypes
-Depends: octave (>= 9.1.0)
+Depends: octave (>= 9.1.0), datatypes(>=1.1.0)
 Url: https://github.com/pr0m1th3as/octave-llms
 Tracker: https://github.com/pr0m1th3as/octave-llms/issues
