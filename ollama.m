@@ -77,7 +77,9 @@ classdef ollama < handle
     ## behavior when @code{ollama} is called with fewer arguments.  An active
     ## model is mandatory before starting any communication with the ollama
     ## server.  Use the @code{listModels} class method to see the all models
-    ## available in the server instance that @var{llm} is interfacings with.
+    ## available in the server instance that @var{llm} is interfacing with.  Use
+    ## the @code{loadModel} method to set an active model in an ollama interface
+    ## object that has been already created.
     ##
     ## @code{@var{llm} = ollama (@var{serverURL}, @var{model}, @var{mode})} also
     ## specifies the inference mode of the ollama interface.  @var{mode} can be
@@ -187,7 +189,7 @@ classdef ollama < handle
     ## with the syntax @code{@var{list} = @var{llm}.runningModels}.
     ##
     ## @code{@var{list} = listRunningModels (@var{lllm}, @var{outtype})} also
-    # specifies# the data type of the output argument @var{list}.  @var{outtype}
+    ## specifies the data type of the output argument @var{list}.  @var{outtype}
     ## must be a character vector with any of the following options:
     ##
     ## @itemize
@@ -224,9 +226,28 @@ classdef ollama < handle
       endif
     endfunction
 
+    ## -*- texinfo -*-
+    ## @deftypefn  {ollama} {} copyModel (@var{llm}, @var{source}, @var{target})
+    ##
+    ## Copy model in ollama server.
+    ##
+    ## @code{copyModel (@var{llm}, @var{source}, @var{target})} copies the model
+    ## specified by @var{source} into a new model named after @var{target} in
+    ## the ollama server interfaced by @var{llm}.  Both @var{source} and
+    ## @var{target} must be character vectors, and @var{source} must specify an
+    ## existing model in the ollama server.  If successful, the available models
+    ## in the @qcode{@var{llm}.availableModels} property are updated, otherwise,
+    ## an error is returned.
+    ##
+    ## Alternatively, @var{source} may also be an integer scalar value indexing
+    ## an existing model in @qcode{@var{llm}.availableModels}.
+    ##
+    ## @end deftypefn
     function copyModel (this, model, newmodel)
       if (isnumeric (model))
-        if (model <= numel (this.availableModels))
+        if (fix (model) != model)
+          error ("ollama.copyModel: index must be an integer value.");
+        elseif (model <= numel (this.availableModels) && model > 0)
           model = this.availableModels{model};
         else
           error (strcat ("ollama.copyModel: index to 'availableModels'", ...
@@ -249,9 +270,25 @@ classdef ollama < handle
       endif
     endfunction
 
+    ## -*- texinfo -*-
+    ## @deftypefn  {ollama} {} deleteModel (@var{llm}, @var{target})
+    ##
+    ## Delete model in ollama server.
+    ##
+    ## @code{deleteModel (@var{llm}, @var{target})} deletes the model specified
+    ## by @var{target} in the ollama server interfaced by @var{llm}.
+    ## @var{source} can be either a character vector with the name of the model
+    ## or an integer scalar value indexing an existing model in
+    ## @qcode{@var{llm}.availableModels}.  If successful, the available models
+    ## in the @qcode{@var{llm}.availableModels} property are updated, otherwise,
+    ## an error is returned.
+    ##
+    ## @end deftypefn
     function deleteModel (this, model)
       if (isnumeric (model))
-        if (model <= numel (this.availableModels))
+        if (fix (model) != model)
+          error ("ollama.deleteModel: index must be an integer value.");
+        elseif (model <= numel (this.availableModels) && model > 0)
           model = this.availableModels{model};
         else
           error (strcat ("ollama.deleteModel: index to 'availableModels'", ...
@@ -270,9 +307,33 @@ classdef ollama < handle
       endif
     endfunction
 
+    ## -*- texinfo -*-
+    ## @deftypefn  {ollama} {} loadModel (@var{llm}, @var{target})
+    ##
+    ## Load model in ollama server.
+    ##
+    ## @code{loadModel (@var{llm}, @var{target})} loads the model specified by
+    ## @var{target} in the ollama server interfaced by @var{llm}.  This syntax
+    ## is equivalent to assigning a value to the @qcode{activeModel} property as
+    ## in @qcode{@var{llm}.activeModel = @var{target}}.  If successful,
+    ## the specified model is also set as the active model for inference in the
+    ## @qcode{@var{llm}.activeModel} property.  @var{target} can be either a
+    ## character vector with the name of the model or an integer scalar value
+    ## indexing an existing model in @qcode{@var{llm}.availableModels}.
+    ##
+    ## You can load multiple models conncurently and you are only limited by the
+    ## hardware specifications of the ollama server, which @var{llm} interfaces
+    ## with.  However, since each time a new model is loaded it is also set as
+    ## the active mode for inference, keep in mind that only a single model can
+    ## be set active at a time for a given ollama interface object.  The active
+    ## model for for inference will always be the latest loaded model.
+    ##
+    ## @end deftypefn
     function loadModel (this, model)
       if (isnumeric (model))
-        if (model <= numel (this.availableModels))
+        if (fix (model) != model)
+          error ("ollama.loadModel: index must be an integer value.");
+        elseif (model <= numel (this.availableModels) && model > 0)
           model = this.availableModels{model};
         else
           error (strcat ("ollama.loadModel: index to 'availableModels'", ...
@@ -290,9 +351,29 @@ classdef ollama < handle
       endif
     endfunction
 
+    ## -*- texinfo -*-
+    ## @deftypefn  {ollama} {} unloadModel (@var{llm}, @var{target})
+    ##
+    ## Unload model in ollama server.
+    ##
+    ## @code{unloadModel (@var{llm}, @var{target})} unloads the model specified
+    ## by @var{target} from memory of the ollama server interfaced by @var{llm}.
+    ## @var{target} can be either a character vector with the name of the model
+    ## or an integer scalar value indexing an existing model in
+    ## @qcode{@var{llm}.availableModels}.  Use this method to free resources in
+    ## the ollama server.  By default, the ollama server unloads any idle model
+    ## from memory after five minutes, unless otherwise instructed.
+    ##
+    ## If the model you unload is also the active model in the ollama interface
+    ## object, then the @qcode{activeModel} property is also cleared.  You need
+    ## to set an active model before inference.
+    ##
+    ## @end deftypefn
     function unloadModel (this, model)
       if (isnumeric (model))
-        if (model <= numel (this.availableModels))
+        if (fix (model) != model)
+          error ("ollama.unloadModel: index must be an integer value.");
+        elseif (model <= numel (this.availableModels) && model > 0)
           model = this.availableModels{model};
         else
           error (strcat ("ollama.unloadModel: index to 'availableModels'", ...
@@ -310,6 +391,18 @@ classdef ollama < handle
       endif
     endfunction
 
+    ## -*- texinfo -*-
+    ## @deftypefn  {ollama} {} pullModel (@var{llm}, @var{target})
+    ##
+    ## Download model from the ollama library into ollama server.
+    ##
+    ## @code{pullModel (@var{llm}, @var{target})} downloads the model specified
+    ## by @var{target} from the ollama library into the ollama server interfaced
+    ## by @var{llm}.  If successful, the model is appended to list of available
+    ## models in the @qcode{@var{llm}.availableModels} property.  @var{target}
+    ## must be a character vector.
+    ##
+    ## @end deftypefn
     function pullModel (this, model)
       if (! ischar (model))
         error ("ollama.pullModel: MODEL must be a character vector.");
@@ -327,6 +420,107 @@ classdef ollama < handle
       endif
     endfunction
 
+    ## -*- texinfo -*-
+    ## @deftypefn  {ollama} {} setOptions (@var{llm}, @var{name}, @var{value})
+    ##
+    ## Set custom options for model inference.
+    ##
+    ## @code{setOptions (@var{llm}, @var{name}, @var{value})} sets custom
+    ## options to be parsed to the ollama server in order to tailor the
+    ## behavior of the model according to specific needs.  The options must be
+    ## specified as @var{name}, @var{value} paired arguments, where @var{name}
+    ## is a character vector naming the option to be customized, and @var{value}
+    ## can be either numeric or logical scalars depending on the values each
+    ## option requires.
+    ##
+    ## The following options may be customized in any order as paired input
+    ## arguments.
+    ##
+    ## @multitable @columnfractions 0.25 0.02 0.15 0.02 0.56
+    ## @headitem @var{name} @tab @tab @var{value} @tab @tab @var{description}
+    ## @item @qcode{'num_keep'} @tab @tab integer @tab @tab Specifies how many
+    ## of the most recent tokens or responses should be kept in memory for
+    ## generating the next output.  Higher values can improve relevance of the
+    ## generated text by providing more context.
+    ## @item @qcode{'seed'} @tab @tab integer @tab @tab Controls the randomness
+    ## of token selection during text generation so that similar responses are
+    ## reproduced for the same requests.
+    ## @item @qcode{'num_predict'} @tab @tab integer @tab @tab Specifies the
+    ## maximum number of tokens to predict when geneerating text.
+    ## @item @qcode{'top_k'} @tab @tab integer @tab @tab Limits the number of
+    ## possible choices for each next token when generating responses by
+    ## specifying how many of the most likely options to consider.
+    ## @item @qcode{'top_p'} @tab @tab double @tab @tab Sets the cumulative
+    ## probability for nucleus sampling. It must be in the range @math{[0,1]}.
+    ## @item @qcode{'min_p'} @tab @tab double @tab @tab Adjusts the sampling
+    ## threshold in accordance with the model's confidence. Specifically, it
+    ## scales the probability threshold based on the top token's probability,
+    ## allowing the model to focus on high-confidence tokens when certain, and
+    ## to consider a broader range of tokens when less confident.  It must be in
+    ## the range @math{[0,1]}.
+    ## @item @qcode{'typical_p'} @tab @tab double @tab @tab Controls how
+    ## conventional or creative the responses from a language model will be.  A
+    ## higher typical_p value results in more expected and standard responses,
+    ## while a lower value allows for more unusual and creative outputs.  It
+    ## must be in the range @math{[0,1]}.
+    ## @item @qcode{'repeat_last_n'} @tab @tab integer @tab @tab Defines how far
+    ## back the model looks to avoid repetition.
+    ## @item @qcode{'temperature'} @tab @tab double @tab @tab Controls the
+    ## randomness of the generated out by determining how the model leverages
+    ## the raw likelihoods of the tokens under consideration for the next words
+    ## in a sequence.  It ranges from 0 to 2 with higher values corresponding to
+    ## more chaotic output.
+    ## @item @qcode{'repeat_penalty'} @tab @tab double @tab @tab Adjusts the
+    ## penalty for repeated phrases; higher values discourage repetition.
+    ## @item @qcode{'presence_penalty'} @tab @tab double @tab @tab Controls the
+    ## diversity of the generated text by penalizing new tokens based on whether
+    ## they appear in the text so far.
+    ## @item @qcode{'frequency_penalty'} @tab @tab double @tab @tab Controls how
+    ## often the same words should be repeated in the generated text.
+    ## @item @qcode{'penalize_newline'} @tab @tab logical @tab @tab Discourages
+    ## the model from generating newlines in its responses.
+    ## @item @qcode{'numa'} @tab @tab logical @tab @tab Allows for non-uniform
+    ## memory access to enhance performance.  This can significantly improve
+    ## processing speeds on multi-CPU systems.
+    ## @item @qcode{'num_ctx'} @tab @tab integer @tab @tab Sets the context
+    ## window length (in tokens) determining how much previous text the model
+    ## considers.  This should be kept in mind especially in chat seesions.
+    ## @item @qcode{'num_batch'} @tab @tab integer @tab @tab Controls the number
+    ## of input samples processed in a single batch during model inference.
+    ## Reducing this value can help prevent out-of-memory (OOM) errors when
+    ## working with large models.
+    ## @item @qcode{'num_gpu'} @tab @tab integer @tab @tab Specifies the number
+    ## of GPU devices to use for computation.
+    ## @item @qcode{'main_gpu'} @tab @tab integer @tab @tab Specified which GPU
+    ## device to use for inference.
+    ## @item @qcode{'use_mmap'} @tab @tab logical @tab @tab Allows for
+    ## memory-mapped file access, which can improve performance by enabling
+    ## faster loading of model weights from disk.
+    ## @item @qcode{'num_thread'} @tab @tab integer @tab @tab Specifies the
+    ## number of threads to use during model generation, allowing you to
+    ## optimize performance based on your CPU's capabilities.
+    ## @end multitable
+    ##
+    ## Specified customized options are preserved in the ollama interface object
+    ## for all subsequent requests for inference until they are altered or reset
+    ## to the model's default value by removing them.  To remove a custom option
+    ## pass an empty value to the @var{name}, @var{value} paired argument, as in
+    ## @code{setOptions (@var{llm}, 'seed', [])}.
+    ##
+    ## Use the @code{showOptions} method to display any custom options that may
+    ## be currently set in the ollama interface object.  Alternatively, you can
+    ## retrieve the custom options as a structure through the @qcode{options}
+    ## property as in @code{@var{opts} = @var{llm}.options}, where each field in
+    ## @var{opts} refers to a custom property  If no custom options are set,
+    ## then @var{opts} is an empty structure.
+    ##
+    ## You can also set or clear a single custom option with direct assignment
+    ## to the @qcode{options} property of the ollama inteface object by passing
+    ## the @var{name}, @var{value} paired argument as a 2-element cell array.
+    ## The equivalent syntax of @code{setOptions (@var{llm}, 'seed', []} is
+    ## @code{@var{llm}.options = @{'seed', []@}}.
+    ##
+    ## @end deftypefn
     function setOptions (this, varargin)
       if (mod (numel (varargin), 2) != 0)
         error ("ollama.setOptions: 'options' must be in Name-Value pairs.");
@@ -423,6 +617,14 @@ classdef ollama < handle
             else
               error ("ollama.setOptions: 'repeat_penalty' must be positive.");
             endif
+          case 'presence_penalty'
+            if (isfield (this.options, 'presence_penalty') && isempty (value))
+              this.options = rmfield (this.options, 'presence_penalty');
+            elseif (value >= 0)
+              this.options.presence_penalty = value;
+            else
+              error ("ollama.setOptions: 'presence_penalty' must be positive.");
+            endif
           case 'frequency_penalty'
             if (isfield (this.options, 'frequency_penalty') && isempty (value))
               this.options = rmfield (this.options, 'frequency_penalty');
@@ -501,6 +703,40 @@ classdef ollama < handle
         ## Remove parsed arguments
         varargin(1:2) = [];
       endwhile
+    endfunction
+
+    ## -*- texinfo -*-
+    ## @deftypefn  {ollama} {} showOptions (@var{llm})
+    ##
+    ## Show custom options.
+    ##
+    ## @code{showOptions (@var{llm})} displays any custom options that may be
+    ## specified in the ollama inteface object @var{llm}.
+    ##
+    ## @end deftypefn
+    function showOptions (this)
+      opts = fieldnames (this.options);
+      nopt = numel (opts);
+      if (nopt)
+        for i = 1:nopt
+          name = sprintf ("'%s'", opts{i});
+          value = this.options.(opts{i});
+          if (islogical (value))
+            if (value)
+              value = 'true';
+            else
+              value = 'false';
+            endif
+            fprintf ("%+25s: '%s'\n", name, value);
+          elseif (fix (value) == value)
+            fprintf ("%+25s: %d\n", name, value);
+          else
+            fprintf ("%+25s: %f\n", name, value);
+          endif
+        endfor
+      else
+        disp ("No custom options are specified.");
+      endif
     endfunction
 
     function [varargout] = query (this, varargin)
@@ -880,7 +1116,7 @@ classdef ollama < handle
               endif
             case 'options'
               if (iscell (val) && numel (val) == 2)
-                this = setOptions (this, val{1}, val{2});
+                setOptions (this, val{1}, val{2});
               else
                 error (strcat ("ollama.subsref: 'options' must be", ...
                                " a 2-element cell array."));
