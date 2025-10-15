@@ -227,7 +227,7 @@ classdef ollama < handle
     endfunction
 
     ## -*- texinfo -*-
-    ## @deftypefn  {ollama} {} copyModel (@var{llm}, @var{source}, @var{target})
+    ## @deftypefn {ollama} {} copyModel (@var{llm}, @var{source}, @var{target})
     ##
     ## Copy model in ollama server.
     ##
@@ -271,7 +271,7 @@ classdef ollama < handle
     endfunction
 
     ## -*- texinfo -*-
-    ## @deftypefn  {ollama} {} deleteModel (@var{llm}, @var{target})
+    ## @deftypefn {ollama} {} deleteModel (@var{llm}, @var{target})
     ##
     ## Delete model in ollama server.
     ##
@@ -308,7 +308,7 @@ classdef ollama < handle
     endfunction
 
     ## -*- texinfo -*-
-    ## @deftypefn  {ollama} {} loadModel (@var{llm}, @var{target})
+    ## @deftypefn {ollama} {} loadModel (@var{llm}, @var{target})
     ##
     ## Load model in ollama server.
     ##
@@ -352,7 +352,7 @@ classdef ollama < handle
     endfunction
 
     ## -*- texinfo -*-
-    ## @deftypefn  {ollama} {} unloadModel (@var{llm}, @var{target})
+    ## @deftypefn {ollama} {} unloadModel (@var{llm}, @var{target})
     ##
     ## Unload model in ollama server.
     ##
@@ -392,7 +392,7 @@ classdef ollama < handle
     endfunction
 
     ## -*- texinfo -*-
-    ## @deftypefn  {ollama} {} pullModel (@var{llm}, @var{target})
+    ## @deftypefn {ollama} {} pullModel (@var{llm}, @var{target})
     ##
     ## Download model from the ollama library into ollama server.
     ##
@@ -421,7 +421,7 @@ classdef ollama < handle
     endfunction
 
     ## -*- texinfo -*-
-    ## @deftypefn  {ollama} {} setOptions (@var{llm}, @var{name}, @var{value})
+    ## @deftypefn {ollama} {} setOptions (@var{llm}, @var{name}, @var{value})
     ##
     ## Set custom options for model inference.
     ##
@@ -706,7 +706,7 @@ classdef ollama < handle
     endfunction
 
     ## -*- texinfo -*-
-    ## @deftypefn  {ollama} {} showOptions (@var{llm})
+    ## @deftypefn {ollama} {} showOptions (@var{llm})
     ##
     ## Show custom options.
     ##
@@ -739,6 +739,65 @@ classdef ollama < handle
       endif
     endfunction
 
+    ## -*- texinfo -*-
+    ## @deftypefn  {ollama} {} query (@var{llm}, @var{prompt})
+    ## @deftypefnx {ollama} {} query (@var{llm}, @var{prompt}, @var{image})
+    ## @deftypefnx {ollama} {@var{txt} =} query (@dots{})
+    ## @deftypefnx {ollama} {} query (@var{llm})
+    ##
+    ## Query a model in ollama server.
+    ##
+    ## @code{query (@var{llm}, @var{prompt})} uses the @qcode{"api/generate"}
+    ## API end point to make a request to the ollama server interfaced by
+    ## @var{llm} to generate text based on the user's input specified in
+    ## @var{prompt}, which must be a character vector.  When no output argument
+    ## is requested, @code{query} prints the response text in the standard
+    ## output (command window) with a custom display method so that words are
+    ## not split between lines depending on the terminal size.  If an output
+    ## argument is requested, the text is returned as a character vector and
+    ## nothing gets displayed in the terminal.
+    ##
+    ## @code{query (@var{llm}, @var{prompt}, @var{image})} also specifies an
+    ## image or multiple images to be passed to the model along with the user's
+    ## prompt.  For a single image, @var{image} must be a character vector
+    ## specifying either the filename of an image or a base64 encoded image.
+    ## @code{query} distinguishes between the two by scanning @var{image} for
+    ## a period character (@qcode{'.'}), which is commonly used as a separator
+    ## between base-filename and extension, but it is an invalid character for
+    ## base64 encoded strings.  For multiple images, @var{image} must be a cell
+    ## array of character vectors explicitly containing either multiple
+    ## filenames or mulitple base64 encoded string representations of images.
+    ##
+    ## @code{@var{txt} = query (@dots{})} returns the generated text to the
+    ## output argument @var{txt} instead of displaying it to the terminal for
+    ## any of the previous syntaxes.
+    ##
+    ## @code{query (@var{llm})} does not make a request to the ollama server,
+    ## but it sets the @qcode{'mode'} property in the ollama interface object
+    ## @var{llm} to @qcode{'query'} for future requests.  Use this syntax to
+    ## switch from another inteface mode to query mode without making a request
+    ## to the server.
+    ##
+    ## An alternative method of calling the @code{query} method is by using
+    ## direct subscripted reference to the ollama interface object @var{llm} as
+    ## long as it already set in query mode. The table below lists the
+    ## equivalent syntaxes.
+    ##
+    ## @multitable @columnfractions 0.5 0.02 0.48
+    ## @headitem @var{method calling} @tab @tab @var{object subscripted reference}
+    ## @item @qcode{query (@var{llm}, @var{prompt})} @tab @tab
+    ## @qcode{@var{llm}(@var{prompt})}
+    ## @item @qcode{query (@var{llm}, @var{prompt}, @var{image})} @tab @tab
+    ## @qcode{@var{llm}(@var{prompt}, @var{image})}
+    ## @item @qcode{query (@var{llm}, @var{prompt}, @var{image})} @tab @tab
+    ## @qcode{@var{llm}(@var{prompt}, @var{image})}
+    ## @item @qcode{@var{txt} = query (@var{llm}, @var{prompt})} @tab @tab
+    ## @qcode{@var{txt} = @var{llm}(@var{prompt})}
+    ## @item @qcode{@var{txt} = query (@var{llm}, @var{prompt}, @var{image})}
+    ## @tab @tab @qcode{@var{txt} = @var{llm}(@var{prompt}, @var{image})}
+    ## @end multitable
+    ##
+    ## @end deftypefn
     function [varargout] = query (this, varargin)
       ## Check active model exists
       if (isempty (this.activeModel))
@@ -809,6 +868,76 @@ classdef ollama < handle
       endif
     endfunction
 
+    ## -*- texinfo -*-
+    ## @deftypefn  {ollama} {} chat (@var{llm}, @var{prompt})
+    ## @deftypefnx {ollama} {} chat (@var{llm}, @var{prompt}, @var{image})
+    ## @deftypefnx {ollama} {@var{txt} =} chat (@dots{})
+    ## @deftypefnx {ollama} {} chat (@var{llm})
+    ##
+    ## Query a model in ollama server.
+    ##
+    ## @code{chat (@var{llm}, @var{prompt})} uses the @qcode{"api/chat"} API
+    ## end point to make a request to the ollama server interfaced by
+    ## @var{llm} to generate text based on the user's input specified in
+    ## @var{prompt} along with all previous requests and responses, made by the
+    ## user and models during the same chat session, which is stored in the
+    ## @qcode{'chatHistory'} property of the ollama interface object @var{llm}.
+    ## @var{prompt} must be a character vector.  When no output argument
+    ## is requested, @code{chat} prints the response text in the standard output
+    ## (command window) with a custom display method so that words are not split
+    ## between lines depending on the terminal size.  If an output argument is
+    ## requested, the text is returned as a character vector and nothing gets
+    ## displayed in the terminal.  In either case, the response text is appended
+    ## to the history chat, which can be displayed with the @code{showHistory}
+    ## method or return as a cell array from @qcode{@var{llm}.chatHistory}.  If
+    ## you want to start a new chat session, you can either clear the chat
+    ## history with the @code{clearHistory} method or create a new ollama
+    ## interface object.
+    ##
+    ## @code{chat (@var{llm}, @var{prompt}, @var{image})} also specifies an
+    ## image or multiple images to be passed to the model along with the user's
+    ## prompt.  For a single image, @var{image} must be a character vector
+    ## specifying either the filename of an image or a base64 encoded image.
+    ## @code{chat} distinguishes between the two by scanning @var{image} for
+    ## a period character (@qcode{'.'}), which is commonly used as a separator
+    ## between base-filename and extension, but it is an invalid character for
+    ## base64 encoded strings.  For multiple images, @var{image} must be a cell
+    ## array of character vectors, which can contain both multiple filenames and
+    ## mulitple base64 encoded string representations of images.  Any images
+    ## supplied along with a prompt during a chat session are also stored in the
+    ## chat history.
+    ##
+    ## @code{@var{txt} = chat (@dots{})} returns the generated text to the
+    ## output argument @var{txt} instead of displaying it to the terminal for
+    ## any of the previous syntaxes.
+    ##
+    ## @code{chat (@var{llm})} does not make a request to the ollama server,
+    ## but it sets the @qcode{'mode'} property in the ollama interface object
+    ## @var{llm} to @qcode{'chat'} for future requests.  Use this syntax to
+    ## switch from another inteface mode to chat mode without making a request
+    ## to the server.  Switching to chat mode does not clear any existing chat
+    ## history in @var{llm}.
+    ##
+    ## An alternative method of calling the @code{chat} method is by using
+    ## direct subscripted reference to the ollama interface object @var{llm} as
+    ## long as it already set in chat mode. The table below lists the
+    ## equivalent syntaxes.
+    ##
+    ## @multitable @columnfractions 0.5 0.02 0.48
+    ## @headitem @var{method calling} @tab @tab @var{object subscripted reference}
+    ## @item @qcode{chat (@var{llm}, @var{prompt})} @tab @tab
+    ## @qcode{@var{llm}(@var{prompt})}
+    ## @item @qcode{chat (@var{llm}, @var{prompt}, @var{image})} @tab @tab
+    ## @qcode{@var{llm}(@var{prompt}, @var{image})}
+    ## @item @qcode{chat (@var{llm}, @var{prompt}, @var{image})} @tab @tab
+    ## @qcode{@var{llm}(@var{prompt}, @var{image})}
+    ## @item @qcode{@var{txt} = chat (@var{llm}, @var{prompt})} @tab @tab
+    ## @qcode{@var{txt} = @var{llm}(@var{prompt})}
+    ## @item @qcode{@var{txt} = chat (@var{llm}, @var{prompt}, @var{image})}
+    ## @tab @tab @qcode{@var{txt} = @var{llm}(@var{prompt}, @var{image})}
+    ## @end multitable
+    ##
+    ## @end deftypefn
     function [varargout] = chat (this, varargin)
       ## Check active model exists
       if (isempty (this.activeModel))
@@ -888,7 +1017,29 @@ classdef ollama < handle
       endif
     endfunction
 
-    ## Display stats from last query
+    ## -*- texinfo -*-
+    ## @deftypefn {ollama} {} showStats (@var{llm})
+    ##
+    ## Show response statistics.
+    ##
+    ## @code{showStats (@var{llm})} displays the response statistics of the last
+    ## response returned from the ollama server intefaced by @var{llm}.  The
+    ## type of request (e.g. query, chat, embed) does not alter the displayed
+    ## statistics, which include the following parameters:
+    ##
+    ## @itemize
+    ## @item total duration: the total time in seconds to process the request
+    ## and return the response.
+    ## @item load duration: the time in seconds to load the user's request into
+    ## the model.
+    ## @item evaluation duration: the time in seconds for the model to generate
+    ## the response base on the user's request.
+    ## @item prompt count: the number of tokens comprising the user's request.
+    ## @item evaluation count: the number of tokens comprising the model's
+    ## response.
+    ## @end itemize
+    ##
+    ## @end deftypefn
     function showStats (this)
       RS = this.responseStats;
       if (isempty (fieldnames (RS)))
@@ -908,6 +1059,43 @@ classdef ollama < handle
       fprintf ("%+25s: %d (tokens)\n\n", 'Evaluation count', RS.eval_count);
     endfunction
 
+    ## -*- texinfo -*-
+    ## @deftypefn  {ollama} {} showHistory (@var{llm})
+    ## @deftypefnx {ollama} {} showHistory (@var{llm}, @qcode{'all'})
+    ## @deftypefnx {ollama} {} showHistory (@var{llm}, @qcode{'last'})
+    ## @deftypefnx {ollama} {} showHistory (@var{llm}, @qcode{'first'})
+    ## @deftypefnx {ollama} {} showHistory (@var{llm}, @var{idx})
+    ##
+    ## Display chat history.
+    ##
+    ## @code{showHistory (@var{llm})} displays the entire chat history stored in
+    ## the ollama interface object @var{llm}.  The chat history is displayed in
+    ## chronological order alternating between user's requests and the model's
+    ## responses.  For any user's request that contained images, the filenames
+    ## or the number of images (in case of base64 encoded images) are also
+    ## listed below the corresponding request and before the subsequent
+    ## response.
+    ##
+    ## @code{showHistory (@var{llm}), @qcode{'all'}} is exactly the same as
+    ## @code{showHistory (@var{llm})}.
+    ##
+    ## @code{showHistory (@var{llm}), @qcode{'last'}} displays only the last
+    ## user-model interaction of the current chat session.
+    ##
+    ## @code{showHistory (@var{llm}), @qcode{'first'}} displays only the first
+    ## user-model interaction of the current chat session.
+    ##
+    ## @code{showHistory (@var{llm}), @var{idx}} displays the user-model
+    ## interactions specified by @var{idx}, which must be a scalar or a vector
+    ## of integer values indexing the rows of the @math{Nx3} cell array
+    ## comprising the @qcode{chatHistory} property in @var{llm}.
+    ##
+    ## @code{showHistory} is explicitly used for displaying the chat history and
+    ## does not return any output argument.  If you want to retrieve the chat
+    ## history in a cell array, you can access the @qcode{chatHistory} property
+    ## directly, as in @code{@var{hdata} = @var{llm}.chatHistory}.
+    ##
+    ## @end deftypefn
     function showHistory (this, idx = 'all')
       H = this.chatHistory;
       if (isempty (H))
@@ -954,13 +1142,63 @@ classdef ollama < handle
           endif
         endif
         #fprintf ("\n Assistant:\n %s\n", H{idx,3});
-        disp ("User:");
+        disp ("Model:");
         __disp__ (H{idx,3});
       endfor
     endfunction
 
-    function clearHistory (this)
-      this.chatHistory = {};
+    ## -*- texinfo -*-
+    ## @deftypefn  {ollama} {} clearHistory (@var{llm})
+    ##
+    ## Clear chat history.
+    ##
+    ## @code{clearHistory (@var{llm})} deletes the entire chat history in the
+    ## ollama interface object @var{llm}.  Use this method to initialize a new
+    ## chat session.
+    ##
+    ## @code{clearHistory (@var{llm}), @qcode{'all'}} is exactly the same as
+    ## @code{clearHistory (@var{llm})}.
+    ##
+    ## @code{clearHistory (@var{llm}), @qcode{'last'}} deletes the last
+    ## user-model interaction from the current chat session.  Use this option if
+    ## you want to rephrase or modify the last request without clear the entire
+    ## chat history.
+    ##
+    ## @code{showHistory (@var{llm}), @qcode{'first'}} removes only the first
+    ## user-model interaction from the current chat session.  Use this option if
+    ## you want to discard the initial user-model interaction in order to
+    ## experiment with the model's context size.
+    ##
+    ## @code{showHistory (@var{llm}), @var{idx}} deletes the user-model
+    ## interactions specified by @var{idx}, which must be a scalar or a vector
+    ## of integer values indexing the rows of the @math{Nx3} cell array
+    ## comprising the @qcode{chatHistory} property in @var{llm}.
+    ##
+    ## Note that selectively deleting user-model interactions from the chat
+    ## history also removes any images that may be integrated with the selected
+    ## requests.
+    ##
+    ## @end deftypefn
+    function clearHistory (this, idx = 'all')
+      H = this.chatHistory;
+      if (isempty (H))
+        return;
+      endif
+      ## Get history length
+      Hidx = rows (H);
+      if (strcmp (idx, 'all'))
+        this.chatHistory = {};
+      elseif (strcmp (idx, 'first'))
+        index = 1;
+      elseif (strcmp (idx, 'last'))
+        index = Hidx;
+      elseif (isnumeric (idx) && isvector (idx) && all (diff (idx) == 0) &&
+              all (fix (idx) == idx) && all (idx > 0) && all (idx <= Hidx))
+        index = idx;
+      else
+        error ("ollama.clearHistory: invalid IDX input.");
+      endif
+      this.chatHistory(index,:) = [];
     endfunction
 
   endmethods
