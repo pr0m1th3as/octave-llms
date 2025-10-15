@@ -35,20 +35,113 @@ classdef ollama < handle
   ## @end deftp
 
   properties (Dependent = true)
+    ## -*- texinfo -*-
+    ## @deftp {ollama} {property} runningModels
+    ##
+    ## Display running models.
+    ##
+    ## Displays the models that are currently loaded in ollama server's memory.
+    ##
+    ## @end deftp
     runningModels
   endproperties
 
   properties (GetAccess = public, Protected = true)
+    ## -*- texinfo -*-
+    ## @deftp {ollama} {property} mode
+    ##
+    ## Inference mode.
+    ##
+    ## Specifies the inference mode that the ollama interface object will use
+    ## to send requests to the ollama server.  Currently, only @qcode{'query'}
+    ## and @qcode{'chat'} modes are implemented.
+    ##
+    ## @end deftp
     mode = 'query';
+
+    ## -*- texinfo -*-
+    ## @deftp {ollama} {property} serverURL
+    ##
+    ## URL of the ollama server.
+    ##
+    ## Specifies the network IP address and the port at which the ollama
+    ## interface object is connected to.
+    ##
+    ## @end deftp
     serverURL = '';
+
+    ## -*- texinfo -*-
+    ## @deftp {ollama} {property} availableModels
+    ##
+    ## Display available models.
+    ##
+    ## Displays the models that are currently available in ollama server.
+    ##
+    ## @end deftp
     availableModels = {''};
+
+    ## -*- texinfo -*-
+    ## @deftp {ollama} {property} responseStats
+    ##
+    ## Response Statistics of LLM.
+    ##
+    ## Contains various metrics about the last processed request and the
+    ## response returned from the ollama server.
+    ##
+    ## @end deftp
     responseStats = struct ();
+
+    ## -*- texinfo -*-
+    ## @deftp {ollama} {property} chatHistory
+    ##
+    ## Chat history of current session.
+    ##
+    ## Contains an @math{Nx3} cell array with the history of user prompts,
+    ## images (if any), and models response for a given chat session. The first
+    ## column contains character vectors with the user's prompts, the second
+    ## column contains a nested cell array with any images attached to the
+    ## corresponding user prompt (otherwise it is empty), and the third column
+    ## contains the model's responses.  By default, @qcode{chatHistory} is an
+    ## empty cell array, and it is only populated while in  @qcode{'chat'} mode.
+    ##
+    ## @end deftp
     chatHistory = {};
   endproperties
 
   properties (GetAccess = public)
+    ## -*- texinfo -*-
+    ## @deftp {ollama} {property} activeModel
+    ##
+    ## The model to be used for any user request for inference.
+    ##
+    ## The name of the model that will be used for generating the response to
+    ## the next user request.  This is empty upon construction and it must be
+    ## specified before requesting any inference from the ollama server.
+    ##
+    ## @end deftp
     activeModel = '';
+
+    ## -*- texinfo -*-
+    ## @deftp {ollama} {property} readTimeout
+    ##
+    ## Network read timeout
+    ##
+    ## The time in seconds that the ollama interface object will wait for a
+    ## server response before closing the connection with an error.
+    ##
+    ## @end deftp
     readTimeout = 300;
+
+    ## -*- texinfo -*-
+    ## @deftp {ollama} {property} writeTimeout
+    ##
+    ## Network write timeout
+    ##
+    ## The time in seconds that the ollama interface object will wait for a
+    ## request to be successfully sent to the server before closing the
+    ## connection with an error.
+    ##
+    ## @end deftp
     writeTimeout = 300;
     options = struct ();
   endproperties
