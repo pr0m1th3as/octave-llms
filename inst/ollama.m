@@ -194,6 +194,21 @@ classdef ollama < handle
     ##
     ## @end deftp
     thinking = [];
+
+    ## -*- texinfo -*-
+    ## @deftp {ollama} {property} muteThinking
+    ##
+    ## Flag for displaying thinking.
+    ##
+    ## A logical scalar specifying whether to display thinking text or not.  It
+    ## only applies when @qcode{thinking} is enabled and no output argument is
+    ## requested from @code{query} and @code{chat} methods.  It also applies to
+    ## the @code{showHistory} method, when model responses contain thinking
+    ## text. By default, @qcode{muteThinking} is @qcode{true}.  Use dot notation
+    ## to access and/or modify the default value of the thinking flag.
+    ##
+    ## @end deftp
+    muteThinking = false;
   endproperties
 
   methods (GetAccess = public)
@@ -1042,10 +1057,15 @@ classdef ollama < handle
         varargout{1} = out;
       else
         if (this.thinking)
-          disp ("<thinking>");
-          __disp__ (out{2});
-          disp ("</thinking>\n\nResponse:\n");
-          __disp__ (out{1});
+          if (this.muteThinking)
+            disp ("Response:\n");
+            __disp__ (out{1});
+          else
+            disp ("<thinking>");
+            __disp__ (out{2});
+            disp ("</thinking>\n\nResponse:\n");
+            __disp__ (out{1});
+          endif
         else
           disp ("Response:\n");
           __disp__ (out);
@@ -1222,10 +1242,15 @@ classdef ollama < handle
         varargout{1} = message{end,3};
       else
         if (this.thinking)
-          disp ("<thinking>");
-          __disp__ (message{end,3}{2});
-          disp ("</thinking>\n\nResponse:\n");
-          __disp__ (message{end,3}{1});
+          if (this.muteThinking)
+            disp ("Response:\n");
+            __disp__ (out{1});
+          else
+            disp ("<thinking>");
+            __disp__ (out{2});
+            disp ("</thinking>\n\nResponse:\n");
+            __disp__ (out{1});
+          endif
         else
           disp ("Response:\n");
           __disp__ (message{end,3});
@@ -1333,7 +1358,7 @@ classdef ollama < handle
         error ("ollama.showHistory: invalid IDX input.");
       endif
       for idx = index
-        disp ("User:");
+        disp ("User prompt:");
         __disp__ (H{idx,1});
         if (! isempty (H{idx,2}{1}))
           img = H{idx,2};
@@ -1356,12 +1381,16 @@ classdef ollama < handle
             fprintf ("\n User supplied %d Base64 image%s.\n", ss, isbase);
           endif
         endif
-        disp ("Model:");
+        disp ("Model response:");
         if (iscell (H{idx,3}))
-          disp ("<thinking>");
-          __disp__ (H{idx,3}{2});
-          disp ("</thinking>\nResponse:");
-          __disp__ (H{idx,3}{1});
+          if (this.muteThinking)
+            __disp__ (H{idx,3}{1});
+          else
+            disp ("<thinking>");
+            __disp__ (H{idx,3}{2});
+            disp ("</thinking>\n\nResponse:\n");
+            __disp__ (H{idx,3}{1});
+          endif
         else
           __disp__ (H{idx,3});
         endif
@@ -1492,10 +1521,15 @@ classdef ollama < handle
             endif
             if (nargout == 0)
               if (this.thinking)
-                disp ("<thinking>");
-                __disp__ (out{2});
-                disp ("</thinking>\n\nResponse:\n");
-                __disp__ (out{1});
+                if (this.muteThinking)
+                  disp ("Response:\n");
+                  __disp__ (out{1});
+                else
+                  disp ("<thinking>");
+                  __disp__ (out{2});
+                  disp ("</thinking>\n\nResponse:\n");
+                  __disp__ (out{1});
+                endif
               else
                 disp ("Response:\n");
                 __disp__ (out);
