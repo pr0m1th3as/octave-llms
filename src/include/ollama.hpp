@@ -84,8 +84,8 @@ namespace ollama
     using json = nlohmann::json;
     using base64 = macaron::Base64;    
 
-    static bool use_exceptions = true;    // Change this to false to avoid throwing exceptions within the library.    
-    static bool log_requests = false;      // Log raw requests to the Ollama server. Useful when debugging.       
+    static bool use_exceptions = true;     // Change this to false to avoid throwing exceptions within the library.
+    static bool log_requests = false;      // Log raw requests to the Ollama server. Useful when debugging.
     static bool log_replies = false;       // Log raw replies from the Ollama server. Useful when debugging.
 
     inline void allow_exceptions(bool enable) {use_exceptions = enable;}
@@ -239,36 +239,47 @@ namespace ollama
 
     class request: public json {
 
-        public:
+    public:
 
-            // Create a request for a generation.
-            request(const std::string& model,const std::string& prompt, const json& options=nullptr, bool stream=false, const std::vector<std::string>& images=std::vector<std::string>()): request()
-            {   
+            // Create a request for a generation with custom system message and thinking option.
+            // Thinking is parsed as a string to support GPT-OSS which accepts "low", "medium", or "high".
+            // Standard "true"/"false" values are converted to boolean values internally
+            request(const std::string& model, const std::string& prompt, const std::string& think, const std::string& sysmsg, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>()): request()
+            {
                 (*this)["model"] = model;
                 (*this)["prompt"] = prompt;
-                (*this)["stream"] = stream;
+                (*this)["stream"] = false;
 
+                if (think == "false") (*this)["think"] = false;
+                else if (think == "true") (*this)["think"] = true;
+                else (*this)["think"] = think;
+
+                if (!sysmsg.empty()) (*this)["system"] = sysmsg;
                 if (options!=nullptr) (*this)["options"] = options["options"];
                 if (!images.empty()) (*this)["images"] = images;
 
                 type = message_type::generation;
             }
 
-            // Create a request for a chat completion.
-            request(const std::string& model, const ollama::messages& messages, const json& options=nullptr, bool stream=false, const std::string& format="json", const std::string& keep_alive_duration="5m"): request()
+            // Create a request for a chat completion with custom system message and thinking option.
+            // Thinking is parsed as a string to support GPT-OSS which accepts "low", "medium", or "high".
+            // Standard "true"/"false" values are converted to boolean values internally
+            request(const std::string& model, const ollama::messages& messages, const std::string& think, const std::string& sysmsg, const json& options=nullptr, const std::string& keep_alive_duration="5m"): request()
             {
                 (*this)["model"] = model;
                 (*this)["messages"] = messages.to_json();
-                (*this)["stream"] = stream;
+                (*this)["stream"] = false;
 
+                if (think == "false") (*this)["think"] = false;
+                else if (think == "true") (*this)["think"] = true;
+                else (*this)["think"] = think;
+
+                if (!sysmsg.empty()) (*this)["system"] = sysmsg;
                 if (options!=nullptr) (*this)["options"] = options["options"];
-                (void)format; //(*this)["format"] = format; // Commented out as providing the format causes issues with some models.
                 (*this)["keep_alive"] = keep_alive_duration;
                 type = message_type::chat;
 
             }
-            // Request for a chat completion with a single message
-            request(const std::string& model, const ollama::message& message, const json& options=nullptr, bool stream=false, const std::string& format="json", const std::string& keep_alive_duration="5m") :request(model, messages(message), options, stream, format, keep_alive_duration ){}
            
             request(message_type type): request() { this->type = type; }
 
@@ -389,16 +400,16 @@ class Ollama
         Ollama(): Ollama("http://localhost:11434") {}
         ~Ollama() { delete this->cli; }
 
-    ollama::response generate(const std::string& model,const std::string& prompt, const ollama::response& context, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>())
+    ollama::response generate(const std::string& model,const std::string& prompt, const ollama::response& context, const std::string& think, const std::string& sysmsg, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>())
     {
-        ollama::request request(model, prompt, options, false, images);
+        ollama::request request(model, prompt, think, sysmsg, options, images);
         if ( context.as_json().contains("context") ) request["context"] = context.as_json()["context"];
         return generate(request);
     }
 
-    ollama::response generate(const std::string& model,const std::string& prompt, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>())
+    ollama::response generate(const std::string& model, const std::string& prompt, const std::string& think, const std::string& sysmsg, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>())
     {
-        ollama::request request(model, prompt, options, false, images);
+        ollama::request request(model, prompt, think, sysmsg, options, images);
         return generate(request);
     }
 
@@ -427,9 +438,9 @@ class Ollama
         return response;        
     }
 
-    ollama::response chat(const std::string& model, const ollama::messages& messages, json options=nullptr, const std::string& format="json", const std::string& keep_alive_duration="5m")
+    ollama::response chat(const std::string& model, const ollama::messages& messages, const std::string& think, const std::string& sysmsg, json options=nullptr, const std::string& keep_alive_duration="5m")
     {
-        ollama::request request(model, messages, options, false, format, keep_alive_duration);
+        ollama::request request(model, messages, think, sysmsg, options, keep_alive_duration);
         return chat(request);
     }
 
@@ -813,14 +824,14 @@ namespace ollama
         ollama.setServerURL(server_url);
     }
 
-    inline ollama::response generate(const std::string& model, const std::string& prompt, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>())
+    inline ollama::response generate(const std::string& model,const std::string& prompt, const ollama::response& context, const std::string& think, const std::string& sysmsg, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>())
     {
-        return ollama.generate(model, prompt, options, images);
+        return ollama.generate(model, prompt, context, think, sysmsg, options, images);
     }
 
-    inline ollama::response generate(const std::string& model,const std::string& prompt, const ollama::response& context, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>())
+    inline ollama::response generate(const std::string& model, const std::string& prompt, const std::string& think, const std::string& sysmsg, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>())
     {
-        return ollama.generate(model, prompt, context, options, images);
+        return ollama.generate(model, prompt, think, sysmsg, options, images);
     }
 
     inline ollama::response generate(ollama::request& request)
@@ -828,9 +839,9 @@ namespace ollama
         return ollama.generate(request);
     }
 
-    inline ollama::response chat(const std::string& model, const ollama::messages& messages, const json& options=nullptr, const std::string& format="json", const std::string& keep_alive_duration="5m")
+    inline ollama::response chat(const std::string& model, const ollama::messages& messages, const std::string& think, const std::string& sysmsg, const json& options=nullptr, const std::string& keep_alive_duration="5m")
     {
-        return ollama.chat(model, messages, options, format, keep_alive_duration);
+        return ollama.chat(model, messages, think, sysmsg, options, keep_alive_duration);
     }
 
     inline ollama::response chat(ollama::request& request)
