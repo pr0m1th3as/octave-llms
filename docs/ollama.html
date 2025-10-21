@@ -509,6 +509,117 @@ Custom options.
           </div>
         </div>
 
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseProperty11"
+              aria-expanded="false" aria-controls="collapseProperty11">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>systemMessage</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+System message.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseProperty11">
+            <div class="border-bottom py-2">
+
+
+<p> </p>
+<p> A character vector containing the system message, which may be used to
+ provide crucial context and instructions that guide how the model behaves
+ during your interactions.  By default, <code>systemMessage = 'default'</code>,
+ in which case the model utilizes its default system prompt as specified
+ in the respective model file in the ollama server.  Specifying  a system
+ message results in the <code>query</code> or <code>chat</code> methods parsing the
+ customized system message to the model in every interaction.  The system
+ message cannot be modified during a chat session.  Use dot notation to
+ access and/or modify the default value of the system message.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseProperty12"
+              aria-expanded="false" aria-controls="collapseProperty12">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>thinking</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Flag for thinking.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseProperty12">
+            <div class="border-bottom py-2">
+
+
+<p> </p>
+<p> A logical scalar or a character vector specifying the thinking status of
+ the active model.  By default, the thiking status is set to <code>true</code>
+ for capable models and to <code>false</code> for models that do not support
+ thiking capabilities.  In special cases, where models support categorical
+ states of thinking capabilities (such ass the GPT-OSS model family), then
+ you must specify the thinking status of your choice explicitly, because
+ the default <code>true</code> value is ignored by the ollama server.  Unless
+ an active model is set, the <code>thinking</code> property is empty.  Use dot
+ notation to access and/or modify the default value of the thinking flag.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseProperty13"
+              aria-expanded="false" aria-controls="collapseProperty13">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>muteThinking</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Flag for displaying thinking.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseProperty13">
+            <div class="border-bottom py-2">
+
+
+<p> </p>
+<p> A logical scalar specifying whether to display thinking text or not.  It
+ only applies when <code>thinking</code> is enabled and no output argument is
+ requested from <code>query</code> and <code>chat</code> methods.  It also applies to
+ the <code>showHistory</code> method, when model responses contain thinking
+ text. By default, <code>muteThinking</code> is <code>true</code>.  Use dot notation
+ to access and/or modify the default value.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
         <h4 class="d-inline-block my-3">
           Methods
         </h4>
@@ -1192,7 +1303,9 @@ Query a model in ollama server.
 </p>
 <p> <code><var>txt</var> = chat (&hellip;)</code> returns the generated text to the
  output argument <var>txt</var> instead of displaying it to the terminal for
- any of the previous syntaxes.
+ any of the previous syntaxes.  If thinking is enabled, then <var>txt</var> is
+ a <math>2&times;1</math> cell array of character vectors with the first element
+ containing the final answer and the second element the thinking process.
 </p>
 <p> <code>chat (<var>llm</var>)</code> does not make a request to the ollama server,
  but it sets the <code>'mode'</code> property in the ollama interface object

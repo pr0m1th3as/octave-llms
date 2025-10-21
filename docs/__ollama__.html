@@ -168,6 +168,41 @@
 <p>Base fuction for ollama class. 
 </p>
 <div class="ms-5">
+<p>All parameters to Ollama must be passed as <var>Name</var>, <var>Value</var> paired input arguments.  Empty parameter values are not allowed.  The following parameters are supported:
+</p>
+<ul>
+<li> <code>'model'</code> A character vector with the model name.
+</li><li> <code>'prompt'</code> A character vector with the user&rsquo;s prompt.
+</li><li> <code>'serverURL'</code> A character vector with the server&rsquo;s URL.
+</li><li> <code>'readTimeout'</code> A double scalar for waiting response timeout.
+</li><li> <code>'writeTimeout'</code> A double scalar for waiting request timeout.
+</li><li> <code>'Query'</code> A character vector for querying <code>'status'</code> or <code>'version'</code> of the ollama server.
+</li><li> <code>'loadModel'</code> A character vector with the name of the model to be loaded in the server&rsquo;s memory.
+</li><li> <code>'pullModel'</code> A character vector with the name of the model to be downloaded from the Ollama library.
+</li><li> <code>'copyModel'</code> A 2-element cell array of character vectors with source and target names of the model to be copied in the server.
+</li><li> <code>'deleteModel'</code> A character vector with the name of the model to be deleted from the server.
+</li><li> <code>'unloadModel'</code> A character vector with the name of the model to be unloaded from the server&rsquo;s memory.
+</li><li> <code>'modelInfo'</code> A character vector with the name of the model to retrieve information for.
+</li><li> <code>'listModels'</code> A character vector for returning the list of models available in the server either as <code>'cellstr'</code> or in <code>'json'</code> format.
+</li><li> <code>'listRunningModels'</code> A character vector for returning the list of modelsavailable in the server either as <code>'cellstr'</code> or in <code>'json'</code> format.
+</li><li> <code>'imageFile'</code> A character vector or a cell array of character vectors with the filename(s) of the image(s) to be included in a request.
+</li><li> <code>'imageBase64'</code> A character vector or a cell array of character vectors with the base64 encoded string(s) of the image(s) to be included in a request.
+</li><li> <code>'options'</code> A scalar structures whose fields with be included as optional model parameters in a request.
+</li><li> <code>'message'</code> An <math>N&times;3</math> cell array containing the message history of a chat session to be used for the subsequent chat request.
+</li><li> <code>'systemMessage'</code> A character vector for setting a custom system message for the model during a request.
+</li><li> <code>'think'</code> A character vector for setting the thinking mode of the model during a request.
+</li></ul>
+
+<p>The following conditions apply:
+</p>
+<ol>
+<li> Specifying <code>'Query'</code> ingores all other paramters.
+</li><li> You can only specify <code>'loadModel'</code>, <code>'pullModel'</code>, <code>'copyModel'</code>, <code>'deleteModel'</code>, or <code>'unloadModel'</code> at once.
+</li><li> Specifying <code>'modelInfo'</code> takes precedence after any of the previous parameters.
+</li><li> You can either specify <code>'listModels'</code> or <code>'listRunningModels'</code> at once.  This only takes precedence after the <code>'modelInfo'</code> paramter.
+</li><li> You can either specify <code>'imageFile'</code> or <code>'imageBase64'</code> at once.
+</li><li> You can either specify <code>'prompt'</code> or <code>'messages'</code> at once.
+</li></ol>
 
 <p><strong>Source Code: </strong>
   <a href="https://github.com/pr0m1th3as/octave-llms/tree/main/src/__ollama__.cc">__ollama__</a>
