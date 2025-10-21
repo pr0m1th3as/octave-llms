@@ -90,10 +90,11 @@ The following conditions apply:\n\n\
 @qcode{'copyModel'}, @qcode{'deleteModel'}, or @qcode{'unloadModel'} at once.\n\
 @item Specifying @qcode{'modelInfo'} takes precedence after any of the previous \
 parameters.\n\
-@item You can specify either @qcode{'listModels'} or @qcode{'listRunningModels'} \
+@item You can either specify @qcode{'listModels'} or @qcode{'listRunningModels'} \
 at once.  This only takes precedence after the @qcode{'modelInfo'} paramter.\n\
-@item You can specify either @qcode{'imageFile'} or @qcode{'imageBase64'} \
+@item You can either specify @qcode{'imageFile'} or @qcode{'imageBase64'} \
 at once.\n\
+@item You can either specify @qcode{'prompt'} or @qcode{'messages'} at once.\n\
 @end enumerate\n\
 @end deftypefn")
 {
