@@ -53,9 +53,11 @@ Base fuction for ollama class. \n\
   string model = "";
   string prompt = "";
   bool has_prompt = false;
-  ollama::images images;
+  string sysmsg = "";
+  string think = "false";
+  ollama::images images = ollama::images ();
   bool has_images = false;
-  ollama::options options;
+  ollama::options options = ollama::options ();
   bool has_options = false;
   ollama::messages messages;
   bool has_messages = false;
@@ -354,65 +356,45 @@ Base fuction for ollama class. \n\
       // "repeat_penalty" -> double        "num_thread"        -> integer
       octave_scalar_map opt = args(p+1).scalar_map_value ();
       if (opt.isfield ("num_keep")) {
-        options["num_keep"] = opt.contents ("num_keep").int_value ();
-        has_options = true; }
+        options["num_keep"] = opt.contents ("num_keep").int_value (); }
       if (opt.isfield ("seed")) {
-        options["seed"] = opt.contents ("seed").int_value ();
-        has_options = true; }
+        options["seed"] = opt.contents ("seed").int_value (); }
       if (opt.isfield ("num_predict")) {
-        options["num_predict"] = opt.contents ("num_predict").int_value ();
-        has_options = true; }
+        options["num_predict"] = opt.contents ("num_predict").int_value (); }
       if (opt.isfield ("top_k")) {
-        options["top_k"] = opt.contents ("top_k").int_value ();
-        has_options = true; }
+        options["top_k"] = opt.contents ("top_k").int_value (); }
       if (opt.isfield ("top_p")) {
-        options["top_p"] = opt.contents ("top_p").double_value ();
-        has_options = true; }
+        options["top_p"] = opt.contents ("top_p").double_value (); }
       if (opt.isfield ("min_p")) {
-        options["min_p"] = opt.contents ("min_p").double_value ();
-        has_options = true; }
+        options["min_p"] = opt.contents ("min_p").double_value (); }
       if (opt.isfield ("typical_p")) {
-        options["typical_p"] = opt.contents ("typical_p").double_value ();
-        has_options = true; }
+        options["typical_p"] = opt.contents ("typical_p").double_value (); }
       if (opt.isfield ("repeat_last_n")) {
-        options["repeat_last_n"] = opt.contents ("repeat_last_n").int_value ();
-        has_options = true; }
+        options["repeat_last_n"] = opt.contents ("repeat_last_n").int_value (); }
       if (opt.isfield ("temperature")) {
-        options["temperature"] = opt.contents ("temperature").double_value ();
-        has_options = true; }
+        options["temperature"] = opt.contents ("temperature").double_value (); }
       if (opt.isfield ("repeat_penalty")) {
-        options["repeat_penalty"] = opt.contents ("repeat_penalty").double_value ();
-        has_options = true; }
+        options["repeat_penalty"] = opt.contents ("repeat_penalty").double_value (); }
       if (opt.isfield ("presence_penalty")) {
-        options["presence_penalty"] = opt.contents ("presence_penalty").double_value ();
-        has_options = true; }
+        options["presence_penalty"] = opt.contents ("presence_penalty").double_value (); }
       if (opt.isfield ("frequency_penalty")) {
-        options["frequency_penalty"] = opt.contents ("frequency_penalty").double_value ();
-        has_options = true; }
+        options["frequency_penalty"] = opt.contents ("frequency_penalty").double_value (); }
       if (opt.isfield ("penalize_newline")) {
-        options["penalize_newline"] = opt.contents ("penalize_newline").bool_value ();
-        has_options = true; }
+        options["penalize_newline"] = opt.contents ("penalize_newline").bool_value (); }
       if (opt.isfield ("numa")) {
-        options["numa"] = opt.contents ("numa").bool_value ();
-        has_options = true; }
+        options["numa"] = opt.contents ("numa").bool_value (); }
       if (opt.isfield ("num_ctx")) {
-        options["num_ctx"] = opt.contents ("num_ctx").int_value ();
-        has_options = true; }
+        options["num_ctx"] = opt.contents ("num_ctx").int_value (); }
       if (opt.isfield ("num_batch")) {
-        options["num_batch"] = opt.contents ("num_batch").int_value ();
-        has_options = true; }
+        options["num_batch"] = opt.contents ("num_batch").int_value (); }
       if (opt.isfield ("num_gpu")) {
-        options["num_gpu"] = opt.contents ("num_gpu").int_value ();
-        has_options = true; }
+        options["num_gpu"] = opt.contents ("num_gpu").int_value (); }
       if (opt.isfield ("main_gpu")) {
-        options["main_gpu"] = opt.contents ("main_gpu").int_value ();
-        has_options = true; }
+        options["main_gpu"] = opt.contents ("main_gpu").int_value (); }
       if (opt.isfield ("use_mmap")) {
-        options["use_mmap"] = opt.contents ("use_mmap").bool_value ();
-        has_options = true; }
+        options["use_mmap"] = opt.contents ("use_mmap").bool_value (); }
       if (opt.isfield ("num_thread")) {
-        options["num_thread"] = opt.contents ("num_thread").int_value ();
-        has_options = true; }
+        options["num_thread"] = opt.contents ("num_thread").int_value (); }
     }
     else if (args(p).string_value () == "message")
     {
@@ -438,7 +420,8 @@ Base fuction for ollama class. \n\
       // msg(m,1) -> N-by-2 cellstr array (can be empty)
       //             1st column specifies either "imageFile" or "imageBase64"
       //             2nd column specifies the image itself
-      // msg(m,2) -> character vector (empty for m = 0)
+      // msg(m,2) -> character vector (empty for m == 0) or a 2-by-1 cellstr
+      //             array (ignored for m == 0), always use 1st element
       for (octave_idx_type mrows = 0; mrows < msg.rows (); mrows++)
       {
         // Get user prompt
@@ -478,13 +461,44 @@ Base fuction for ollama class. \n\
           messages.push_back (msg_no_images);
         }
         // Get previous response (if any)
-        string assistant = msg(mrows,2).string_value ();
+        string assistant;
+        if (msg(mrows,2).is_string ())
+        {
+          assistant = msg(mrows,2).string_value ();
+        }
+        else
+        {
+          Cell response = msg(mrows,2).cell_value ();
+          assistant = response(1).string_value ();
+        }
         if (assistant.size () > 0)
         {
           ollama::message msg_prev_resp("assistant", assistant);
           messages.push_back (msg_prev_resp);
         }
       }
+    }
+    else if (args(p).string_value () == "systemMessage")
+    {
+      // Check parameter value
+      if (! args(p+1).is_string ())
+      {
+        error ("__ollama__: 'systemMessage' must be a character vector.");
+      }
+      sysmsg = args(p+1).string_value ();
+      if (sysmsg == "default")
+      {
+        sysmsg = "";
+      }
+    }
+    else if (args(p).string_value () == "think")
+    {
+      // Check parameter value
+      if (! args(p+1).is_string ())
+      {
+        error ("__ollama__: 'think' value must be a character vector.");
+      }
+      think = args(p+1).string_value ();
     }
   }
 
@@ -677,14 +691,7 @@ Base fuction for ollama class. \n\
     try
     {
       ollama::response response;
-      if (has_options || has_images)
-      {
-        response = ollama::generate (model, prompt, options, images);
-      }
-      else
-      {
-        response = ollama::generate (model, prompt);
-      }
+      response = ollama::generate (model, prompt, think, sysmsg, options, images);
       string txt = response.as_json_string ();
       retval(0) = txt;
       retval(1) = false;
@@ -701,14 +708,7 @@ Base fuction for ollama class. \n\
     try
     {
       ollama::response response;
-      if (has_options)
-      {
-       response = ollama::chat (model, messages, options);
-      }
-      else
-      {
-        response = ollama::chat (model, messages);
-      }
+      response = ollama::chat (model, messages, think, sysmsg, options);
       string txt = response.as_json_string ();
       retval(0) = txt;
       retval(1) = false;
