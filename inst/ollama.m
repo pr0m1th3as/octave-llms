@@ -158,6 +158,42 @@ classdef ollama < handle
     ##
     ## @end deftp
     options = struct ();
+
+    ## -*- texinfo -*-
+    ## @deftp {ollama} {property} systemMessage
+    ##
+    ## System message.
+    ##
+    ## A character vector containing the system message, which may be used to
+    ## provide crucial context and instructions that guide how the model behaves
+    ## during your interactions.  By default, @qcode{systemMessage = 'default'},
+    ## in which case the model utilizes its default system prompt as specified
+    ## in the respective model file in the ollama server.  Specifying  a system
+    ## message results in the @code{query} or @code{chat} methods parsing the
+    ## customized system message to the model in every interaction.  The system
+    ## message cannot be modified during a chat session.  Use dot notation to
+    ## access and/or modify the default value of the system message.
+    ##
+    ## @end deftp
+    systemMessage = 'default';
+
+    ## -*- texinfo -*-
+    ## @deftp {ollama} {property} thinking
+    ##
+    ## Flag for thinking.
+    ##
+    ## A logical scalar or a character vector specifying the thinking status of
+    ## the active model.  By default, the thiking status is set to @qcode{true}
+    ## for capable models and to @qcode{false} for models that do not support
+    ## thiking capabilities.  In special cases, where models support categorical
+    ## states of thinking capabilities (such ass the GPT-OSS model family), then
+    ## you must specify the thinking status of your choice explicitly, because
+    ## the default @qcode{true} value is ignored by the ollama server.  Unless
+    ## an active model is set, the @qcode{thinking} property is empty.  Use dot
+    ## notation to access and/or modify the default value of the thinking flag.
+    ##
+    ## @end deftp
+    thinking = [];
   endproperties
 
   methods (GetAccess = public)
@@ -227,6 +263,13 @@ classdef ollama < handle
           warning ("ollama: model '%s' is not available.", model);
         else
           this.activeModel = model;
+        endif
+        ## Query active model for information and set default thinking
+        ## to true if model is capable of thinking
+        if (checkThinking (this, model))
+          this.thinking = true;
+        else
+          this.thinking = false;
         endif
       endif
     endfunction
@@ -455,6 +498,13 @@ classdef ollama < handle
         error ("ollama.loadModel: MODEL could not be loaded.");
       else
         this.activeModel = model;
+        ## Query active model for information and set default thinking
+        ## to true if model is capable of thinking
+        if (checkThinking (this, model))
+          this.thinking = true;
+        else
+          this.thinking = false;
+        endif
       endif
     endfunction
 
@@ -495,6 +545,7 @@ classdef ollama < handle
         error ("ollama.unloadModel: MODEL not found.");
       elseif (strcmp (this.activeModel, model))
         this.activeModel = '';
+        this.thinking = [];
       endif
     endfunction
 
@@ -953,12 +1004,24 @@ classdef ollama < handle
         endif
         args = [args, {type, image}];
       endif
+      ## Get thinking status
+      if (islogical (this.thinking))
+        if (this.thinking)
+          think = 'true';
+        else
+          think = 'false';
+        endif
+      else
+        think = this.thinking;
+      endif
       ## Run inference
       [out, err] = __ollama__ ('model', this.activeModel, ...
                                'serverURL', this.serverURL, ...
                                'readTimeout', this.readTimeout, ...
                                'writeTimeout', this.writeTimeout, ...
-                               'options', this.options, args{:});
+                               'options', this.options, ...
+                               'systemMessage', this.systemMessage, ...
+                               'think', think, args{:});
       if (err)
         msg = strcat ("If you get a time out error, try to increase the", ...
                       " 'readTimeout' and 'writeTimeout' parameters\n", ...
@@ -967,11 +1030,26 @@ classdef ollama < handle
       endif
       ## Decode json output
       this.responseStats = jsondecode (out);
+      ## Get output
+      if (this.thinking)
+        out = {strtrim(this.responseStats.response); ...
+               strtrim(this.responseStats.thinking)};
+      else
+        out = strtrim (this.responseStats.response);
+      endif
       ## Return response text
       if (nargout > 0)
-        varargout{1} = this.responseStats.response;
+        varargout{1} = out;
       else
-        __disp__ (this.responseStats.response);
+        if (this.thinking)
+          disp ("<thinking>");
+          __disp__ (out{2});
+          disp ("</thinking>\n\nResponse:\n");
+          __disp__ (out{1});
+        else
+          disp ("Response:\n");
+          __disp__ (out);
+        endif
       endif
     endfunction
 
@@ -1016,7 +1094,9 @@ classdef ollama < handle
     ##
     ## @code{@var{txt} = chat (@dots{})} returns the generated text to the
     ## output argument @var{txt} instead of displaying it to the terminal for
-    ## any of the previous syntaxes.
+    ## any of the previous syntaxes.  If thinking is enabled, then @var{txt} is
+    ## a @math{2x1} cell array of character vectors with the first element
+    ## containing the final answer and the second element the thinking process.
     ##
     ## @code{chat (@var{llm})} does not make a request to the ollama server,
     ## but it sets the @qcode{'mode'} property in the ollama interface object
@@ -1058,7 +1138,11 @@ classdef ollama < handle
         error ("ollama.chat: too few input arguments.");
       endif
       ## Initialize new chat or use previous history
-      message = {'', {'', ''}, ''};
+      if (this.thinking) # true or "low", "medium", or "high" (GPT-OSS specific)
+        message = {'', {'', ''}, {''; ''}};
+      else
+        message = {'', {'', ''}, ''};
+      endif
       if (! isempty (this.chatHistory))
         message = [this.chatHistory; message];
       endif
@@ -1098,13 +1182,25 @@ classdef ollama < handle
           endfor
         endif
       endif
+      ## Get thinking status
+      if (islogical (this.thinking))
+        if (this.thinking)
+          think = 'true';
+        else
+          think = 'false';
+        endif
+      else
+        think = this.thinking;
+      endif
       ## Run inference
       [out, err] = __ollama__ ('model', this.activeModel, ...
                                'serverURL', this.serverURL, ...
                                'readTimeout', this.readTimeout, ...
                                'writeTimeout', this.writeTimeout, ...
                                'options', this.options, ...
-                               'message', message);
+                               'message', message, ...
+                               'systemMessage', this.systemMessage, ...
+                               'think', think);
       if (err)
         msg = strcat ("If you get a time out error, try to increase the", ...
                       " 'readTimeout' and 'writeTimeout' parameters\n", ...
@@ -1114,13 +1210,26 @@ classdef ollama < handle
       ## Decode json output
       this.responseStats = jsondecode (out);
       ## Add response to chat history
-      message(end,3) = this.responseStats.message.content;
+      if (this.thinking)
+        message{end,3}(1) = strtrim (this.responseStats.message.content);
+        message{end,3}(2) = strtrim (this.responseStats.message.thinking);
+      else
+        message(end,3) = strtrim (this.responseStats.message.content);
+      endif
       this.chatHistory = message;
       ## Return response text
       if (nargout > 0)
-        varargout{1} = this.responseStats.message.content;
+        varargout{1} = message{end,3};
       else
-        __disp__ (this.responseStats.message.content);
+        if (this.thinking)
+          disp ("<thinking>");
+          __disp__ (message{end,3}{2});
+          disp ("</thinking>\n\nResponse:\n");
+          __disp__ (message{end,3}{1});
+        else
+          disp ("Response:\n");
+          __disp__ (message{end,3});
+        endif
       endif
     endfunction
 
@@ -1224,7 +1333,6 @@ classdef ollama < handle
         error ("ollama.showHistory: invalid IDX input.");
       endif
       for idx = index
-        #fprintf ("\n User:\n %s\n", H{idx,1});
         disp ("User:");
         __disp__ (H{idx,1});
         if (! isempty (H{idx,2}{1}))
@@ -1248,9 +1356,15 @@ classdef ollama < handle
             fprintf ("\n User supplied %d Base64 image%s.\n", ss, isbase);
           endif
         endif
-        #fprintf ("\n Assistant:\n %s\n", H{idx,3});
         disp ("Model:");
-        __disp__ (H{idx,3});
+        if (iscell (H{idx,3}))
+          disp ("<thinking>");
+          __disp__ (H{idx,3}{2});
+          disp ("</thinking>\nResponse:");
+          __disp__ (H{idx,3}{1});
+        else
+          __disp__ (H{idx,3});
+        endif
       endfor
     endfunction
 
@@ -1325,8 +1439,22 @@ classdef ollama < handle
       fprintf ("\n  ollama interface in '%s' mode connected at: %s\n\n", ...
                this.mode, this.serverURL);
       fprintf ("%+25s: '%s'\n", 'activeModel', this.activeModel);
+      if (islogical (this.thinking))
+        if (this.thinking)
+          fprintf ("%+25s: true\n", 'thinking');
+        else
+          fprintf ("%+25s: false\n", 'thinking');
+        endif
+      elseif (ischar (this.thinking))
+        fprintf ("%+25s: '%s'\n", 'thinking', this.thinking);
+      endif
       fprintf ("%+25s: %d (sec)\n", 'readTimeout', this.readTimeout);
       fprintf ("%+25s: %d (sec)\n", 'writeTimeout', this.writeTimeout);
+      if (length (this.systemMessage) <= 60)
+        fprintf ("%+25s: '%s'\n", 'systemMessage', this.systemMessage);
+      else
+        fprintf ("%+25s: '%s...'\n", 'systemMessage', this.systemMessage(1:60));
+      endif
       if (numel (fieldnames (this.options)))
         fprintf ("%+25s: %s\n\n", 'options', 'custom');
       else
@@ -1363,8 +1491,15 @@ classdef ollama < handle
               out = chat (this, s.subs{:});
             endif
             if (nargout == 0)
-              disp ("Response:");
-              __disp__ (out);
+              if (this.thinking)
+                disp ("<thinking>");
+                __disp__ (out{2});
+                disp ("</thinking>\n\nResponse:\n");
+                __disp__ (out{1});
+              else
+                disp ("Response:\n");
+                __disp__ (out);
+              endif
             else
               varargout{1} = out;
             endif
@@ -1400,6 +1535,10 @@ classdef ollama < handle
               out = this.writeTimeout;
             case 'options'
               out = this.options;
+            case 'system'
+              out = this.system;
+            case 'thinking'
+              out = this.thinking;
             otherwise
               error ("ollama.subsref: unrecongized property: '%s'", s.subs);
           endswitch
@@ -1466,6 +1605,33 @@ classdef ollama < handle
                 error (strcat ("ollama.subsref: 'options' must be", ...
                                " a 2-element cell array."));
               endif
+            case 'systemMessage'
+              if (ischar (val) && isvector (val))
+                if (strcmp (this.mode, 'chat') && ! isempty (this.chatHistory))
+                  error (strcat ("ollama.subsref: 'systemMessage' cannot", ...
+                                 " be modifed during a chat session."));
+                endif
+                this.systemMessage = val;
+              else
+                error ("ollama.subsref: 'system' must be a character vector.");
+              endif
+            case 'thinking'
+              if (isscalar (val) && islogical (val) || ischar (val) && ivector (val))
+                if (isempty (this.activeModel))
+                  error (strcat ("ollama.subsref: cannot set 'thinking'", ...
+                                 " without an active model."));
+                endif
+                ## Query active model for information and set default thinking
+                ## to true if model is capable of thinking
+                if (! checkThinking (this, model))
+                  error (strcat ("ollama.subsref: currently active model", ...
+                                 " does not support 'thinking'"));
+                endif
+                this.thinking = val;
+              else
+                error (strcat ("ollama.subsref: 'thinking' must be either", ...
+                               " a logical scalar or a character vector."));
+              endif
             otherwise
               error ("ollama.subsasgn: unrecongized property: %s", s.subs);
           endswitch
@@ -1477,6 +1643,22 @@ classdef ollama < handle
 
   methods (Access = private)
 
+    ## Function for check if a model has thinking capabilities
+    function out = checkThinking (this, model)
+      [out, err] = __ollama__ ('modelInfo', model, 'serverURL', this.serverURL);
+      if (err)
+        error ("ollama: could not get MODEL info for '%s'", model);
+      else
+        ## Search the capabilities field for thiking
+        if (ismember ('thinking', jsondecode (out).capabilities))
+          out = true;
+        else
+          out = false;
+        endif
+      endif
+    endfunction
+
+    ## Helper function for listing available and running models
     function [list, err] = do_list_models (this, mode, operation)
       if (! any (strcmp (mode, {'cellstr', 'json', 'table'})))
         err = sprintf ("ollama.%s: MODE can be either 'cellstr' or 'json'.", ...
@@ -1556,7 +1738,8 @@ function out = __disp__ (txt)
   cols = terminal_size ()(2) - 4;
   ## Split text by paragraphs
   ptxt = strsplit (txt, "\n");
-  for i = 1:numel (ptxt)
+  pnum = numel (ptxt);
+  for i = 1:pnum
     ## Split text by whitespaces and print in each line as many words as they
     ## can fit without exceeding the screen size and push the remaining words
     ## into the next line.
@@ -1571,6 +1754,8 @@ function out = __disp__ (txt)
     if (numel (wtxt) > 0)
       disp (strjoin (wtxt));
     endif
-    disp ('');
+    if (i < pnum)
+      disp ('');
+    endif
   endfor
 endfunction
