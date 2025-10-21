@@ -205,7 +205,7 @@ classdef ollama < handle
     ## requested from @code{query} and @code{chat} methods.  It also applies to
     ## the @code{showHistory} method, when model responses contain thinking
     ## text. By default, @qcode{muteThinking} is @qcode{true}.  Use dot notation
-    ## to access and/or modify the default value of the thinking flag.
+    ## to access and/or modify the default value.
     ##
     ## @end deftp
     muteThinking = false;

@@ -38,6 +38,63 @@ DEFUN_DLD (__ollama__, args, nargout,
 \n\
 Base fuction for ollama class. \n\
 \n\
+All parameters to Ollama must be passed as @var{Name}, @var{Value} paired input \
+arguments.  Empty parameter values are not allowed.  The following parameters \
+are supported:\n\
+\n\
+@itemize\n\
+@item @qcode{'model'} A character vector with the model name.\n\
+@item @qcode{'prompt'} A character vector with the user's prompt.\n\
+@item @qcode{'serverURL'} A character vector with the server's URL.\n\
+@item @qcode{'readTimeout'} A double scalar for waiting response timeout.\n\
+@item @qcode{'writeTimeout'} A double scalar for waiting request timeout.\n\
+@item @qcode{'Query'} A character vector for querying @qcode{'status'} or \
+@qcode{'version'} of the ollama server.\n\
+@item @qcode{'loadModel'} A character vector with the name of the model to \
+be loaded in the server's memory.\n\
+@item @qcode{'pullModel'} A character vector with the name of the model to \
+be downloaded from the Ollama library.\n\
+@item @qcode{'copyModel'} A 2-element cell array of character vectors with \
+source and target names of the model to be copied in the server.\n\
+@item @qcode{'deleteModel'} A character vector with the name of the model to \
+be deleted from the server.\n\
+@item @qcode{'unloadModel'} A character vector with the name of the model to \
+be unloaded from the server's memory.\n\
+@item @qcode{'modelInfo'} A character vector with the name of the model to \
+retrieve information for.\n\
+@item @qcode{'listModels'} A character vector for returning the list of models \
+available in the server either as @qcode{'cellstr'} or in @qcode{'json'} \
+format.\n\
+@item @qcode{'listRunningModels'} A character vector for returning the list of \
+modelsavailable in the server either as @qcode{'cellstr'} or in @qcode{'json'} \
+format.\n\
+@item @qcode{'imageFile'} A character vector or a cell array of character \
+vectors with the filename(s) of the image(s) to be included in a request.\n\
+@item @qcode{'imageBase64'} A character vector or a cell array of character \
+vectors with the base64 encoded string(s) of the image(s) to be included in a \
+request.\n\
+@item @qcode{'options'} A scalar structures whose fields with be included as \
+optional model parameters in a request.\n\
+@item @qcode{'message'} An @math{Nx3} cell array containing the message history \
+of a chat session to be used for the subsequent chat request.\n\
+@item @qcode{'systemMessage'} A character vector for setting a custom system \
+message for the model during a request.\n\
+@item @qcode{'think'} A character vector for setting the thinking mode of the \
+model during a request.\n\
+@end itemize\n\
+\n\
+The following conditions apply:\n\n\
+@enumerate\n\
+@item Specifying @qcode{'Query'} ingores all other paramters.\n\
+@item You can only specify @qcode{'loadModel'}, @qcode{'pullModel'}, \
+@qcode{'copyModel'}, @qcode{'deleteModel'}, or @qcode{'unloadModel'} at once.\n\
+@item Specifying @qcode{'modelInfo'} takes precedence after any of the previous \
+parameters.\n\
+@item You can specify either @qcode{'listModels'} or @qcode{'listRunningModels'} \
+at once.  This only takes precedence after the @qcode{'modelInfo'} paramter.\n\
+@item You can specify either @qcode{'imageFile'} or @qcode{'imageBase64'} \
+at once.\n\
+@end enumerate\n\
 @end deftypefn")
 {
   // Initialize output arguments
