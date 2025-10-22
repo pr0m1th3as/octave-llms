@@ -81,6 +81,8 @@ of a chat session to be used for the subsequent chat request.\n\
 message for the model during a request.\n\
 @item @qcode{'think'} A character vector for setting the thinking mode of the \
 model during a request.\n\
+@item @qcode{'tools'} A character vector for sending a @qcode{toolFunction} or \
+a @qcode{toolRegistry} in JSON format to the mode during a request.\n\
 @end itemize\n\
 \n\
 The following conditions apply:\n\n\
@@ -94,7 +96,7 @@ parameters.\n\
 at once.  This only takes precedence after the @qcode{'modelInfo'} paramter.\n\
 @item You can either specify @qcode{'imageFile'} or @qcode{'imageBase64'} \
 at once.\n\
-@item You can either specify @qcode{'prompt'} or @qcode{'messages'} at once.\n\
+@item You can either specify @qcode{'prompt'} or @qcode{'message'} at once.\n\
 @end enumerate\n\
 @end deftypefn")
 {
@@ -108,6 +110,7 @@ at once.\n\
   bool running = ollama::is_running ();
   retval(1) = ! running;
   // Initialize variables for inference
+  string tools = "NA";
   string model = "";
   string prompt = "";
   bool has_prompt = false;
@@ -465,29 +468,59 @@ at once.\n\
       // Check parameter value
       if (! args(p+1).iscell ())
       {
-        error ("__ollama__: 'messages' name must be a cell array.");
+        error ("__ollama__: 'message' name must be a cell array.");
       }
       // Get contents and size
       Cell msg = args(p+1).cell_value ();
       if (msg.columns () != 3)
       {
-        error ("__ollama__: 'messages' cell array must have 3 columns.");
+        error ("__ollama__: 'message' cell array must have 3 columns.");
       }
-      // Each row contains user prompt, images, and previous response
-      // msg(m,0) -> character vector (cannot be empty)
+      // Each row contains an input to the model, which can be user prompt or
+      // tool output, a single or multiple images, and the model's previous
+      // response, which can contain content, thinking, and tool calls.
+      //
+      // msg(m,0) -> character vector (cannot be empty) for user prompt or a
+      //             scalar cellstring with a tool's output in json format.
       // msg(m,1) -> N-by-2 cellstr array (can be empty)
       //             1st column specifies either "imageFile" or "imageBase64"
       //             2nd column specifies the image itself
-      // msg(m,2) -> character vector (empty for m == 0) or a 2-by-1 cellstr
-      //             array (ignored for m == 0), always use 1st element
+      // msg(m,2) -> character vector (empty for m == 0) for model's content, a
+      //             2-by-1 cellstr array containing both content and thinking,
+      //             or a 3-by-1 array containing content (empty), thinking (if
+      //             enabled), and a list of tools in json that the model wants
+      //             to use.
       for (octave_idx_type mrows = 0; mrows < msg.rows (); mrows++)
       {
-        // Get user prompt
-        string user = msg(mrows,0).string_value ();
-        // Get any images first
+        // Get input to model (either user prompt or tool output)
+        string user_prompt = "";
+        string tool_output = "";
+        string tool_name = "";
+        bool user_role = true;
+        if (msg(mrows,0).is_string ())
+        {
+          user_prompt = msg(mrows,0).string_value ();
+        }
+        else if (msg(mrows,0).iscellstr ())
+        {
+          Cell tool = msg(mrows,0).cell_value ();
+          for (octave_idx_type irows = 0; irows < tool.rows (); irows++)
+          {
+            tool_output = tool(irows, 0).string_value ();
+            tool_name = tool(irows, 1).string_value ();
+            ollama::message msg_tool("tool", tool_output, "", "", tool_name);
+            messages.push_back (msg_tool);
+          }
+          user_role = false;
+        }
+        else
+        {
+          error ("__ollama__: first column in 'message' contains invalid value.");
+        }
+        // Get any images
         if (! msg(mrows,1).iscell () || msg(mrows,1).columns () != 2)
         {
-          error ("__ollama__: second column in 'messages' name must be a 2-column cell array.");
+          error ("__ollama__: second column in 'message' name must be a 2-column cell array.");
         }
         Cell img = msg(mrows,1).cell_value ();
         vector<ollama::image> msg_images;
@@ -507,31 +540,41 @@ at once.\n\
             has_msg_images = true;
           }
         }
-        // Create user message (with images, if any)
+        // If input is a tool output, no images are allowed in the same request.
+        // Images are only valid for user prompt.
+        if (has_msg_images && ! user_role)
+        {
+          error ("__ollama__: cannot append images after a tool output in 'message'.");
+        }
+        // Create user prompt with images
         if (has_msg_images)
         {
-          ollama::message msg_with_images("user", user, msg_images);
+          ollama::message msg_with_images("user", user_prompt, msg_images);
           messages.push_back (msg_with_images);
         }
-        else
+        else // without any images
         {
-          ollama::message msg_no_images("user", user);
+          ollama::message msg_no_images("user", user_prompt);
           messages.push_back (msg_no_images);
         }
-        // Get previous response (if any)
-        string assistant;
-        if (msg(mrows,2).is_string ())
+        // Get content from previous response (if any)
+        string content = "";
+        string thinking = "";
+        string toolcall = "";
+        if (msg(mrows,2).is_string ())      // content only
         {
-          assistant = msg(mrows,2).string_value ();
+          content = msg(mrows,2).string_value ();
         }
-        else
+        else if (msg(mrows,2).iscellstr ()) // content + thinking + toolcall
         {
           Cell response = msg(mrows,2).cell_value ();
-          assistant = response(1).string_value ();
+          content = response(0).string_value ();
+          thinking = response(1).string_value ();
+          toolcall = response(2).string_value ();
         }
-        if (assistant.size () > 0)
+        if (content.size () > 0 || toolcall.size () > 0)
         {
-          ollama::message msg_prev_resp("assistant", assistant);
+          ollama::message msg_prev_resp("assistant", content, thinking, toolcall, "");
           messages.push_back (msg_prev_resp);
         }
       }
@@ -557,6 +600,15 @@ at once.\n\
         error ("__ollama__: 'think' value must be a character vector.");
       }
       think = args(p+1).string_value ();
+    }
+    else if (args(p).string_value () == "tools")
+    {
+      // Check parameter value
+      if (! args(p+1).is_string ())
+      {
+        error ("__ollama__: 'tools' value must be a character vector.");
+      }
+      tools = args(p+1).string_value ();
     }
   }
 
@@ -766,7 +818,7 @@ at once.\n\
     try
     {
       ollama::response response;
-      response = ollama::chat (model, messages, think, sysmsg, options);
+      response = ollama::chat (model, messages, think, sysmsg, tools, options);
       string txt = response.as_json_string ();
       retval(0) = txt;
       retval(1) = false;
