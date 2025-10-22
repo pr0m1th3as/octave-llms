@@ -192,8 +192,28 @@ classdef ollama < handle
     ## an active model is set, the @qcode{thinking} property is empty.  Use dot
     ## notation to access and/or modify the default value of the thinking flag.
     ##
+    ## Setting a value to the thinking flag when there is no active model or for
+    ## an active model that does not have thinking capabilities results to an
+    ## error.
+    ##
     ## @end deftp
     thinking = [];
+
+    ## -*- texinfo -*-
+    ## @deftp {ollama} {property} tools
+    ##
+    ## Function tools for tool-capable models.
+    ##
+    ## A @qcode{toolFunction} object or a @qcode{toolRegistry} object (merely an
+    ## indexed collection of toolFunction objects), which are available to the
+    ## active model explicitly during chat sessions.  By default, no tools are
+    ## available.  Unless an active model capable of tool calling is set, the
+    ## @qcode{tools} property is empty.  Moreover, tools can only be assigned
+    ## when the active model is tool capable.  Use dot notation to access and/or
+    ## assign a @qcode{toolFunction} object or a @qcode{toolRegistry} object.
+    ##
+    ## @end deftp
+    tools = [];
 
     ## -*- texinfo -*-
     ## @deftp {ollama} {property} muteThinking
@@ -281,7 +301,7 @@ classdef ollama < handle
         endif
         ## Query active model for information and set default thinking
         ## to true if model is capable of thinking
-        if (checkThinking (this, model))
+        if (checkThinking (this))
           this.thinking = true;
         else
           this.thinking = false;
@@ -470,6 +490,11 @@ classdef ollama < handle
         [this.availableModels, err] = __ollama__ ('listModels', 'cellstr', ...
                                                   'serverURL', this.serverURL);
       endif
+      if (strcmp (model, this.activeModel))
+        this.activeModel = '';
+        this.thinking = [];
+        this.tools = [];
+      endif
     endfunction
 
     ## -*- texinfo -*-
@@ -515,7 +540,7 @@ classdef ollama < handle
         this.activeModel = model;
         ## Query active model for information and set default thinking
         ## to true if model is capable of thinking
-        if (checkThinking (this, model))
+        if (checkThinking (this))
           this.thinking = true;
         else
           this.thinking = false;
@@ -561,6 +586,7 @@ classdef ollama < handle
       elseif (strcmp (this.activeModel, model))
         this.activeModel = '';
         this.thinking = [];
+        this.tools = [];
       endif
     endfunction
 
@@ -1076,6 +1102,7 @@ classdef ollama < handle
     ## -*- texinfo -*-
     ## @deftypefn  {ollama} {} chat (@var{llm}, @var{prompt})
     ## @deftypefnx {ollama} {} chat (@var{llm}, @var{prompt}, @var{image})
+    ## @deftypefnx {ollama} {} chat (@var{llm}, @{@var{tool_output}@})
     ## @deftypefnx {ollama} {@var{txt} =} chat (@dots{})
     ## @deftypefnx {ollama} {} chat (@var{llm})
     ##
@@ -1087,17 +1114,18 @@ classdef ollama < handle
     ## @var{prompt} along with all previous requests and responses, made by the
     ## user and models during the same chat session, which is stored in the
     ## @qcode{'chatHistory'} property of the ollama interface object @var{llm}.
-    ## @var{prompt} must be a character vector.  When no output argument
-    ## is requested, @code{chat} prints the response text in the standard output
-    ## (command window) with a custom display method so that words are not split
-    ## between lines depending on the terminal size.  If an output argument is
-    ## requested, the text is returned as a character vector and nothing gets
-    ## displayed in the terminal.  In either case, the response text is appended
-    ## to the history chat, which can be displayed with the @code{showHistory}
-    ## method or return as a cell array from @qcode{@var{llm}.chatHistory}.  If
-    ## you want to start a new chat session, you can either clear the chat
-    ## history with the @code{clearHistory} method or create a new ollama
-    ## interface object.
+    ## @var{prompt} must a character vector specifying the content in the user's
+    ## message parsed in the request as @qcode{"role":"user"}.  When no output
+    ## argument is requested, @code{chat} prints the response text in the
+    ## standard output (command window) with a custom display method so that
+    ## words are not split between lines depending on the terminal size.  If an
+    ## output argument is requested, the text is returned as a character vector
+    ## and nothing gets displayed in the terminal.  In either case, the response
+    ## text is appended to the history chat, which can be displayed with the
+    ## @code{showHistory} method or return as a cell array from
+    ## @qcode{@var{llm}.chatHistory}.  If you want to start a new chat session,
+    ## you can either clear the chat history with the @code{clearHistory} method
+    ## or create a new ollama interface object.
     ##
     ## @code{chat (@var{llm}, @var{prompt}, @var{image})} also specifies an
     ## image or multiple images to be passed to the model along with the user's
@@ -1111,6 +1139,16 @@ classdef ollama < handle
     ## mulitple base64 encoded string representations of images.  Any images
     ## supplied along with a prompt during a chat session are also stored in the
     ## chat history.
+    ##
+    ## @code{chat (@var{llm}, @{@var{tool_output}@}) syntax may be used to pass
+    ## the results of a @qcode{toolFunction}, which has been evaluated after a
+    ## previous @qcode{"tool_calls"} request by the model, to the next message.
+    ## This syntax requires that the @var{tool_output} input argument is an
+    ## @math{Nx2} cell array of character vectors, in which the first column
+    ## contains the output of the evaluated @qcode{toolFunction} object and the
+    ## second column contains its function name.  Each rows in @var{tool_output}
+    ## corresponds to a separate function, when multiple @qcode{toolFunction}
+    ## objects, have been called for evaluation.
     ##
     ## @code{@var{txt} = chat (@dots{})} returns the generated text to the
     ## output argument @var{txt} instead of displaying it to the terminal for
@@ -1158,21 +1196,34 @@ classdef ollama < handle
         error ("ollama.chat: too few input arguments.");
       endif
       ## Initialize new chat or use previous history
-      if (this.thinking) # true or "low", "medium", or "high" (GPT-OSS specific)
-        message = {'', {'', ''}, {''; ''}};
+      if (this.thinking || ! isempty (this.tools)) # true,"low", "medium", "high"
+        message = {'', {'', ''}, {''; ''; ''}};
       else
         message = {'', {'', ''}, ''};
       endif
       if (! isempty (this.chatHistory))
         message = [this.chatHistory; message];
       endif
-      ## Validate user prompt
+      ## Validate first input either as "role:user" or as "role:tool"
       if (nargin > 1)
         prompt = varargin{1};
-        if (! (isvector (prompt) && ischar (prompt)))
-          error ("ollama.chat: PROMPT must be a character vector.");
+        if (isempty (this.tools))
+          if (isvector (prompt) && ischar (prompt))
+            message(end, 1) = prompt;
+          else
+            error ("ollama.chat: PROMPT must be a character vector.");
+          endif
+        else
+          if (isvector (prompt) && ischar (prompt))
+            message(end, 1) = prompt;
+          elseif (columns (prompt) == 2 && iscellstr (prompt))
+            message(end, 1) = prompt;
+          else
+            error ("ollama.chat: first input argument must be either", ...
+                   " a character vector or a two-column cell array", ...
+                   " of character vectors.");
+          endif
         endif
-        message(end, 1) = prompt;
       endif
       ## Validate any images
       if (nargin > 2)
@@ -1212,6 +1263,14 @@ classdef ollama < handle
       else
         think = this.thinking;
       endif
+      ## Handle tools
+      if (isempty (this.tools))
+        tools = "NA";
+      elseif (isa (this.tools, 'toolFunction'))
+        tools = jsonencode ({encodeFunction(this.tool)});
+      else # it must be a toolRegistry
+        tools = jsonencode (encodeToolRegistry(this.tool));
+      endif
       ## Run inference
       [out, err] = __ollama__ ('model', this.activeModel, ...
                                'serverURL', this.serverURL, ...
@@ -1220,7 +1279,7 @@ classdef ollama < handle
                                'options', this.options, ...
                                'message', message, ...
                                'systemMessage', this.systemMessage, ...
-                               'think', think);
+                               'think', think, 'tools', tools);
       if (err)
         msg = strcat ("If you get a time out error, try to increase the", ...
                       " 'readTimeout' and 'writeTimeout' parameters\n", ...
@@ -1228,13 +1287,25 @@ classdef ollama < handle
         error ("ollama.chat: %s\n   %s", out, msg);
       endif
       ## Decode json output
-      this.responseStats = jsondecode (out);
+      this.responseStats = jsondecode (out, 'makeValidName', false);
+      ## Grab tool_calls (if any)
+      tool_calls = '';
+      if (! isempty (this.tools))
+        if (ismember (fieldnames (this.responseStats.message), 'tool_calls'))
+          tool_calls = this.responseStats.message.tool_calls;
+        endif
+      endif
       ## Add response to chat history
-      if (this.thinking)
+      if (this.thinking || ! isempty (tool_calls))
         message{end,3}(1) = strtrim (this.responseStats.message.content);
         message{end,3}(2) = strtrim (this.responseStats.message.thinking);
+        message{end,3}(3) = jsonencode (tool_calls);
       else
-        message(end,3) = strtrim (this.responseStats.message.content);
+        if (isempty (tool_calls))
+          message(end,3) = strtrim (this.responseStats.message.content);
+        else
+          message(end,3) = jsonencode (tool_calls);
+        endif
       endif
       this.chatHistory = message;
       ## Return response text
@@ -1244,16 +1315,31 @@ classdef ollama < handle
         if (this.thinking)
           if (this.muteThinking)
             disp ("Response:\n");
-            __disp__ (out{1});
+            if (isempty (tool_calls))
+              __disp__ (message{end,3}{1});
+            else
+              disp ("The following tool calls are required.")
+              disp (tool_calls);
+            endif
           else
             disp ("<thinking>");
-            __disp__ (out{2});
+            __disp__ (message{end,3}{2});
             disp ("</thinking>\n\nResponse:\n");
-            __disp__ (out{1});
+            if (isempty (tool_calls))
+              __disp__ (message{end,3}{1});
+            else
+              disp ("The following tool calls are required.")
+              disp (tool_calls);
+            endif
           endif
         else
           disp ("Response:\n");
-          __disp__ (message{end,3});
+          if (isempty (tool_calls))
+            __disp__ (message{end,3}{1});
+          else
+              disp ("The following tool calls are required.")
+              disp (tool_calls);
+          endif
         endif
       endif
     endfunction
@@ -1384,15 +1470,31 @@ classdef ollama < handle
         disp ("Model response:");
         if (iscell (H{idx,3}))
           if (this.muteThinking)
-            __disp__ (H{idx,3}{1});
+            if (isempty (H{idx,3}{3}))
+              __disp__ (H{idx,3}{1});
+            else
+                disp ("The following tool calls are required.");
+                disp (jsondecode (H{idx,3}{3}, 'makeValidName', false));
+            endif
           else
             disp ("<thinking>");
             __disp__ (H{idx,3}{2});
             disp ("</thinking>\n\nResponse:\n");
-            __disp__ (H{idx,3}{1});
+            if (isempty (H{idx,3}{3}))
+              __disp__ (H{idx,3}{1});
+            else
+              disp ("The following tool calls are required.");
+              disp (jsondecode (H{idx,3}{3}, 'makeValidName', false));
+            endif
           endif
         else
-          __disp__ (H{idx,3});
+          try
+            out = jsondecode (H{idx,3}, 'makeValidName', false);
+            disp ("The following tool calls are required.");
+            disp (out);
+          catch
+            __disp__ (H{idx,3});
+          end_try_catch
         endif
       endfor
     endfunction
@@ -1515,27 +1617,17 @@ classdef ollama < handle
             varargout{1} = this;
           else
             if (strcmp (this.mode, 'query'))
-              out = query (this, s.subs{:});
-            else  # chat mode
-              out = chat (this, s.subs{:});
-            endif
-            if (nargout == 0)
-              if (this.thinking)
-                if (this.muteThinking)
-                  disp ("Response:\n");
-                  __disp__ (out{1});
-                else
-                  disp ("<thinking>");
-                  __disp__ (out{2});
-                  disp ("</thinking>\n\nResponse:\n");
-                  __disp__ (out{1});
-                endif
+              if (nargout == 0)
+                query (this, s.subs{:});
               else
-                disp ("Response:\n");
-                __disp__ (out);
+                varargout{1} = query (this, s.subs{:});
               endif
-            else
-              varargout{1} = out;
+            else  # chat mode
+              if (nargout == 0)
+                chat (this, s.subs{:});
+              else
+                varargout{1} = chat (this, s.subs{:});
+              endif
             endif
             return;
           endif
@@ -1573,6 +1665,8 @@ classdef ollama < handle
               out = this.system;
             case 'thinking'
               out = this.thinking;
+            case 'tools'
+              out = this.tools;
             otherwise
               error ("ollama.subsref: unrecongized property: '%s'", s.subs);
           endswitch
@@ -1652,16 +1746,33 @@ classdef ollama < handle
             case 'thinking'
               if (isscalar (val) && islogical (val) || ischar (val) && ivector (val))
                 if (isempty (this.activeModel))
-                  error (strcat ("ollama.subsref: cannot set 'thinking'", ...
+                  error (strcat ("ollama.subsref: cannot assign 'thinking'", ...
                                  " without an active model."));
                 endif
-                ## Query active model for information and set default thinking
-                ## to true if model is capable of thinking
-                if (! checkThinking (this, model))
-                  error (strcat ("ollama.subsref: currently active model", ...
-                                 " does not support 'thinking'"));
+                ## Query active model for information and assign
+                ## value only if model is capable of thinking
+                if (! checkThinking (this))
+                  error (strcat ("ollama.subsref: currently active", ...
+                                 " model does not support 'thinking'"));
                 endif
                 this.thinking = val;
+              else
+                error (strcat ("ollama.subsref: 'thinking' must be either", ...
+                               " a logical scalar or a character vector."));
+              endif
+            case 'tools'
+              if (isa (val, 'toolFunction') || isa (val, 'toolRegistry'))
+                if (isempty (this.activeModel))
+                  error (strcat ("ollama.subsref: cannot assign", ...
+                                 " 'tools' without an active model."));
+                endif
+                ## Query active model for information and assign
+                ## value only if model is capable of thinking
+                if (! checkToolCalling (this))
+                  error (strcat ("ollama.subsref: currently active", ...
+                                 " model does not support 'tools'"));
+                endif
+                this.tools = val;
               else
                 error (strcat ("ollama.subsref: 'thinking' must be either", ...
                                " a logical scalar or a character vector."));
@@ -1677,14 +1788,31 @@ classdef ollama < handle
 
   methods (Access = private)
 
-    ## Function for check if a model has thinking capabilities
-    function out = checkThinking (this, model)
-      [out, err] = __ollama__ ('modelInfo', model, 'serverURL', this.serverURL);
+    ## Function for check if the active model has thinking capabilities
+    function out = checkThinking (this)
+      [out, err] = __ollama__ ('modelInfo', this.activeModel, ...
+                               'serverURL', this.serverURL);
       if (err)
         error ("ollama: could not get MODEL info for '%s'", model);
       else
         ## Search the capabilities field for thiking
         if (ismember ('thinking', jsondecode (out).capabilities))
+          out = true;
+        else
+          out = false;
+        endif
+      endif
+    endfunction
+
+    ## Function for check if a model has tool-calling capabilities
+    function out = checkToolCalling (this)
+      [out, err] = __ollama__ ('modelInfo', this.activeModel, ...
+                               'serverURL', this.serverURL);
+      if (err)
+        error ("ollama: could not get MODEL info for '%s'", model);
+      else
+        ## Search the capabilities field for thiking
+        if (ismember ('tools', jsondecode (out).capabilities))
           out = true;
         else
           out = false;
