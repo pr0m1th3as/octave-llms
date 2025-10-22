@@ -192,7 +192,20 @@ namespace ollama
 
     class message: public json {
         public:
-            message(const std::string& role, const std::string& content, const std::vector<ollama::image>& images): json() { (*this)["role"] = role; (*this)["content"] = content; (*this)["images"] = images; }
+            message(const std::string& role, const std::string& content, const std::string& thinking, const std::string& tool_calls, const std::string& tool_name): json()
+            {
+                (*this)["role"] = role;
+                (*this)["content"] = content;
+                if (!thinking.empty()) (*this)["thinking"] = thinking;
+                if (!tool_calls.empty()) (*this)["tool_calls"] = tool_calls;
+                if (!tool_name.empty()) (*this)["tool_name"] = tool_name;
+            }
+            message(const std::string& role, const std::string& content, const std::vector<ollama::image>& images): json()
+            {
+                (*this)["role"] = role;
+                (*this)["content"] = content;
+                (*this)["images"] = images;
+            }
             message(const std::string& role, const std::string& content): json() { (*this)["role"] = role; (*this)["content"] = content; }           
             message() : json() {}
             ~message() {}
@@ -244,6 +257,7 @@ namespace ollama
             // Create a request for a generation with custom system message and thinking option.
             // Thinking is parsed as a string to support GPT-OSS which accepts "low", "medium", or "high".
             // Standard "true"/"false" values are converted to boolean values internally
+            // A generation request may contain options and images
             request(const std::string& model, const std::string& prompt, const std::string& think, const std::string& sysmsg, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>()): request()
             {
                 (*this)["model"] = model;
@@ -264,7 +278,8 @@ namespace ollama
             // Create a request for a chat completion with custom system message and thinking option.
             // Thinking is parsed as a string to support GPT-OSS which accepts "low", "medium", or "high".
             // Standard "true"/"false" values are converted to boolean values internally
-            request(const std::string& model, const ollama::messages& messages, const std::string& think, const std::string& sysmsg, const json& options=nullptr, const std::string& keep_alive_duration="5m"): request()
+            // A chat request may contain options and tools
+            request(const std::string& model, const ollama::messages& messages, const std::string& think, const std::string& sysmsg, const std::string& tools, const json& options=nullptr, const std::string& keep_alive_duration="5m"): request()
             {
                 (*this)["model"] = model;
                 (*this)["messages"] = messages.to_json();
@@ -275,6 +290,8 @@ namespace ollama
                 else (*this)["think"] = think;
 
                 if (!sysmsg.empty()) (*this)["system"] = sysmsg;
+                if (tools != "NA") (*this)["tools"] = tools;
+
                 if (options!=nullptr) (*this)["options"] = options["options"];
                 (*this)["keep_alive"] = keep_alive_duration;
                 type = message_type::chat;
@@ -286,7 +303,7 @@ namespace ollama
             request(): json() {}
             ~request(){};
 
-            static ollama::request from_embedding(const std::string& model, const std::string& input, const json& options=nullptr, bool truncate=true, const std::string& keep_alive_duration="5m")
+            static ollama::request from_embedding(const std::string& model, const std::string& input, const json& options=nullptr, bool truncate=true, const std::string& keep_alive_duration="5m", const int& dimensions=0)
             {
                 ollama::request request(message_type::embedding);
 
@@ -295,6 +312,7 @@ namespace ollama
                 if (options!=nullptr) request["options"] = options["options"];
                 request["truncate"] = truncate;
                 request["keep_alive"] = keep_alive_duration;
+                if (dimensions > 0) request["dimensions"] = dimensions;
                 
                 return request;
             }
@@ -438,9 +456,9 @@ class Ollama
         return response;        
     }
 
-    ollama::response chat(const std::string& model, const ollama::messages& messages, const std::string& think, const std::string& sysmsg, json options=nullptr, const std::string& keep_alive_duration="5m")
+    ollama::response chat(const std::string& model, const ollama::messages& messages, const std::string& think, const std::string& sysmsg, const std::string& tools, json options=nullptr, const std::string& keep_alive_duration="5m")
     {
-        ollama::request request(model, messages, think, sysmsg, options, keep_alive_duration);
+        ollama::request request(model, messages, think, sysmsg, tools, options, keep_alive_duration);
         return chat(request);
     }
 
@@ -465,6 +483,35 @@ class Ollama
         {
             if (ollama::use_exceptions) throw ollama::exception("No response returned from server "+this->server_url+". Error was: "+httplib::to_string( res.error() ));
         }
+
+        return response;
+    }
+
+    ollama::response generate_embeddings(const std::string& model, const std::string& input, const json& options=nullptr, bool truncate = true, const std::string& keep_alive_duration="5m", const int& dimensions=0)
+    {
+        ollama::request request = ollama::request::from_embedding(model, input, options, truncate, keep_alive_duration, dimensions);
+        return generate_embeddings(request);
+    }
+
+
+    ollama::response generate_embeddings(ollama::request& request)
+    {
+        ollama::response response;
+
+        std::string request_string = request.dump();
+        if (ollama::log_requests) std::cout << request_string << std::endl;
+
+        if (auto res = cli->Post("/api/embed", request_string, "application/json"))
+        {
+            if (ollama::log_replies) std::cout << res->body << std::endl;
+
+
+            if (res->status==httplib::StatusCode::OK_200) {response = ollama::response(res->body); return response; };
+            if (res->status==httplib::StatusCode::NotFound_404) { if (ollama::use_exceptions) throw ollama::exception("Model not found when trying to push (Code 404)."); }
+
+            if ( response.has_error() ) { if (ollama::use_exceptions) throw ollama::exception( "Error returned from ollama when generating embeddings: "+response.get_error() ); }
+        }
+        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when pushing model: "+httplib::to_string( res.error() ) );}
 
         return response;
     }
@@ -732,35 +779,6 @@ class Ollama
         return false;
     }
 
-    ollama::response generate_embeddings(const std::string& model, const std::string& input, const json& options=nullptr, bool truncate = true, const std::string& keep_alive_duration="5m")
-    {
-        ollama::request request = ollama::request::from_embedding(model, input, options, truncate, keep_alive_duration);
-        return generate_embeddings(request);
-    }
-
-
-    ollama::response generate_embeddings(ollama::request& request)
-    {
-        ollama::response response;
-
-        std::string request_string = request.dump();
-        if (ollama::log_requests) std::cout << request_string << std::endl;
-        
-        if (auto res = cli->Post("/api/embed", request_string, "application/json"))
-        {
-            if (ollama::log_replies) std::cout << res->body << std::endl;
-
-
-            if (res->status==httplib::StatusCode::OK_200) {response = ollama::response(res->body); return response; };
-            if (res->status==httplib::StatusCode::NotFound_404) { if (ollama::use_exceptions) throw ollama::exception("Model not found when trying to push (Code 404)."); }
-
-            if ( response.has_error() ) { if (ollama::use_exceptions) throw ollama::exception( "Error returned from ollama when generating embeddings: "+response.get_error() ); }          
-        }
-        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when pushing model: "+httplib::to_string( res.error() ) );}        
-
-        return response;
-    }
-
     std::string get_version()
     {
         std::string version;
@@ -839,14 +857,24 @@ namespace ollama
         return ollama.generate(request);
     }
 
-    inline ollama::response chat(const std::string& model, const ollama::messages& messages, const std::string& think, const std::string& sysmsg, const json& options=nullptr, const std::string& keep_alive_duration="5m")
+    inline ollama::response chat(const std::string& model, const ollama::messages& messages, const std::string& think, const std::string& sysmsg, const std::string& tools, const json& options=nullptr, const std::string& keep_alive_duration="5m")
     {
-        return ollama.chat(model, messages, think, sysmsg, options, keep_alive_duration);
+        return ollama.chat(model, messages, think, sysmsg, tools, options, keep_alive_duration);
     }
 
     inline ollama::response chat(ollama::request& request)
     {
         return ollama.chat(request);
+    }
+
+    inline ollama::response generate_embeddings(const std::string& model, const std::string& input, const json& options=nullptr, bool truncate = true, const std::string& keep_alive_duration="5m", const int& dimensions=0)
+    {
+        return ollama.generate_embeddings(model, input, options, truncate, keep_alive_duration, dimensions);
+    }
+
+    inline ollama::response generate_embeddings(ollama::request& request)
+    {
+        return ollama.generate_embeddings(request);
     }
 
     inline bool create(const std::string& modelName, const std::string& modelFile, bool loadFromFile=true)
@@ -927,16 +955,6 @@ namespace ollama
     inline bool push_model(const std::string& model, bool allow_insecure = false)
     {
         return ollama.push_model(model, allow_insecure);
-    }
-
-    inline ollama::response generate_embeddings(const std::string& model, const std::string& input, const json& options=nullptr, bool truncate = true, const std::string& keep_alive_duration="5m")
-    {
-        return ollama.generate_embeddings(model, input, options, truncate, keep_alive_duration);
-    }
-
-    inline ollama::response generate_embeddings(ollama::request& request)
-    {
-        return ollama.generate_embeddings(request);
     }
 
     inline void setReadTimeout(const int& seconds)
