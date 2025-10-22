@@ -1774,8 +1774,8 @@ classdef ollama < handle
                 endif
                 this.tools = val;
               else
-                error (strcat ("ollama.subsref: 'thinking' must be either", ...
-                               " a logical scalar or a character vector."));
+                error (strcat ("ollama.subsref: 'tool' must be either a", ...
+                               " 'toolFunction' or a 'toolRegistry' object."));
               endif
             otherwise
               error ("ollama.subsasgn: unrecongized property: %s", s.subs);
