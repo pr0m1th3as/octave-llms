@@ -1146,7 +1146,7 @@ classdef ollama < handle
     ## This syntax requires that the @var{tool_output} input argument is an
     ## @math{Nx2} cell array of character vectors, in which the first column
     ## contains the output of the evaluated @qcode{toolFunction} object and the
-    ## second column contains its function name.  Each rows in @var{tool_output}
+    ## second column contains its function name.  Each row in @var{tool_output}
     ## corresponds to a separate function, when multiple @qcode{toolFunction}
     ## objects, have been called for evaluation.
     ##
@@ -1196,11 +1196,7 @@ classdef ollama < handle
         error ("ollama.chat: too few input arguments.");
       endif
       ## Initialize new chat or use previous history
-      if (this.thinking || ! isempty (this.tools)) # true,"low", "medium", "high"
-        message = {'', {'', ''}, {''; ''; ''}};
-      else
-        message = {'', {'', ''}, ''};
-      endif
+      message = {'', {'', ''}, {''; ''; ''}};
       if (! isempty (this.chatHistory))
         message = [this.chatHistory; message];
       endif
@@ -1269,7 +1265,7 @@ classdef ollama < handle
       elseif (isa (this.tools, 'toolFunction'))
         tools = jsonencode ({encodeFunction(this.tool)});
       else # it must be a toolRegistry
-        tools = jsonencode (encodeToolRegistry(this.tool));
+        tools = jsonencode (encodeRegistry(this.tool));
       endif
       ## Run inference
       [out, err] = __ollama__ ('model', this.activeModel, ...
@@ -1281,10 +1277,7 @@ classdef ollama < handle
                                'systemMessage', this.systemMessage, ...
                                'think', think, 'tools', tools);
       if (err)
-        msg = strcat ("If you get a time out error, try to increase the", ...
-                      " 'readTimeout' and 'writeTimeout' parameters\n", ...
-                      "   to allow more time for ollama server to respond.");
-        error ("ollama.chat: %s\n   %s", out, msg);
+        error ("ollama.chat: %s", out);
       endif
       ## Decode json output
       this.responseStats = jsondecode (out, 'makeValidName', false);
@@ -1301,11 +1294,7 @@ classdef ollama < handle
         message{end,3}(2) = strtrim (this.responseStats.message.thinking);
         message{end,3}(3) = jsonencode (tool_calls);
       else
-        if (isempty (tool_calls))
-          message(end,3) = strtrim (this.responseStats.message.content);
-        else
-          message(end,3) = jsonencode (tool_calls);
-        endif
+        message(end,3) = strtrim (this.responseStats.message.content);
       endif
       this.chatHistory = message;
       ## Return response text
@@ -1318,8 +1307,7 @@ classdef ollama < handle
             if (isempty (tool_calls))
               __disp__ (message{end,3}{1});
             else
-              disp ("The following tool calls are required.")
-              disp (tool_calls);
+              __json__ (tool_calls);
             endif
           else
             disp ("<thinking>");
@@ -1328,8 +1316,7 @@ classdef ollama < handle
             if (isempty (tool_calls))
               __disp__ (message{end,3}{1});
             else
-              disp ("The following tool calls are required.")
-              disp (tool_calls);
+              __json__ (tool_calls);
             endif
           endif
         else
@@ -1337,8 +1324,7 @@ classdef ollama < handle
           if (isempty (tool_calls))
             __disp__ (message{end,3}{1});
           else
-              disp ("The following tool calls are required.")
-              disp (tool_calls);
+            __json__ (tool_calls);
           endif
         endif
       endif
@@ -1473,8 +1459,7 @@ classdef ollama < handle
             if (isempty (H{idx,3}{3}))
               __disp__ (H{idx,3}{1});
             else
-                disp ("The following tool calls are required.");
-                disp (jsondecode (H{idx,3}{3}, 'makeValidName', false));
+              __json__ (jsondecode (H{idx,3}{3}, 'makeValidName', false));
             endif
           else
             disp ("<thinking>");
@@ -1483,18 +1468,11 @@ classdef ollama < handle
             if (isempty (H{idx,3}{3}))
               __disp__ (H{idx,3}{1});
             else
-              disp ("The following tool calls are required.");
-              disp (jsondecode (H{idx,3}{3}, 'makeValidName', false));
+              __json__ (jsondecode (H{idx,3}{3}, 'makeValidName', false));
             endif
           endif
         else
-          try
-            out = jsondecode (H{idx,3}, 'makeValidName', false);
-            disp ("The following tool calls are required.");
-            disp (out);
-          catch
-            __disp__ (H{idx,3});
-          end_try_catch
+          __disp__ (H{idx,3});
         endif
       endfor
     endfunction
@@ -1895,7 +1873,7 @@ classdef ollama < handle
 endclassdef
 
 ## Private function for printing inference text output within the screen's limit
-function out = __disp__ (txt)
+function __disp__ (txt)
   ## Get screen size to trim lines to
   cols = terminal_size ()(2) - 4;
   ## Split text by paragraphs
@@ -1920,4 +1898,32 @@ function out = __disp__ (txt)
       disp ('');
     endif
   endfor
+endfunction
+
+## Private function for printing tool_calls in structured json format
+function __json__ (tool_calls)
+  toolnum = numel (tool_calls);
+  if (toolnum == 1)
+    disp ("The following toolFunction object must be evaluated:");
+    fprintf ("%+25s: '%s'\n", 'name', tool_calls.function.name);
+    ModelArgs = fieldnames (tool_calls.function.arguments);
+    fargs = cellfun (@(fnames) tool_calls.function.arguments.(fnames), ...
+                     ModelArgs, 'UniformOutput', false);
+    fprintf ("%+25s: {'%s': '%s'}\n", 'arguments', ModelArgs{1}, fargs{1});
+    for i = 2:numel (ModelArgs)
+      fprintf ("%+26s {'%s': '%s'}\n", '', ModelArgs{i}, fargs{i});
+    endfor
+  else
+    disp ("The following toolFunction objects must be evaluated:");
+    for t = 1:toolnum
+      fprintf ("%+25s: '%s'\n", 'name', tool_calls(t).function.name);
+      ModelArgs = fieldnames (tool_calls(t).function.arguments);
+      fargs = cellfun (@(fnames) tool_calls(t).function.arguments.(fnames), ...
+                       ModelArgs, 'UniformOutput', false);
+      fprintf ("%+25s: {'%s': '%s'}\n", 'arguments', ModelArgs{1}, fargs{1});
+      for i = 2:numel (ModelArgs)
+        fprintf ("%+26s {'%s': '%s'}\n", '', ModelArgs{i}, fargs{i});
+      endfor
+    endfor
+  endif
 endfunction
