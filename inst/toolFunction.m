@@ -176,17 +176,20 @@ classdef toolFunction
     ## Evaluate the tool function.
     ##
     ## @code{@var{tool_output} = evalFunction (@var{tool}, @var{tool_call})}
-    ## will evaluate the function handle of the @qcode{toolFunction} object
+    ## evaluates the function handle of the @qcode{toolFunction} object
     ## specified by @var{tool} according to the input arguments described by the
     ## LLM's tool calling response specified in @var{tool_call}, which can be a
     ## character vector containing the appropriate JSON string message or its
-    ## equivalent to a scalar structure.
+    ## equivalent to a scalar structure.  The returned @var{tool_output} is a
+    ## @math{1x2} cell array of character vectors, in which the first element
+    ## contains the output of the evaluated @qcode{toolFunction} object and the
+    ## second element contains its corresponding function name.
     ##
     ## @end deftypefn
     function tool_output = evalFunction (this, tool_call)
       if (! isstruct (tool_call))
         if (validateString (tool_call))
-          error (strcat ("toolFunction.addParameters: unless a struct", ...
+          error (strcat ("toolFunction.evalFunction: unless a struct", ...
                          " TOOL_CALL must be a nonempty character vector."));
         endif
         try
@@ -218,7 +221,7 @@ classdef toolFunction
 
   endmethods
 
-  methods (GetAccess = public, Hidden)
+  methods (Hidden)
 
     function funStruct = encodeFunction (this)
       funStruct.type = "function";
@@ -228,6 +231,22 @@ classdef toolFunction
       funStruct.function.parameters.properties = this.parameters;
       funStruct.function.required = fieldnames (this.parameters);
     endfunction
+
+    ## Class specific subscripted reference
+    function varargout = subsref (this, s)
+      chain_s = s(2:end);
+      s = s(1);
+      switch (s.type)
+        case '()'
+          error ("toolFunction.subsref: '()}' invalid indexing.");
+        case '{}'
+          error ("toolFunction.subsref: '{}' invalid indexing.");
+        case '.'
+          switch (s.subs)
+            case 'name'
+              out = this.name;
+          endswitch
+      endswitch
 
   endmethods
 

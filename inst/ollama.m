@@ -15,7 +15,7 @@
 
 classdef ollama < handle
   ## -*- texinfo -*-
-  ## @deftp {ollama} ollama
+  ## @deftp {llms} ollama
   ##
   ## An ollama object interface with a running ollama server.
   ##
@@ -1140,15 +1140,16 @@ classdef ollama < handle
     ## supplied along with a prompt during a chat session are also stored in the
     ## chat history.
     ##
-    ## @code{chat (@var{llm}, @{@var{tool_output}@}) syntax may be used to pass
-    ## the results of a @qcode{toolFunction}, which has been evaluated after a
-    ## previous @qcode{"tool_calls"} request by the model, to the next message.
-    ## This syntax requires that the @var{tool_output} input argument is an
-    ## @math{Nx2} cell array of character vectors, in which the first column
-    ## contains the output of the evaluated @qcode{toolFunction} object and the
-    ## second column contains its function name.  Each row in @var{tool_output}
-    ## corresponds to a separate function, when multiple @qcode{toolFunction}
-    ## objects, have been called for evaluation.
+    ## @code{chat (@var{llm}, @var{tool_output}) syntax may be used to pass the
+    ## output results of a single @qcode{toolFunction} object or mulitple
+    ## @qcode{toolFunction} objects contained in a @qcode{toolRegistry}, which
+    ## have been evaluated after a previous @qcode{"tool_calls"} request by the
+    ## model, to the next message.  This syntax requires the @var{tool_output}
+    ## input argument to be a  @math{Nx2} cell array of character vectors, in
+    ## which the first column contains the output of each evaluated
+    ## @qcode{toolFunction} object and the second column contains its respective
+    ## function name.  Each row in @var{tool_output} corresponds to a separate
+    ## function, when multiple @qcode{toolFunction} objects have been evaluated.
     ##
     ## @code{@var{txt} = chat (@dots{})} returns the generated text to the
     ## output argument @var{txt} instead of displaying it to the terminal for
