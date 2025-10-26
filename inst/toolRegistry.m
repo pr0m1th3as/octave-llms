@@ -129,6 +129,7 @@ classdef toolRegistry
 
   methods (Hidden)
 
+    ## Encode toolRegistry into a structure array
     function regStruct = encodeRegistry (this)
       for i = 1:numel (this.names)
         regStruct(i) = encodeFunction (this.tools{i});

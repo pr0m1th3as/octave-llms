@@ -223,6 +223,7 @@ classdef toolFunction
 
   methods (Hidden)
 
+    ## Encode toolFunction into a scalar structure
     function funStruct = encodeFunction (this)
       funStruct.type = "function";
       funStruct.function.name = this.name;
@@ -245,6 +246,10 @@ classdef toolFunction
           switch (s.subs)
             case 'name'
               out = this.name;
+            case 'description'
+              out = this.description;
+            case 'handle'
+              out = this.handle;
           endswitch
       endswitch
 

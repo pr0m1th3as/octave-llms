@@ -1064,10 +1064,7 @@ classdef ollama < handle
                                'systemMessage', this.systemMessage, ...
                                'think', think, args{:});
       if (err)
-        msg = strcat ("If you get a time out error, try to increase the", ...
-                      " 'readTimeout' and 'writeTimeout' parameters\n", ...
-                      "   to allow more time for ollama server to respond.");
-        error ("ollama.query: %s\n   %s", out, msg);
+        error ("ollama.query: %s", out);
       endif
       ## Decode json output
       this.responseStats = jsondecode (out);
