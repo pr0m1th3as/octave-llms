@@ -566,14 +566,26 @@ class Ollama
 
     }
 
-    bool load_model(const std::string& model)
+    bool load_model(const std::string& model, bool load_embeddingModel = false)
     {
         json request;
         request["model"] = model;
         std::string request_string = request.dump();
-        auto res = this->cli->Post("/api/generate", request_string, "application/json");
-		json response = json::parse(res->body);
-		if (response.contains ("done")) {return response["done"];}
+        if (ollama::log_requests) std::cout << request_string << std::endl;
+        if (load_embeddingModel)
+        {
+            auto res = this->cli->Post("/api/embed", request_string, "application/json");
+            json response = json::parse(res->body);
+            if (ollama::log_replies) std::cout << "Reply from '/api/embed' was " << res->body << std::endl;
+            if (response.contains ("embeddings")) {return true;}
+        }
+        else
+        {
+            auto res = this->cli->Post("/api/generate", request_string, "application/json");
+            json response = json::parse(res->body);
+            if (ollama::log_replies) std::cout << "Reply from '/api/generate' was " << res->body << std::endl;
+            if (response.contains ("done")) {return response["done"];}
+        }
         return false;                
     }
 
@@ -890,9 +902,9 @@ namespace ollama
         return ollama.is_running();
     }
 
-    inline bool load_model(const std::string& model)
+    inline bool load_model(const std::string& model, bool load_embeddingModel = false)
     {
-        return ollama.load_model(model);
+        return ollama.load_model(model, load_embeddingModel);
     }
 
     inline bool unload_model(const std::string& model)
