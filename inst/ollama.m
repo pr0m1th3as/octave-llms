@@ -263,15 +263,18 @@ classdef ollama < handle
     ## specifies the inference mode of the ollama interface.  @var{mode} can be
     ## specified as @qcode{'query'}, for generating responses to single prompts,
     ## @qcode{'chat'}, for starting a conversation with a model by retaining the
-    ## entire chat history during inference, and @qcode{'embed'} (unimplemented)
-    ## for generating embedings for given prompts.  By default, the
-    ## @code{ollama} interface is initialized in query mode.
+    ## entire chat history during inference, and @qcode{'embed'} for generating
+    ## embedings for given prompts.  By default, the @code{ollama} interface is
+    ## initialized in query mode, unless an embedding model has ben requested,
+    ## in which case it defaults to embedding mode.  @qcode{'embed'} is only
+    ## valid for embedding models, otherwise @code{ollama} returns an error.
+    ## Loading an embedding model overrides any value specified in @var{mode}.
     ##
     ## @seealso{fig2base64}
     ## @end deftypefn
     function this = ollama (serverURL = [], model = '', mode = 'query')
       ## Parse inputs
-      if (! any (strcmpi (mode, {'query', 'chat'})))
+      if (! any (strcmpi (mode, {'query', 'chat', 'embed'})))
         error ("ollama: unsupported mode option '%s'.", mode);
       endif
       this.mode = tolower (mode);
@@ -293,18 +296,31 @@ classdef ollama < handle
       endif
       ## Make a model active (if requested AND if available)
       if (! isempty (model) && ischar (model) && isvector (model))
-        [out, err] = __ollama__ ('loadModel', model, 'serverURL', this.serverURL);
-        if (err)
-          warning ("ollama: model '%s' is not available.", model);
+        this.activeModel = model;
+        if (checkEmbedding (this))
+          [out, err] = __ollama__ ('loadModel', model, ...
+                                   'embeddingModel', true, ...
+                                   'serverURL', this.serverURL);
+          this.mode = 'embed';
         else
-          this.activeModel = model;
+          if (strcmp (this.mode, 'embed'))
+            error ("ollama: '%s' is not an embedding model.", model);
+          endif
+          [out, err] = __ollama__ ('loadModel', model, ...
+                                   'serverURL', this.serverURL);
+        endif
+        if (err)
+          this.activeModel = '';
+          error ("ollama: model '%s' is not available.", model);
         endif
         ## Query active model for information and set default thinking
-        ## to true if model is capable of thinking
-        if (checkThinking (this))
-          this.thinking = true;
-        else
-          this.thinking = false;
+        ## to true if model is capable of thinking, unless mode == 'embed'
+        if (! strcmp (this.mode, 'embed'))
+          if (checkThinking (this))
+            this.thinking = true;
+          else
+            this.thinking = false;
+          endif
         endif
       endif
     endfunction
@@ -511,6 +527,10 @@ classdef ollama < handle
     ## character vector with the name of the model or an integer scalar value
     ## indexing an existing model in @qcode{@var{llm}.availableModels}.
     ##
+    ## If loading a model fails, an error message is returned and the properties
+    ## @qcode{activeModel}, @qcode{thinking}, and @qcode{tools} are reset to
+    ## their default values.
+    ##
     ## You can load multiple models conncurently and you are only limited by the
     ## hardware specifications of the ollama server, which @var{llm} interfaces
     ## with.  However, since each time a new model is loaded it is also set as
@@ -533,13 +553,25 @@ classdef ollama < handle
         error (strcat ("ollama.loadModel: MODEL must be a character", ...
                        " vector or an index to 'availableModels'."));
       endif
-      [out, err] = __ollama__ ('loadModel', model, 'serverURL', this.serverURL);
-      if (err)
-        error ("ollama.loadModel: MODEL could not be loaded.");
+      this.activeModel = model;
+      if (checkEmbedding (this))
+        [out, err] = __ollama__ ('loadModel', model, ...
+                                 'embeddingModel', true, ...
+                                 'serverURL', this.serverURL);
+        this.mode = 'embed';
       else
-        this.activeModel = model;
-        ## Query active model for information and set default thinking
-        ## to true if model is capable of thinking
+        [out, err] = __ollama__ ('loadModel', model, ...
+                                 'serverURL', this.serverURL);
+      endif
+      if (err)
+        this.activeModel = '';
+        this.thinking = [];
+        this.tools = [];
+        error ("ollama.loadModel: MODEL could not be loaded.");
+      endif
+      ## Query active model for information and set default thinking
+      ## to true if model is capable of thinking, unless mode == 'embed'
+      if (! strcmp (this.mode, 'embed'))
         if (checkThinking (this))
           this.thinking = true;
         else
@@ -1329,6 +1361,66 @@ classdef ollama < handle
     endfunction
 
     ## -*- texinfo -*-
+    ## @deftypefn  {ollama} {@var{vectors} =} embed (@var{llm}, @var{input})
+    ## @deftypefnx {ollama} {@var{vectors} =} embed (@var{llm}, @var{input}, @var{dims})
+    ##
+    ## Generate embeddings.
+    ##
+    ## @code{@var{vectors} = embed (@var{llm}, @var{input})} generates embedding
+    ## @var{vectors} corresponding to the user's @var{input}, which can either
+    ## be a character vector or a cell array of character vectors.  By default,
+    ## when @var{input} is a character vector, @var{vectors} is a row vector
+    ## with its length specified by the model's default values, whereas if
+    ## @var{input} is a cell array of character vectors, then @var{vectors} is a
+    ## matrix with each row corresponding to a linearly indexed element of the
+    ## cell array.
+    ##
+    ## @code{@var{vectors} = embed (@var{llm}, @var{input}, @var{dims})} also
+    ## specifies the length of the generated embedding vectors.  @var{dims} must
+    ## be a positive integer value, which overrides the default settings of the
+    ## embedding model.
+    ##
+    ## @end deftypefn
+    function vectors = embed (this, input, dims = 0)
+      ## Check active model exists and has embeding capabilities
+      if (isempty (this.activeModel))
+        error ("ollama.embed: no model has been loaded yet.");
+      endif
+      if (! strcmp (this.mode, 'embed'))
+        error ("ollama.embed: active model has no embedding capabilities.");
+      endif
+      ## Check input
+      if (isempty (input))
+        error ("ollama.embed: INPUT cannot be empty.");
+      endif
+      if (ischar (input) && isvector (input) || isa (input, 'string'))
+        input = cellstr (input);
+      endif
+      if (! iscellstr (input) || any (cellfun ('isempty', input)))
+        error (strcat ("ollama.embed: INPUT must be a non-empty character", ...
+                       " vector or a cell array of non-empty character vectors."));
+      endif
+      ## Check dims
+      if (! isscalar (dims) || fix (dims) != dims || dims < 0)
+        error ("ollama.embed: DIMS must be a nonnegative integer scalar value.");
+      endif
+      ## Run inference
+      [out, err] = __ollama__ ('model', this.activeModel, ...
+                               'serverURL', this.serverURL, ...
+                               'readTimeout', this.readTimeout, ...
+                               'writeTimeout', this.writeTimeout, ...
+                               'options', this.options, ...
+                               'input', input, 'dimensions', int16 (dims));
+      if (err)
+        error ("ollama.embed: %s", out);
+      endif
+      ## Decode json output
+      this.responseStats = jsondecode (out, 'makeValidName', false);
+      ## Return embedding vectors
+      vectors = this.responseStats.embeddings;
+    endfunction
+
+    ## -*- texinfo -*-
     ## @deftypefn {ollama} {} showStats (@var{llm})
     ##
     ## Show response statistics.
@@ -1763,6 +1855,22 @@ classdef ollama < handle
   endmethods
 
   methods (Access = private)
+
+    ## Function for check if the active model has embedding capabilities
+    function out = checkEmbedding (this)
+      [out, err] = __ollama__ ('modelInfo', this.activeModel, ...
+                               'serverURL', this.serverURL);
+      if (err)
+        error ("ollama: could not get MODEL info for '%s'", model);
+      else
+        ## Search the capabilities field for thiking
+        if (ismember ('embedding', jsondecode (out).capabilities))
+          out = true;
+        else
+          out = false;
+        endif
+      endif
+    endfunction
 
     ## Function for check if the active model has thinking capabilities
     function out = checkThinking (this)
