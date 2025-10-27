@@ -83,6 +83,10 @@ message for the model during a request.\n\
 model during a request.\n\
 @item @qcode{'tools'} A character vector for sending a @qcode{toolFunction} or \
 a @qcode{toolRegistry} in JSON format to the mode during a request.\n\
+@item @qcode{'input'} A cell array of character vectors to generate embeddings \
+for.\n\
+@item @qcode{'dimensions'} An integer scalar value specifying the dimensions \
+of the generated embeddings.\n\
 @end itemize\n\
 \n\
 The following conditions apply:\n\n\
@@ -96,7 +100,8 @@ parameters.\n\
 at once.  This only takes precedence after the @qcode{'modelInfo'} paramter.\n\
 @item You can either specify @qcode{'imageFile'} or @qcode{'imageBase64'} \
 at once.\n\
-@item You can either specify @qcode{'prompt'} or @qcode{'message'} at once.\n\
+@item You can either specify @qcode{'prompt'}, @qcode{'message'}, or \
+@qcode{'input'} at once.\n\
 @end enumerate\n\
 @end deftypefn")
 {
@@ -122,6 +127,10 @@ at once.\n\
   bool has_options = false;
   ollama::messages messages;
   bool has_messages = false;
+  // Variables for generating embeddings
+  vector<string> input;
+  int dimensions = 0;
+  bool has_input = false;
   // Initialize variables for handling models and server
   bool query_status = false;
   bool query_version = false;
@@ -610,6 +619,34 @@ at once.\n\
       }
       tools = args(p+1).string_value ();
     }
+    else if (args(p).string_value () == "input")
+    {
+      // Check parameter value
+      if (! args(p+1).iscellstr ())
+      {
+        error ("__ollama__: 'input' value must be a cell array of character vectors.");
+      }
+      Cell inputs = args(p+1).cell_value ();
+      for (octave_idx_type ins = 0; ins < inputs.numel (); ins++)
+      {
+        string charvec = inputs(ins).string_value ();
+        input.push_back (charvec);
+      }
+      has_input = true;
+    }
+    else if (args(p).string_value () == "dimensions")
+    {
+      // Check parameter value
+      if (! args(p+1).is_scalar_type () || ! args(p+1).isnumeric ())
+      {
+        error ("__ollama__: 'dimensions' value must be a numeric scalar.");
+      }
+      if (args(p+1).int_value () <= 0 || ! args(p+1).isinteger ())
+      {
+        error ("__ollama__: 'dimensions' value must be a positive integer.");
+      }
+      dimensions = args(p+1).int_value ();
+    }
   }
 
   // Start communication with ollama server
@@ -792,11 +829,11 @@ at once.\n\
   {
     error ("__ollama: 'model' parameter is required.");
   }
-  if (! has_prompt && ! has_messages)
+  if (! has_prompt && ! has_messages && ! has_input)
   {
-    error ("__ollama: either 'prompt' or 'messages' parameter is required.");
+    error ("__ollama: 'prompt', 'message', or 'input' parameter is required for inference.");
   }
-  if (has_prompt)   // use generate
+  if (has_prompt)         // use generate
   {
     try
     {
@@ -813,12 +850,29 @@ at once.\n\
       retval(1) = true;
     }
   }
-  else  // messages must be specified: use chat
+  else if (has_messages)  // use chat
   {
     try
     {
       ollama::response response;
       response = ollama::chat (model, messages, think, sysmsg, tools, options);
+      string txt = response.as_json_string ();
+      retval(0) = txt;
+      retval(1) = false;
+    }
+    catch (ollama::exception& err)
+    {
+      string errmsg = err.what ();
+      retval(0) = errmsg;
+      retval(1) = true;
+    }
+  }
+  else    // generate embeddings from input
+  {
+    try
+    {
+      ollama::response response;
+      response = ollama::generate_embeddings (model, input, dimensions, options);
       string txt = response.as_json_string ();
       retval(0) = txt;
       retval(1) = false;

@@ -303,16 +303,19 @@ namespace ollama
             request(): json() {}
             ~request(){};
 
-            static ollama::request from_embedding(const std::string& model, const std::string& input, const json& options=nullptr, bool truncate=true, const std::string& keep_alive_duration="5m", const int& dimensions=0)
+            // Create a request for generating embeddings with specified dimensions from a vector of strings as an input
+            static ollama::request from_embedding(const std::string& model, const std::vector<std::string>& input, const int& dimensions=0, const json& options=nullptr, bool truncate=true, const std::string& keep_alive_duration="5m")
             {
                 ollama::request request(message_type::embedding);
 
                 request["model"] = model;
                 request["input"] = input;
+
+                if (dimensions > 0) request["dimensions"] = dimensions;
                 if (options!=nullptr) request["options"] = options["options"];
+
                 request["truncate"] = truncate;
                 request["keep_alive"] = keep_alive_duration;
-                if (dimensions > 0) request["dimensions"] = dimensions;
                 
                 return request;
             }
@@ -487,9 +490,9 @@ class Ollama
         return response;
     }
 
-    ollama::response generate_embeddings(const std::string& model, const std::string& input, const json& options=nullptr, bool truncate = true, const std::string& keep_alive_duration="5m", const int& dimensions=0)
+    ollama::response generate_embeddings(const std::string& model, const std::vector<std::string>& input, const int& dimensions=0, const json& options=nullptr, bool truncate = true, const std::string& keep_alive_duration="5m")
     {
-        ollama::request request = ollama::request::from_embedding(model, input, options, truncate, keep_alive_duration, dimensions);
+        ollama::request request = ollama::request::from_embedding(model, input, dimensions, options, truncate, keep_alive_duration);
         return generate_embeddings(request);
     }
 
@@ -867,9 +870,9 @@ namespace ollama
         return ollama.chat(request);
     }
 
-    inline ollama::response generate_embeddings(const std::string& model, const std::string& input, const json& options=nullptr, bool truncate = true, const std::string& keep_alive_duration="5m", const int& dimensions=0)
+    inline ollama::response generate_embeddings(const std::string& model, const std::vector<std::string>& input, const int& dimensions=0, const json& options=nullptr, bool truncate = true, const std::string& keep_alive_duration="5m")
     {
-        return ollama.generate_embeddings(model, input, options, truncate, keep_alive_duration, dimensions);
+        return ollama.generate_embeddings(model, input, dimensions, options, truncate, keep_alive_duration);
     }
 
     inline ollama::response generate_embeddings(ollama::request& request)
