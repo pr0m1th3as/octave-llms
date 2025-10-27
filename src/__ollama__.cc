@@ -44,6 +44,8 @@ are supported:\n\
 \n\
 @itemize\n\
 @item @qcode{'model'} A character vector with the model name.\n\
+@item @qcode{'embeddingModel'} A logical scalar specifying whether the model \
+to be loaded is an embedding model.\n\
 @item @qcode{'prompt'} A character vector with the user's prompt.\n\
 @item @qcode{'serverURL'} A character vector with the server's URL.\n\
 @item @qcode{'readTimeout'} A double scalar for waiting response timeout.\n\
@@ -85,8 +87,8 @@ model during a request.\n\
 a @qcode{toolRegistry} in JSON format to the mode during a request.\n\
 @item @qcode{'input'} A cell array of character vectors to generate embeddings \
 for.\n\
-@item @qcode{'dimensions'} An integer scalar value specifying the dimensions \
-of the generated embeddings.\n\
+@item @qcode{'dimensions'} An nonnegative integer scalar value specifying the \
+dimensions of the generated embeddings.\n\
 @end itemize\n\
 \n\
 The following conditions apply:\n\n\
@@ -131,6 +133,7 @@ at once.\n\
   vector<string> input;
   int dimensions = 0;
   bool has_input = false;
+  bool is_embeddingModel = false;
   // Initialize variables for handling models and server
   bool query_status = false;
   bool query_version = false;
@@ -169,6 +172,14 @@ at once.\n\
         error ("__ollama__: 'model' value must be a character vector.");
       }
       model = args(p+1).string_value ();
+    }
+    if (args(p).string_value () == "embeddingModel")
+    {
+      if (! args(p+1).is_bool_scalar ())
+      {
+        error ("__ollama__: 'embeddingModel' value must be a logical scalar.");
+      }
+      is_embeddingModel = args(p+1).bool_value ();
     }
     else if (args(p).string_value () == "prompt")
     {
@@ -641,9 +652,9 @@ at once.\n\
       {
         error ("__ollama__: 'dimensions' value must be a numeric scalar.");
       }
-      if (args(p+1).int_value () <= 0 || ! args(p+1).isinteger ())
+      if (args(p+1).int_value () < 0 || ! args(p+1).isinteger ())
       {
-        error ("__ollama__: 'dimensions' value must be a positive integer.");
+        error ("__ollama__: 'dimensions' value must be a nonnegative integer.");
       }
       dimensions = args(p+1).int_value ();
     }
@@ -672,7 +683,7 @@ at once.\n\
   }
   if (do_loadModel)
   {
-    bool model_loaded = ollama::load_model (source);
+    bool model_loaded = ollama::load_model (source, is_embeddingModel);
     retval(0) = model_loaded;
     retval(1) = ! model_loaded;
     return retval;
