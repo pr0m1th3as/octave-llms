@@ -252,7 +252,7 @@ classdef toolFunction
               out = this.handle;
           endswitch
       endswitch
-
+    endfunction
   endmethods
 
 endclassdef
