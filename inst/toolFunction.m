@@ -252,6 +252,12 @@ classdef toolFunction
               out = this.handle;
           endswitch
       endswitch
+
+      ## Chained references
+      if (! isempty (chain_s))
+        out = subsref (out, chain_s);
+      endif
+      varargout{1} = out;
     endfunction
   endmethods
 
