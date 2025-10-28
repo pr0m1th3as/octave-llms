@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Large Language Models for GNU Octave.: toolFunction</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
+    <script type="text/javascript" async
+      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML">
+    </script>
+    <script type="text/javascript">
+      window.addEventListener("load", () => {
+        for (let i of document.querySelectorAll(".collapse ul")) {
+          let tog = document.createElement("div");
+          tog.innerHTML = i.previousSibling.textContent;
+          tog.className = "toggle";
+          tog.onclick = () => tog.classList.toggle("show");
+          i.parentElement.removeChild(i.previousSibling);
+          i.parentElement.insertBefore(tog, i);
+        }
+      });
+    </script>
+    <style>
+    h5.fs {
+    margin-top: -0.15em;
+    margin-bottom: -0.15em;
+    }
+    h6:hover {
+      color: gray;
+    }
+    code {
+    font-family: Consolas, "Courier New", monospace;
+    border-radius: 0.3em;
+    white-space: nowrap;
+    color: gray;
+    }
+    code.description {
+    font-family: Consolas, "Courier New", monospace;
+    border-radius: 0.3em;
+    white-space: normal;
+    font-size:1.2em;
+    color: gray;
+    }
+    var {
+    font-family: Consolas, "Courier New", monospace;
+    border-radius: 0.3em;
+    font-style: normal;
+    font-weight: bold;
+    color: gray;
+    }
+    td {
+      vertical-align: top;
+    }
+    [id^="togList"],                        /* HIDE CHECKBOX */
+    [id^="togList"] ~ .list,                /* HIDE LIST */
+    [id^="togList"] + label  span + span,   /* HIDE "Collapse" */
+    [id^="togList"]:checked + label span{   /* HIDE "Expand" (IF CHECKED) */
+      display:none;
+    }
+    [id^="togList"]:checked + label span + span{
+      display:inline-block;                 /* SHOW "Collapse" (IF CHECKED) */
+    }
+    [id^="togList"]:checked ~ .list{
+      display:block;                        /* SHOW LIST (IF CHECKED) */
+    }
+    </style>
+  </head>
+  <body>
+    <div class="bg-dark">
+      <div class="container-xl">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+          <div class="container-fluid">
+            <a class="navbar-brand" href=index.html>
+              <img src="assets/octave-llms.png" alt="llms" class="d-inline-block align-top" width="25" height="25">
+              Large Language Models for GNU Octave.
+            </a>
+            <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+              <ul class="navbar-nav">
+                <li class="nav-item">
+                  <a class="nav-link" href="index.html#tool classes">
+                    <i class="fas fa-list-alt"></i>
+                    tool classes
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="https://gnu-octave.github.io/packages/">
+                  <img src="assets/octave-logo.svg" alt="GNU Octave logo" class="d-inline-block align-top" width="25" height="25">
+                    Octave Packages
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="https://www.octave.org">
+                    <i class="fas fa-home"></i>
+                    GNU Octave website
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </div>
+    <div class="container-xl my-4">
+      <div class="row flex-nowrap" style="min-height:0">
+        <div class="col-md-2 bg-light" style="overflow-y: scroll; width: 250px;">
+          <div class="p-2" style="text-align: center;">
+            <h3>Categories &</h3>
+            <h4 style="color: blue">Functions List</h4>
+          </div>
+			<div class="row">
+				<input id="togList1" type="checkbox">
+				<label for="togList1">
+					<span><h6>interface class</h6></span>
+					<span><h6>interface class</h6></span>
+				</label>
+				<div class="list">
+				<ul style="list-style-type: none; padding-left: 20px;">
+					<li><a href="ollama.html" class="text-decoration-none font-monospace"><small>ollama</small></a></li>
+				</ul>
+				</div>
+			</div>
+			<div class="row">
+				<input id="togList2" type="checkbox" checked>
+				<label for="togList2">
+					<span><h6>tool classes</h6></span>
+					<span><h6>tool classes</h6></span>
+				</label>
+				<div class="list">
+				<ul style="list-style-type: none; padding-left: 20px;">
+					<li><a href="toolFunction.html" class="text-decoration-none font-monospace fw-bolder"><small>toolFunction</small></a></li>
+					<li><a href="toolRegistry.html" class="text-decoration-none font-monospace"><small>toolRegistry</small></a></li>
+				</ul>
+				</div>
+			</div>
+			<div class="row">
+				<input id="togList3" type="checkbox">
+				<label for="togList3">
+					<span><h6>supplementary functions</h6></span>
+					<span><h6>supplementary functions</h6></span>
+				</label>
+				<div class="list">
+				<ul style="list-style-type: none; padding-left: 20px;">
+					<li><a href="fig2base64.html" class="text-decoration-none font-monospace"><small>fig2base64</small></a></li>
+				</ul>
+				</div>
+			</div>
+			<div class="row">
+				<input id="togList4" type="checkbox">
+				<label for="togList4">
+					<span><h6>backend functions</h6></span>
+					<span><h6>backend functions</h6></span>
+				</label>
+				<div class="list">
+				<ul style="list-style-type: none; padding-left: 20px;">
+					<li><a href="__ollama__.html" class="text-decoration-none font-monospace"><small>__ollama__</small></a></li>
+				</ul>
+				</div>
+			</div>
+
+			  </div>
+			  <div class="col-md-10">
+          <div class="card rounded">
+            <div class="card-header card-header-mod">
+              <div class="row d-flex flex-wrap align-items-center">
+                <h3 class="d-inline-block mr-2">
+                Class&nbsp;Definition: <b><code>toolFunction</code></b>
+                </h3>
+              </div>
+            </div>
+            <div class="card-body">
+<dl><code><h5 class="description">llms: toolFunction</h5></code></dl>
+
+<p> A toolFunction object for tool-calling capable models.
+</p>
+<div class="ms-5">
+<p> <code>toolFunction</code> is a scalar class object, which contains the full
+ description of a tool function along with the handle to its corresponding
+ Octave function, which should be executed after a tool call request from
+ the model.
+</p>
+
+<p><strong>Source Code: </strong>
+  <a href="https://github.com/pr0m1th3as/octave-llms/tree/main/inst/toolFunction.m">toolFunction</a>
+</p>
+</div>
+
+        <h4 class="d-inline-block my-3">
+          Methods
+        </h4>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#colapsibleConstructor"
+              aria-expanded="false" aria-controls="colapsibleConstructor">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>toolFunction</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Create a tool function for LLMs.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="colapsibleConstructor">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">toolFunction: <var>tool</var> = <b>toolFunction</b> (<var>name</var>, <var>description</var>, <var>handle</var>)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code><var>tool</var> = toolFunction (<var>name</var>, <var>description</var>,
+ <var>handle</var>)</code> creates a <code>toolFunction</code> object, which comprises an
+ identifier specified by <var>name</var>, a functionality description that can
+ be understood by the LLM model specified in <var>description</var> and a
+ function handle, specified in <var>handle</var>, which corresponds to an
+ actual Octave function that will be evaluated along with any input
+ parameters specified by the LLM&rsquo;s tool calling response.
+</p>
+<p> By default, <code>toolFunction</code> does not add any input parameters to the
+ created object.  Use the <code>addParameters</code> method to append any input
+ input parameters that your function handle may require for its successful
+ evaluation.  Use the <code>evalFunction</code> to evaluate the underlying
+ function handle according to the input arguments specified by the LLM.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod1"
+              aria-expanded="false" aria-controls="collapseMethod1">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>addParameters</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Add an input parameter to the tool function.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseMethod1">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">toolFunction: <var>tool</var> = <b>addParameters</b> (<var>tool</var>, <var>propName</var>, <var>propType</var>, <var>propDescription</var>)</code></h5></dt>
+<dt><code><h5 class="fs">toolFunction: <var>tool</var> = <b>addParameters</b> (<var>tool</var>, <var>propName</var>, <var>propType</var>, <var>propDescription</var>, <var>enum</var>)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code>addParameters</code> appends the parameters of a single input argument
+ into the <code>toolFunction</code> object so that the LLM can understand the
+ context of the corresponding input argument of the underlying function
+ handle when asking for its evaluation.
+</p>
+<p> <code>addParameters</code> requires at least four input arguments (and may
+ accept an optional fifth argument), which are as described below:
+</p>
+ <ol>
+<li> <var>tool</var> (required) A <code>toolFunction</code> object that the
+ parameters will be appended to.
+ </li><li> <var>propName</var> (required) A character vector specifying the name of
+ the input argument in the undelying function handle to be evaluated.
+ </li><li> <var>propType</var> (required) A character vector specifying the data
+ type of the value corresponding to the input argument specified above.
+ </li><li> <var>propDescription</var> (required) A character vector describing the
+ input argument so that the LLM can understand what value to assign for
+ evaluation.
+ </li><li> <var>enum</var> (optional) A cell array of character vectors specifying
+ a list of acceptable values that the LLM may chooce from to supply as an
+ input argument.  Alternatively, <var>enum</var> can be a cell array of numeric
+ or logical values.
+ </li></ol>
+
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod2"
+              aria-expanded="false" aria-controls="collapseMethod2">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
+                    <b><code>evalFunction</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Evaluate the tool function.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseMethod2">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">toolFunction: <var>tool_output</var> = <b>evalFunction</b> (<var>tool</var>, <var>tool_call</var>)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code><var>tool_output</var> = evalFunction (<var>tool</var>, <var>tool_call</var>)</code>
+ evaluates the function handle of the <code>toolFunction</code> object
+ specified by <var>tool</var> according to the input arguments described by the
+ LLM&rsquo;s tool calling response specified in <var>tool_call</var>, which can be a
+ character vector containing the appropriate JSON string message or its
+ equivalent to a scalar structure.  The returned <var>tool_output</var> is a
+ <math>1&times;2</math> cell array of character vectors, in which the first element
+ contains the output of the evaluated <code>toolFunction</code> object and the
+ second element contains its corresponding function name.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </body>
+</html>

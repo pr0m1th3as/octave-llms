@@ -127,6 +127,19 @@
 			<div class="row">
 				<input id="togList2" type="checkbox">
 				<label for="togList2">
+					<span><h6>tool classes</h6></span>
+					<span><h6>tool classes</h6></span>
+				</label>
+				<div class="list">
+				<ul style="list-style-type: none; padding-left: 20px;">
+					<li><a href="toolFunction.html" class="text-decoration-none font-monospace"><small>toolFunction</small></a></li>
+					<li><a href="toolRegistry.html" class="text-decoration-none font-monospace"><small>toolRegistry</small></a></li>
+				</ul>
+				</div>
+			</div>
+			<div class="row">
+				<input id="togList3" type="checkbox">
+				<label for="togList3">
 					<span><h6>supplementary functions</h6></span>
 					<span><h6>supplementary functions</h6></span>
 				</label>
@@ -137,8 +150,8 @@
 				</div>
 			</div>
 			<div class="row">
-				<input id="togList3" type="checkbox">
-				<label for="togList3">
+				<input id="togList4" type="checkbox">
+				<label for="togList4">
 					<span><h6>backend functions</h6></span>
 					<span><h6>backend functions</h6></span>
 				</label>
@@ -578,6 +591,10 @@ Flag for thinking.
  an active model is set, the <code>thinking</code> property is empty.  Use dot
  notation to access and/or modify the default value of the thinking flag.
 </p>
+<p> Setting a value to the thinking flag when there is no active model or for
+ an active model that does not have thinking capabilities results to an
+ error.
+</p>
 
 
 
@@ -593,6 +610,42 @@ Flag for thinking.
               <div class="row align-items-center">
                 <div class="col-4">
                   <h4 class="d-inline-block mr-4">
+                    <b><code>tools</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Function tools for tool-capable models.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseProperty13">
+            <div class="border-bottom py-2">
+
+
+<p> </p>
+<p> A <code>toolFunction</code> object or a <code>toolRegistry</code> object (merely an
+ indexed collection of toolFunction objects), which are available to the
+ active model explicitly during chat sessions.  By default, no tools are
+ available.  Unless an active model capable of tool calling is set, the
+ <code>tools</code> property is empty.  Moreover, tools can only be assigned
+ when the active model is tool capable.  Use dot notation to access and/or
+ assign a <code>toolFunction</code> object or a <code>toolRegistry</code> object.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseProperty14"
+              aria-expanded="false" aria-controls="collapseProperty14">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
                     <b><code>muteThinking</code></b>
                   </h4>
                 </div>
@@ -601,7 +654,7 @@ Flag for displaying thinking.
                 </div>
               </div>
           </div>
-          <div class="collapse multi-collapse" id="collapseProperty13">
+          <div class="collapse multi-collapse" id="collapseProperty14">
             <div class="border-bottom py-2">
 
 
@@ -672,9 +725,12 @@ Create an ollama interface object.
  specifies the inference mode of the ollama interface.  <var>mode</var> can be
  specified as <code>'query'</code>, for generating responses to single prompts,
  <code>'chat'</code>, for starting a conversation with a model by retaining the
- entire chat history during inference, and <code>'embed'</code> (unimplemented)
- for generating embedings for given prompts.  By default, the
- <code>ollama</code> interface is initialized in query mode.
+ entire chat history during inference, and <code>'embed'</code> for generating
+ embedings for given prompts.  By default, the <code>ollama</code> interface is
+ initialized in query mode, unless an embedding model has ben requested,
+ in which case it defaults to embedding mode.  <code>'embed'</code> is only
+ valid for embedding models, otherwise <code>ollama</code> returns an error.
+ Loading an embedding model overrides any value specified in <var>mode</var>.
 </p>
 <p> <strong>See also: </strong>
   <a href="fig2base64.html">fig2base64</a>
@@ -915,6 +971,10 @@ Load model in ollama server.
  <code><var>llm</var>.activeModel</code> property.  <var>target</var> can be either a
  character vector with the name of the model or an integer scalar value
  indexing an existing model in <code><var>llm</var>.availableModels</code>.
+</p>
+<p> If loading a model fails, an error message is returned and the properties
+ <code>activeModel</code>, <code>thinking</code>, and <code>tools</code> are reset to
+ their default values.
 </p>
 <p> You can load multiple models conncurently and you are only limited by the
  hardware specifications of the ollama server, which <var>llm</var> interfaces
@@ -1265,6 +1325,7 @@ Query a model in ollama server.
 <dl>
 <dt><code><h5 class="fs">ollama: <b>chat</b> (<var>llm</var>, <var>prompt</var>)</code></h5></dt>
 <dt><code><h5 class="fs">ollama: <b>chat</b> (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <b>chat</b> (<var>llm</var>, {<var>tool_output</var>})</code></h5></dt>
 <dt><code><h5 class="fs">ollama: <var>txt</var> = <b>chat</b> (&hellip;)</code></h5></dt>
 <dt><code><h5 class="fs">ollama: <b>chat</b> (<var>llm</var>)</code></h5></dt>
 </dl>
@@ -1276,17 +1337,18 @@ Query a model in ollama server.
  <var>prompt</var> along with all previous requests and responses, made by the
  user and models during the same chat session, which is stored in the
  <code>'chatHistory'</code> property of the ollama interface object <var>llm</var>.
- <var>prompt</var> must be a character vector.  When no output argument
- is requested, <code>chat</code> prints the response text in the standard output
- (command window) with a custom display method so that words are not split
- between lines depending on the terminal size.  If an output argument is
- requested, the text is returned as a character vector and nothing gets
- displayed in the terminal.  In either case, the response text is appended
- to the history chat, which can be displayed with the <code>showHistory</code>
- method or return as a cell array from <code><var>llm</var>.chatHistory</code>.  If
- you want to start a new chat session, you can either clear the chat
- history with the <code>clearHistory</code> method or create a new ollama
- interface object.
+ <var>prompt</var> must a character vector specifying the content in the user&rsquo;s
+ message parsed in the request as <code>&quot;role&quot;:&quot;user&quot;</code>.  When no output
+ argument is requested, <code>chat</code> prints the response text in the
+ standard output (command window) with a custom display method so that
+ words are not split between lines depending on the terminal size.  If an
+ output argument is requested, the text is returned as a character vector
+ and nothing gets displayed in the terminal.  In either case, the response
+ text is appended to the history chat, which can be displayed with the
+ <code>showHistory</code> method or return as a cell array from
+ <code><var>llm</var>.chatHistory</code>.  If you want to start a new chat session,
+ you can either clear the chat history with the <code>clearHistory</code> method
+ or create a new ollama interface object.
 </p>
 <p> <code>chat (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code> also specifies an
  image or multiple images to be passed to the model along with the user&rsquo;s
@@ -1301,31 +1363,49 @@ Query a model in ollama server.
  supplied along with a prompt during a chat session are also stored in the
  chat history.
 </p>
-<p> <code><var>txt</var> = chat (&hellip;)</code> returns the generated text to the
+<p> <code>chat (<var>llm</var>, <var>tool_output</var>) syntax may be used to pass the
+ output results of a single <code>toolFunction</code> object or mulitple
+ <code>toolFunction</code> objects contained in a <code>toolRegistry</code>, which
+ have been evaluated after a previous <code>&quot;tool_calls&quot;</code> request by the
+ model, to the next message.  This syntax requires the <var>tool_output</var>
+ input argument to be a  <math>N&times;2</math> cell array of character vectors, in
+ which the first column contains the output of each evaluated
+ <code>toolFunction</code> object and the second column contains its respective
+ function name.  Each row in <var>tool_output</var> corresponds to a separate
+ function, when multiple <code>toolFunction</code> objects have been evaluated.
+</code></p>
+<p><code> <code><var>txt</var> = chat (&hellip;)</code> returns the generated text to the
  output argument <var>txt</var> instead of displaying it to the terminal for
  any of the previous syntaxes.  If thinking is enabled, then <var>txt</var> is
  a <math>2&times;1</math> cell array of character vectors with the first element
  containing the final answer and the second element the thinking process.
-</p>
-<p> <code>chat (<var>llm</var>)</code> does not make a request to the ollama server,
+</code></p>
+<p><code> <code>chat (<var>llm</var>)</code> does not make a request to the ollama server,
  but it sets the <code>'mode'</code> property in the ollama interface object
  <var>llm</var> to <code>'chat'</code> for future requests.  Use this syntax to
  switch from another inteface mode to chat mode without making a request
  to the server.  Switching to chat mode does not clear any existing chat
  history in <var>llm</var>.
-</p>
-<p> An alternative method of calling the <code>chat</code> method is by using
+</code></p>
+<p><code> An alternative method of calling the <code>chat</code> method is by using
  direct subscripted reference to the ollama interface object <var>llm</var> as
  long as it already set in chat mode. The table below lists the
  equivalent syntaxes.
-</p>
+</code></p>
  <table>
-<thead><tr><th width="50%"><var>method calling</var></th><th width="2%"></th><th width="48%"><var>object subscripted reference</var></th></tr></thead>
-<tr><td width="50%"><code>chat (<var>llm</var>, <var>prompt</var>)</code></td><td width="2%"></td><td width="48%"><code><var>llm</var>(<var>prompt</var>)</code></td></tr>
-<tr><td width="50%"><code>chat (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></td><td width="2%"></td><td width="48%"><code><var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
-<tr><td width="50%"><code>chat (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></td><td width="2%"></td><td width="48%"><code><var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
-<tr><td width="50%"><code><var>txt</var> = chat (<var>llm</var>, <var>prompt</var>)</code></td><td width="2%"></td><td width="48%"><code><var>txt</var> = <var>llm</var>(<var>prompt</var>)</code></td></tr>
-<tr><td width="50%"><code><var>txt</var> = chat (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></td><td width="2%"></td><td width="48%"><code><var>txt</var> = <var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
+<thead><tr><th width="50%"><code> <var>method calling</var> </code></th><th width="2%"></th><th width="48%"><code> <var>object subscripted reference</var>
+ </code></th></tr></thead>
+<tr><td width="50%"><code> <code>chat (<var>llm</var>, <var>prompt</var>)</code> </code></td><td width="2%"></td><td width="48%"><code> <code><var>llm</var>(<var>prompt</var>)</code>
+ </code></td></tr>
+<tr><td width="50%"><code> <code>chat (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code> </code></td><td width="2%"></td><td width="48%"><code> <code><var>llm</var>(<var>prompt</var>, <var>image</var>)</code>
+ </code></td></tr>
+<tr><td width="50%"><code> <code>chat (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code> </code></td><td width="2%"></td><td width="48%"><code> <code><var>llm</var>(<var>prompt</var>, <var>image</var>)</code>
+ </code></td></tr>
+<tr><td width="50%"><code> <code><var>txt</var> = chat (<var>llm</var>, <var>prompt</var>)</code> </code></td><td width="2%"></td><td width="48%"><code> <code><var>txt</var> = <var>llm</var>(<var>prompt</var>)</code>
+ </code></td></tr>
+<tr><td width="50%"><code> <code><var>txt</var> = chat (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code>
+ </code></td><td width="2%"></td><td width="48%"><code> <code><var>txt</var> = <var>llm</var>(<var>prompt</var>, <var>image</var>)</code>
+ </code></td></tr>
 </table>
 
 
@@ -1343,6 +1423,51 @@ Query a model in ollama server.
               <div class="row align-items-center">
                 <div class="col-4">
                   <h4 class="d-inline-block mr-4">
+                    <b><code>embed</code></b>
+                  </h4>
+                </div>
+                <div class="col-8">
+Generate embeddings.
+                </div>
+              </div>
+          </div>
+          <div class="collapse multi-collapse" id="collapseMethod12">
+            <div class="border-bottom py-2">
+<dl>
+<dt><code><h5 class="fs">ollama: <var>vectors</var> = <b>embed</b> (<var>llm</var>, <var>input</var>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <var>vectors</var> = <b>embed</b> (<var>llm</var>, <var>input</var>, <var>dims</var>)</code></h5></dt>
+</dl>
+
+<p> </p>
+<p> <code><var>vectors</var> = embed (<var>llm</var>, <var>input</var>)</code> generates embedding
+ <var>vectors</var> corresponding to the user&rsquo;s <var>input</var>, which can either
+ be a character vector or a cell array of character vectors.  By default,
+ when <var>input</var> is a character vector, <var>vectors</var> is a row vector
+ with its length specified by the model&rsquo;s default values, whereas if
+ <var>input</var> is a cell array of character vectors, then <var>vectors</var> is a
+ matrix with each row corresponding to a linearly indexed element of the
+ cell array.
+</p>
+<p> <code><var>vectors</var> = embed (<var>llm</var>, <var>input</var>, <var>dims</var>)</code> also
+ specifies the length of the generated embedding vectors.  <var>dims</var> must
+ be a positive integer value, which overrides the default settings of the
+ embedding model.
+</p>
+
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="container-xl my-1">
+          <div class="row">
+            <button class="btn btn-light btn-sm w-100 text-start" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod13"
+              aria-expanded="false" aria-controls="collapseMethod13">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <h4 class="d-inline-block mr-4">
                     <b><code>showStats</code></b>
                   </h4>
                 </div>
@@ -1351,7 +1476,7 @@ Show response statistics.
                 </div>
               </div>
           </div>
-          <div class="collapse multi-collapse" id="collapseMethod12">
+          <div class="collapse multi-collapse" id="collapseMethod13">
             <div class="border-bottom py-2">
 <dl>
 <dt><code><h5 class="fs">ollama: <b>showStats</b> (<var>llm</var>)</code></h5></dt>
@@ -1385,8 +1510,8 @@ Show response statistics.
         <div class="container-xl my-1">
           <div class="row">
             <button class="btn btn-light btn-sm w-100 text-start" type="button"
-              data-bs-toggle="collapse" data-bs-target="#collapseMethod13"
-              aria-expanded="false" aria-controls="collapseMethod13">
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod14"
+              aria-expanded="false" aria-controls="collapseMethod14">
               <div class="row align-items-center">
                 <div class="col-4">
                   <h4 class="d-inline-block mr-4">
@@ -1398,7 +1523,7 @@ Display chat history.
                 </div>
               </div>
           </div>
-          <div class="collapse multi-collapse" id="collapseMethod13">
+          <div class="collapse multi-collapse" id="collapseMethod14">
             <div class="border-bottom py-2">
 <dl>
 <dt><code><h5 class="fs">ollama: <b>showHistory</b> (<var>llm</var>)</code></h5></dt>
@@ -1446,8 +1571,8 @@ Display chat history.
         <div class="container-xl my-1">
           <div class="row">
             <button class="btn btn-light btn-sm w-100 text-start" type="button"
-              data-bs-toggle="collapse" data-bs-target="#collapseMethod14"
-              aria-expanded="false" aria-controls="collapseMethod14">
+              data-bs-toggle="collapse" data-bs-target="#collapseMethod15"
+              aria-expanded="false" aria-controls="collapseMethod15">
               <div class="row align-items-center">
                 <div class="col-4">
                   <h4 class="d-inline-block mr-4">
@@ -1459,7 +1584,7 @@ Clear chat history.
                 </div>
               </div>
           </div>
-          <div class="collapse multi-collapse" id="collapseMethod14">
+          <div class="collapse multi-collapse" id="collapseMethod15">
             <div class="border-bottom py-2">
 <dl>
 <dt><code><h5 class="fs">ollama: <b>clearHistory</b> (<var>llm</var>)</code></h5></dt>

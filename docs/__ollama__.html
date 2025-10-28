@@ -127,6 +127,19 @@
 			<div class="row">
 				<input id="togList2" type="checkbox">
 				<label for="togList2">
+					<span><h6>tool classes</h6></span>
+					<span><h6>tool classes</h6></span>
+				</label>
+				<div class="list">
+				<ul style="list-style-type: none; padding-left: 20px;">
+					<li><a href="toolFunction.html" class="text-decoration-none font-monospace"><small>toolFunction</small></a></li>
+					<li><a href="toolRegistry.html" class="text-decoration-none font-monospace"><small>toolRegistry</small></a></li>
+				</ul>
+				</div>
+			</div>
+			<div class="row">
+				<input id="togList3" type="checkbox">
+				<label for="togList3">
 					<span><h6>supplementary functions</h6></span>
 					<span><h6>supplementary functions</h6></span>
 				</label>
@@ -137,8 +150,8 @@
 				</div>
 			</div>
 			<div class="row">
-				<input id="togList3" type="checkbox" checked>
-				<label for="togList3">
+				<input id="togList4" type="checkbox" checked>
+				<label for="togList4">
 					<span><h6>backend functions</h6></span>
 					<span><h6>backend functions</h6></span>
 				</label>
@@ -172,6 +185,7 @@
 </p>
 <ul>
 <li> <code>'model'</code> A character vector with the model name.
+</li><li> <code>'embeddingModel'</code> A logical scalar specifying whether the model to be loaded is an embedding model.
 </li><li> <code>'prompt'</code> A character vector with the user&rsquo;s prompt.
 </li><li> <code>'serverURL'</code> A character vector with the server&rsquo;s URL.
 </li><li> <code>'readTimeout'</code> A double scalar for waiting response timeout.
@@ -191,6 +205,9 @@
 </li><li> <code>'message'</code> An <math>N&times;3</math> cell array containing the message history of a chat session to be used for the subsequent chat request.
 </li><li> <code>'systemMessage'</code> A character vector for setting a custom system message for the model during a request.
 </li><li> <code>'think'</code> A character vector for setting the thinking mode of the model during a request.
+</li><li> <code>'tools'</code> A character vector for sending a <code>toolFunction</code> or a <code>toolRegistry</code> in JSON format to the mode during a request.
+</li><li> <code>'input'</code> A cell array of character vectors to generate embeddings for.
+</li><li> <code>'dimensions'</code> An nonnegative integer scalar value specifying the dimensions of the generated embeddings.
 </li></ul>
 
 <p>The following conditions apply:
@@ -201,7 +218,7 @@
 </li><li> Specifying <code>'modelInfo'</code> takes precedence after any of the previous parameters.
 </li><li> You can either specify <code>'listModels'</code> or <code>'listRunningModels'</code> at once.  This only takes precedence after the <code>'modelInfo'</code> paramter.
 </li><li> You can either specify <code>'imageFile'</code> or <code>'imageBase64'</code> at once.
-</li><li> You can either specify <code>'prompt'</code> or <code>'messages'</code> at once.
+</li><li> You can either specify <code>'prompt'</code>, <code>'message'</code>, or <code>'input'</code> at once.
 </li></ol>
 
 <p><strong>Source Code: </strong>

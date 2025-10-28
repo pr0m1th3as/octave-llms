@@ -108,7 +108,7 @@
             </div>
             <div class="col-sm-9 col-md-10">
               <h3 class="d-inline-block mr-2">llms</h3>
-              <b>0.1.1&nbsp;2025-10-21</b>
+              <b>0.1.2&nbsp;2025-10-28</b>
               <p class="indent">
                 Large Language Models for GNU Octave.
               </p>
@@ -119,6 +119,7 @@
            <p>Select Category:
              <select name="cat" onchange="location = this.options[this.selectedIndex].value;">
              <option value="#interface class">interface class</option>
+             <option value="#tool classes">tool classes</option>
              <option value="#supplementary functions">supplementary functions</option>
              <option value="#backend functions">backend functions</option>
              </select>
@@ -136,6 +137,29 @@
                    </code></b>
                  </td>
                  <td>An ollama object interface with a running ollama server.</td>
+               </tr>
+             </tbody>
+           </table>
+           <h3 class="category">
+             <a name="tool classes">tool classes</a>
+           </h3>
+           <table class="table table-striped">
+             <tbody>
+               <tr>
+                 <td>
+                   <b><code>
+                   <a href="toolFunction.html">toolFunction</a>
+                   </code></b>
+                 </td>
+                 <td>A toolFunction object for tool-calling capable models.</td>
+               </tr>
+               <tr>
+                 <td>
+                   <b><code>
+                   <a href="toolRegistry.html">toolRegistry</a>
+                   </code></b>
+                 </td>
+                 <td>A toolRegistry object for tool-calling capable models.</td>
                </tr>
              </tbody>
            </table>
