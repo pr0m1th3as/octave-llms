@@ -3,7 +3,7 @@ Version: 0.1.2
 Date: 2025-10-28
 Author: Andreas Bertsatos
 Maintainer: Andreas Bertsatos <abertsatos@biol.uoa.gr>
-Title: Large Language Models for GNU Octave.
+Title: Large Language Models for GNU Octave
 Description: Large Language Models for GNU Octave.
 Categories: Datatypes
 Depends: octave (>= 9.1.0), datatypes(>=1.1.0)
