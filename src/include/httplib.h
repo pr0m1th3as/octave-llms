@@ -220,8 +220,17 @@ using ssize_t = __int64;
 #define NOMINMAX
 #endif // NOMINMAX
 
+#if ! defined (_WIN32_WINNT)
+#  define _WIN32_WINNT 0x0602
+#endif
+
+#if _WIN32_WINNT < 0x0602
+#  error "Minimum Windows target must be Windows 8 (_WIN32_WINNT 0x0602)"
+#endif
+
 #include <io.h>
 #include <winsock2.h>
+#include <windows.h>
 #include <ws2tcpip.h>
 
 #if defined(__has_include)
