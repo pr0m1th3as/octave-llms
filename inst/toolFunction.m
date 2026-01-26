@@ -15,7 +15,7 @@
 
 classdef toolFunction
   ## -*- texinfo -*-
-  ## @deftp {toolFunction} toolFunction
+  ## @deftp {llms} toolFunction
   ##
   ## A toolFunction object for tool-calling capable models.
   ##
