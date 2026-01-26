@@ -31,7 +31,7 @@ package_texi2html ("llms")
 ## 3. Installation
 To install the latest release, you need Octave (>=9.1.0) installed on your system. Install it by typing:
 ```
-pkg install -forge datatypes
+pkg install -forge llms
 ```
 Install the latest dev version from the Octave command prompt by typing
 ```
@@ -39,7 +39,7 @@ pkg install "https://github.com/pr0m1th3as/octave-llms/archive/refs/heads/main.z
 ```
 Load the package by typing
 ```
-pkg load datatypes
+pkg load llms
 ```
 
 ## 4. Quick Guide
