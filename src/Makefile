@@ -1,5 +1,7 @@
 # Makefile for compiling required oct files
 
+CC := $(shell $(MKOCTFILE) -p CC)
+
 TARGET := $(shell $(CC) -dumpmachine)
 ifeq ($(findstring mingw,$(TARGET)),mingw)
   OS_WINDOWS := 1
@@ -9,9 +11,9 @@ ifeq ($(findstring windows,$(TARGET)),windows)
 endif
 
 ifdef OS_WINDOWS
-  OLLAMA_LIBS = -lws2_32
+  OLLAMA_LIBS := -lws2_32
 else
-  OLLAMA_LIBS =
+  OLLAMA_LIBS :=
 endif
 
 all:
