@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2025 Andreas Bertsatos <abertsatos@biol.uoa.gr>
+Copyright (C) 2025-2026 Andreas Bertsatos <abertsatos@biol.uoa.gr>
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software

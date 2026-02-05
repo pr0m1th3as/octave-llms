@@ -4,7 +4,7 @@
 /*  MIT License
 
     Copyright (c) 2025 James Montgomery (jmont)
-    Copyright (c) 2025 Andreas Bertsatos (pr0m1th3as)
+    Copyright (c) 2025-2026 Andreas Bertsatos (pr0m1th3as)
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -28,8 +28,8 @@
 /*  About this library:
 
     This library is a modified version of the header-only C++ library written by
-	James Montgomery adapted to the needs of interfacing GNU Octave with an ollama
-    server.
+	  James Montgomery adapted to the needs of interfacing GNU Octave with an
+    ollama server.
 */
 
 /*  About this software:
@@ -37,34 +37,34 @@
     Ollama is a high-quality REST server and API providing an interface to run
     language models locally via llama.cpp.
 
-    Ollama was made by Jeffrey Morgan (@jmorganca) and the Ollama team and is 
+    Ollama was made by Jeffrey Morgan (@jmorganca) and the Ollama team and is
     available under the MIT License. To support this project or for more details
-    go to https://github.com/ollama or https://ollama.com/. 
+    go to https://github.com/ollama or https://ollama.com/.
 
     This library is a header-only C++ integration of the Ollama API providing access
     to most API features while integrating them with std library classes or popular
-    header-only libraries within the community. The following external libraries are 
+    header-only libraries within the community. The following external libraries are
     used:
 */
 
-/* 
+/*
     httplib is a header-only C++ http/https library.
     This library was created by Yuji Hirose and is available under the MIT License.
     For more details visit: https://github.com/yhirose/cpp-httplib
 */
 #include "httplib.h"
 
-/* 
+/*
     nlohmnann JSON is a feature-rich header-only C++ JSON implementation.
     This library was created by Niels Lohmann and is available under the MIT License.
     For more details visit: https://github.com/nlohmann/json
 */
 #include "json.hpp"
 
-/* 
+/*
     Base64.h is a header-only C++ library for encoding and decoding Base64 values.
     This library was created by tomykaira and is available under the MIT License.
-    For more details visit: 
+    For more details visit:
     https://gist.github.com/tomykaira/f0fd86b6c73063283afe550bc5d77594
 */
 #include "Base64.h"
@@ -82,7 +82,7 @@
 namespace ollama
 {
     using json = nlohmann::json;
-    using base64 = macaron::Base64;    
+    using base64 = macaron::Base64;
 
     static bool use_exceptions = true;     // Change this to false to avoid throwing exceptions within the library.
     static bool log_requests = false;      // Log raw requests to the Ollama server. Useful when debugging.
@@ -107,7 +107,7 @@ namespace ollama
 
     class image {
         public:
-            image(const std::string base64_sequence, bool valid = true) 
+            image(const std::string base64_sequence, bool valid = true)
             {
                 this->base64_sequence = base64_sequence; this->valid = valid;
             }
@@ -160,28 +160,28 @@ namespace ollama
                 for (ollama::image value : list) {
                     this->push_back(value);
                 }
-            }        
+            }
             ~images(){};
             std::vector<std::string> to_strings()
             {
                 std::vector<std::string> strings;
                 for (auto it = this->begin(); it != this->end(); ++it)
                     strings.push_back(*it);
-                
+
                 return strings;
             }
 
     };
 
     class options: public json {
-        
-        public:
-            options(): json() { this->emplace( "options", nlohmann::json::object() );  }        
 
-        nlohmann::json& operator[](const std::string& key) 
+        public:
+            options(): json() { this->emplace( "options", nlohmann::json::object() );  }
+
+        nlohmann::json& operator[](const std::string& key)
         {
-            if ( !this->at("options").contains(key) ) this->at("options").emplace( key, nlohmann::json::object() );                       
-            return this->at("options").at(key); 
+            if ( !this->at("options").contains(key) ) this->at("options").emplace( key, nlohmann::json::object() );
+            return this->at("options").at(key);
         }
         nlohmann::json& operator[](const char* key) { return this->operator[](std::string(key)); };
 
@@ -206,48 +206,48 @@ namespace ollama
                 (*this)["content"] = content;
                 (*this)["images"] = images;
             }
-            message(const std::string& role, const std::string& content): json() { (*this)["role"] = role; (*this)["content"] = content; }           
+            message(const std::string& role, const std::string& content): json() { (*this)["role"] = role; (*this)["content"] = content; }
             message() : json() {}
             ~message() {}
 
             std::string as_json_string() const { return this->dump(); }
-            
-            operator std::string() const { return this->as_json_string(); }           
+
+            operator std::string() const { return this->as_json_string(); }
 
     };
 
     class messages: public std::vector<message> {
 
         public:
-            messages(): std::vector<message>(0) {}            
+            messages(): std::vector<message>(0) {}
             messages(ollama::message message): messages() { this->push_back(message); }
 
             messages(const std::initializer_list<message>& list) {
                 for (message value : list) {
                     this->push_back(value);
                 }
-            }        
+            }
             ~messages(){};
             const std::vector<std::string> to_strings() const
             {
                 std::vector<std::string> strings;
                 for (auto it = this->begin(); it != this->end(); ++it)
                     strings.push_back(*it);
-                
+
                 return strings;
-            }        
-        
-            const std::vector<json> to_json() const 
-            { 
-                std::vector<json> output;  
+            }
+
+            const std::vector<json> to_json() const
+            {
+                std::vector<json> output;
                 for (auto it = this->begin(); it != this->end(); ++it)
                     output.push_back(*it);
                 return output;
             }
 
             operator std::vector<json>() const {return std::vector<json>();}
-            operator std::vector<std::string>() const { return this->to_strings(); }    
-        
+            operator std::vector<std::string>() const { return this->to_strings(); }
+
     };
 
     class request: public json {
@@ -297,7 +297,7 @@ namespace ollama
                 type = message_type::chat;
 
             }
-           
+
             request(message_type type): request() { this->type = type; }
 
             request(): json() {}
@@ -316,7 +316,7 @@ namespace ollama
 
                 request["truncate"] = truncate;
                 request["keep_alive"] = keep_alive_duration;
-                
+
                 return request;
             }
 
@@ -334,21 +334,21 @@ namespace ollama
             response(const std::string& json_string, message_type type=message_type::generation): type(type)
             {
                 this->json_string = json_string;
-                try 
+                try
                 {
-                    json_data = json::parse(json_string); 
-                    
-                    if (type==message_type::generation && json_data.contains("response")) simple_string=json_data["response"].get<std::string>(); 
+                    json_data = json::parse(json_string);
+
+                    if (type==message_type::generation && json_data.contains("response")) simple_string=json_data["response"].get<std::string>();
                     else
                     if (type==message_type::embedding && json_data.contains("embeddings")) simple_string=json_data["embeddings"].get<std::string>();
                     else
                     if (type==message_type::chat && json_data.contains("message")) simple_string=json_data["message"]["content"].get<std::string>();
-                                         
+
                     if ( json_data.contains("error") ) error_string =json_data["error"].get<std::string>();
                 }
                 catch(...) { if (ollama::use_exceptions) throw ollama::invalid_json_exception("Unable to parse JSON string:"+this->json_string); valid = false; }
             }
-            
+
             response() {json_string = ""; valid = false;}
             ~response(){};
 
@@ -361,18 +361,18 @@ namespace ollama
 
             const json& as_json() const
             {
-                return json_data;                
+                return json_data;
             }
 
             const std::string& as_simple_string() const
             {
-                return simple_string;               
+                return simple_string;
             }
 
             bool has_error() const
             {
                 if ( json_data.contains("error") ) return true;
-                return false;                
+                return false;
             }
 
             const std::string& get_error() const
@@ -389,7 +389,7 @@ namespace ollama
 
             //operator std::string() const { return this->as_simple_string(); }
             operator std::string() const { return this->as_simple_string(); }
-            //const operator std::string() const { return this->as_simple_string(); }           
+            //const operator std::string() const { return this->as_simple_string(); }
 
 
         private:
@@ -398,9 +398,9 @@ namespace ollama
         std::string simple_string;
         std::string error_string;
 
-        json json_data;        
+        json json_data;
         message_type type;
-        bool valid;        
+        bool valid;
     };
 
 }
@@ -441,7 +441,7 @@ class Ollama
 
         request["stream"] = false;
         std::string request_string = request.dump();
-        if (ollama::log_requests) std::cout << request_string << std::endl;      
+        if (ollama::log_requests) std::cout << request_string << std::endl;
 
         if (auto res = this->cli->Post("/api/generate",request_string, "application/json"))
         {
@@ -449,14 +449,14 @@ class Ollama
 
             response = ollama::response(res->body);
             if ( response.has_error() ) { if (ollama::use_exceptions) throw ollama::exception("Ollama response returned error: "+response.get_error() ); }
-           
+
         }
         else
         {
             if (ollama::use_exceptions) throw ollama::exception("No response returned from server "+this->server_url+". Error was: "+httplib::to_string( res.error() ));
         }
 
-        return response;        
+        return response;
     }
 
     ollama::response chat(const std::string& model, const ollama::messages& messages, const std::string& think, const std::string& sysmsg, const std::string& tools, json options=nullptr, const std::string& keep_alive_duration="5m")
@@ -470,9 +470,9 @@ class Ollama
     {
         ollama::response response;
 
-        request["stream"] = false;        
+        request["stream"] = false;
         std::string request_string = request.dump();
-        if (ollama::log_requests) std::cout << request_string << std::endl;      
+        if (ollama::log_requests) std::cout << request_string << std::endl;
 
         if (auto res = this->cli->Post("/api/chat",request_string, "application/json"))
         {
@@ -480,7 +480,7 @@ class Ollama
 
             response = ollama::response(res->body, ollama::message_type::chat);
             if ( response.has_error() ) { if (ollama::use_exceptions) throw ollama::exception("Ollama response returned error: "+response.get_error() ); }
-           
+
         }
         else
         {
@@ -540,13 +540,13 @@ class Ollama
             // Read the entire file into a string using iterators
             std::string file_contents((std::istreambuf_iterator<char>(file)),
                                     std::istreambuf_iterator<char>());
-            
-            request["modelFile"] = file_contents;                                                
+
+            request["modelFile"] = file_contents;
         }
         else request["modelFile"] = modelFile;
 
         std::string request_string = request.dump();
-        if (ollama::log_requests) std::cout << request_string << std::endl;  
+        if (ollama::log_requests) std::cout << request_string << std::endl;
 
         std::string response;
 
@@ -555,7 +555,7 @@ class Ollama
             if (ollama::log_replies) std::cout << res->body << std::endl;
 
             json chunk = json::parse(res->body);
-            if (chunk["status"]=="success") return true;        
+            if (chunk["status"]=="success") return true;
         }
         else
         {
@@ -586,7 +586,7 @@ class Ollama
             if (ollama::log_replies) std::cout << "Reply from '/api/generate' was " << res->body << std::endl;
             if (response.contains ("done")) {return response["done"];}
         }
-        return false;                
+        return false;
     }
 
     bool unload_model(const std::string& model)
@@ -598,7 +598,7 @@ class Ollama
         auto res = this->cli->Post("/api/generate", request_string, "application/json");
 		json response = json::parse(res->body);
 		if (response.contains ("done")) {return response["done"];}
-        return false;                
+        return false;
     }
 
     bool is_running()
@@ -616,7 +616,7 @@ class Ollama
             if (ollama::log_replies) std::cout << res->body << std::endl;
             models = json::parse(res->body);
         }
-        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when querying model list: "+httplib::to_string( res.error() ) );}        
+        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when querying model list: "+httplib::to_string( res.error() ) );}
 
         return models;
     }
@@ -626,7 +626,7 @@ class Ollama
         std::vector<std::string> models;
 
         json json_response = list_model_json();
-        
+
         for (auto& model: json_response["models"])
         {
             models.push_back(model["name"]);
@@ -643,7 +643,7 @@ class Ollama
             if (ollama::log_replies) std::cout << res->body << std::endl;
             models = json::parse(res->body);
         }
-        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when querying running models: "+httplib::to_string( res.error() ) );}        
+        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when querying running models: "+httplib::to_string( res.error() ) );}
 
         return models;
     }
@@ -653,7 +653,7 @@ class Ollama
         std::vector<std::string> models;
 
         json json_response = running_model_json();
-        
+
         for (auto& model: json_response["models"])
         {
             models.push_back(model["name"]);
@@ -667,9 +667,9 @@ class Ollama
         if (auto res = cli->Head("/api/blobs/"+digest))
         {
             if (res->status==httplib::StatusCode::OK_200) return true;
-            if (res->status==httplib::StatusCode::NotFound_404) return false;            
+            if (res->status==httplib::StatusCode::NotFound_404) return false;
         }
-        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when checking if blob exists: "+httplib::to_string( res.error() ) );}        
+        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when checking if blob exists: "+httplib::to_string( res.error() ) );}
 
         return false;
     }
@@ -679,9 +679,9 @@ class Ollama
         if (auto res = cli->Post("/api/blobs/"+digest))
         {
             if (res->status==httplib::StatusCode::Created_201) return true;
-            if (res->status==httplib::StatusCode::BadRequest_400) { if (ollama::use_exceptions) throw ollama::exception("Received bad request (Code 400) from Ollama server when creating blob."); }            
+            if (res->status==httplib::StatusCode::BadRequest_400) { if (ollama::use_exceptions) throw ollama::exception("Received bad request (Code 400) from Ollama server when creating blob."); }
         }
-        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when creating blob: "+httplib::to_string( res.error() ) );}        
+        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when creating blob: "+httplib::to_string( res.error() ) );}
 
         return false;
 
@@ -700,13 +700,13 @@ class Ollama
         {
             if (ollama::log_replies) std::cout << "Reply was " << res->body << std::endl;
             try
-            { 
-                response = json::parse(res->body); 
+            {
+                response = json::parse(res->body);
             }
             catch(...)
-            { if (ollama::use_exceptions) throw ollama::exception("Received bad response from Ollama server when querying model info."); }           
+            { if (ollama::use_exceptions) throw ollama::exception("Received bad response from Ollama server when querying model info."); }
         }
-        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when querying model info: "+httplib::to_string( res.error() ) );}        
+        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when querying model info: "+httplib::to_string( res.error() ) );}
 
         return response;
     }
@@ -719,13 +719,13 @@ class Ollama
 
         std::string request_string = request.dump();
         if (ollama::log_requests) std::cout << request_string << std::endl;
-        
+
         if (auto res = cli->Post("/api/copy", request_string, "application/json"))
         {
             if (res->status==httplib::StatusCode::OK_200) return true;
-            if (res->status==httplib::StatusCode::NotFound_404) { if (ollama::use_exceptions) throw ollama::exception("Source model not found when copying model (Code 404)."); }            
+            if (res->status==httplib::StatusCode::NotFound_404) { if (ollama::use_exceptions) throw ollama::exception("Source model not found when copying model (Code 404)."); }
         }
-        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when copying model: "+httplib::to_string( res.error() ) );}        
+        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when copying model: "+httplib::to_string( res.error() ) );}
 
         return false;
     }
@@ -737,13 +737,13 @@ class Ollama
 
         std::string request_string = request.dump();
         if (ollama::log_requests) std::cout << request_string << std::endl;
-        
+
         if (auto res = cli->Delete("/api/delete", request_string, "application/json"))
         {
             if (res->status==httplib::StatusCode::OK_200) return true;
-            if (res->status==httplib::StatusCode::NotFound_404) { if (ollama::use_exceptions) throw ollama::exception("Model not found when trying to delete (Code 404)."); }            
+            if (res->status==httplib::StatusCode::NotFound_404) { if (ollama::use_exceptions) throw ollama::exception("Model not found when trying to delete (Code 404)."); }
         }
-        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when deleting model: "+httplib::to_string( res.error() ) );}        
+        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when deleting model: "+httplib::to_string( res.error() ) );}
 
         return false;
     }
@@ -757,16 +757,16 @@ class Ollama
 
         std::string request_string = request.dump();
         if (ollama::log_requests) std::cout << request_string << std::endl;
-        
+
         if (auto res = cli->Post("/api/pull", request_string, "application/json"))
         {
             if (res->status==httplib::StatusCode::OK_200) return true;
             if (res->status==httplib::StatusCode::NotFound_404) { if (ollama::use_exceptions) throw ollama::exception("Model not found when trying to pull (Code 404)."); return false; }
 
             response = json::parse(res->body);
-            if ( response.contains("error") ) { if (ollama::use_exceptions) throw ollama::exception( "Error returned from ollama when pulling model: "+response["error"].get<std::string>() ); return false; }          
+            if ( response.contains("error") ) { if (ollama::use_exceptions) throw ollama::exception( "Error returned from ollama when pulling model: "+response["error"].get<std::string>() ); return false; }
         }
-        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when pulling model: "+httplib::to_string( res.error() ) );}        
+        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when pulling model: "+httplib::to_string( res.error() ) );}
 
         return false;
     }
@@ -780,16 +780,16 @@ class Ollama
 
         std::string request_string = request.dump();
         if (ollama::log_requests) std::cout << request_string << std::endl;
-        
+
         if (auto res = cli->Post("/api/push", request_string, "application/json"))
         {
             if (res->status==httplib::StatusCode::OK_200) return true;
             if (res->status==httplib::StatusCode::NotFound_404) { if (ollama::use_exceptions) throw ollama::exception("Model not found when trying to push (Code 404)."); return false; }
 
             response = json::parse(res->body);
-            if ( response.contains("error") ) { if (ollama::use_exceptions) throw ollama::exception( "Error returned from ollama when pushing model: "+response["error"].get<std::string>() ); return false; }          
+            if ( response.contains("error") ) { if (ollama::use_exceptions) throw ollama::exception( "Error returned from ollama when pushing model: "+response["error"].get<std::string>() ); return false; }
         }
-        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when pushing model: "+httplib::to_string( res.error() ) );}        
+        else { if (ollama::use_exceptions) throw ollama::exception("No response returned from server when pushing model: "+httplib::to_string( res.error() ) );}
 
         return false;
     }
@@ -802,7 +802,7 @@ class Ollama
 
         if (res)
         {
-            json response = json::parse(res->body);        
+            json response = json::parse(res->body);
             version = response["version"];
         }
         else
@@ -817,7 +817,7 @@ class Ollama
     void setServerURL(const std::string& server_url)
     {
         this->server_url = server_url;
-        delete(this->cli);        
+        delete(this->cli);
         this->cli = new httplib::Client(server_url);
     }
 
@@ -848,10 +848,10 @@ class Ollama
 
 // Functions associated with Ollama singleton
 namespace ollama
-{    
+{
     // Use directly from the namespace as a singleton
     static Ollama ollama;
-    
+
     inline void setServerURL(const std::string& server_url)
     {
         ollama.setServerURL(server_url);
