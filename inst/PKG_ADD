@@ -1,1 +1,0 @@
-addpath (fullfile (fileparts (canonicalize_file_name (mfilename ("fullpath"))), "tests"));
