@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
     <script type="text/javascript" async
-      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML">
+      src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_CHTML">
     </script>
     <script type="text/javascript">
       window.addEventListener("load", () => {
@@ -19,6 +19,32 @@
           tog.onclick = () => tog.classList.toggle("show");
           i.parentElement.removeChild(i.previousSibling);
           i.parentElement.insertBefore(tog, i);
+        }
+      });
+      // Open the collapsible demo an "#example" link points to, then scroll to
+      // it.  getElementById (not querySelector) matches ids that contain a dot,
+      // e.g. "Class.method-example1".
+      function openHashTarget () {
+        if (! window.location.hash) { return; }
+        let el = document.getElementById (
+          decodeURIComponent (window.location.hash.slice (1)));
+        if (! el) { return; }
+        if (el.classList.contains ("collapse") &&
+            ! el.classList.contains ("show")) {
+          bootstrap.Collapse.getOrCreateInstance (el).show ();
+        }
+        el.scrollIntoView ();
+      }
+      window.addEventListener ("DOMContentLoaded", openHashTarget);
+      window.addEventListener ("hashchange", openHashTarget);
+      // When the collapsible named by the current URL fragment is collapsed,
+      // drop the fragment (replaceState: no scroll, no history entry).  Otherwise
+      // the fragment would still equal this id, so clicking the same #example
+      // link again fires no "hashchange" and the example would not re-expand.
+      document.addEventListener ("hide.bs.collapse", (e) => {
+        if (e.target.id && window.location.hash === "#" + e.target.id) {
+          history.replaceState (null, "",
+            window.location.pathname + window.location.search);
         }
       });
     </script>
@@ -174,7 +200,6 @@
             </div>
             <div class="card-body">
 <dl><code><h5 class="description">llms: ollama</h5></code></dl>
-
 <p> An ollama object interface with a running ollama server.
 </p>
 <div class="ms-5">
@@ -198,9 +223,7 @@ datetime
   <a href="https://github.com/pr0m1th3as/octave-llms/tree/main/inst/ollama.m">ollama</a>
 </p>
 </div>
-        <h4 class="d-inline-block my-3">
-          Properties
-        </h4>
+        <p class="lead my-3">The <code>ollama</code> class contains the following properties:</p>
 
         <div class="container-xl my-1">
           <div class="row">
@@ -221,11 +244,9 @@ Display running models.
           <div class="collapse multi-collapse" id="collapseProperty1">
             <div class="border-bottom py-2">
 
-
 <p> </p>
 <p> Displays the models that are currently loaded in ollama server&rsquo;s memory.
 </p>
-
 
 
             </div>
@@ -251,13 +272,13 @@ Inference mode.
           <div class="collapse multi-collapse" id="collapseProperty2">
             <div class="border-bottom py-2">
 
-
 <p> </p>
 <p> Specifies the inference mode that the ollama interface object will use
- to send requests to the ollama server.  Currently, only <code>'query'</code>
- and <code>'chat'</code> modes are implemented.
+ to send requests to the ollama server.  Currently, the <code>'query'</code>,
+ <code>'chat'</code>, and <code>'embed'</code> modes are implemented.  The
+ <code>'embed'</code> mode is set by <code>loadModel</code> when the loaded model
+ has embedding capabilities.
 </p>
-
 
 
             </div>
@@ -283,12 +304,10 @@ URL of the ollama server.
           <div class="collapse multi-collapse" id="collapseProperty3">
             <div class="border-bottom py-2">
 
-
 <p> </p>
 <p> Specifies the network IP address and the port at which the ollama
  interface object is connected to.
 </p>
-
 
 
             </div>
@@ -314,11 +333,9 @@ Display available models.
           <div class="collapse multi-collapse" id="collapseProperty4">
             <div class="border-bottom py-2">
 
-
 <p> </p>
 <p> Displays the models that are currently available in ollama server.
 </p>
-
 
 
             </div>
@@ -344,12 +361,10 @@ Response Statistics of LLM.
           <div class="collapse multi-collapse" id="collapseProperty5">
             <div class="border-bottom py-2">
 
-
 <p> </p>
 <p> Contains various metrics about the last processed request and the
  response returned from the ollama server.
 </p>
-
 
 
             </div>
@@ -375,9 +390,8 @@ Chat history of current session.
           <div class="collapse multi-collapse" id="collapseProperty6">
             <div class="border-bottom py-2">
 
-
 <p> </p>
-<p> Contains an <math>N&times;3</math> cell array with the history of user prompts,
+<p> Contains an <math>Nx3</math> cell array with the history of user prompts,
  images (if any), and models response for a given chat session. The first
  column contains character vectors with the user&rsquo;s prompts, the second
  column contains a nested cell array with any images attached to the
@@ -385,7 +399,6 @@ Chat history of current session.
  contains the model&rsquo;s responses.  By default, <code>chatHistory</code> is an
  empty cell array, and it is only populated while in  <code>'chat'</code> mode.
 </p>
-
 
 
             </div>
@@ -411,13 +424,11 @@ The model to be used for any user request for inference.
           <div class="collapse multi-collapse" id="collapseProperty7">
             <div class="border-bottom py-2">
 
-
 <p> </p>
 <p> The name of the model that will be used for generating the response to
  the next user request.  This is empty upon construction and it must be
  specified before requesting any inference from the ollama server.
 </p>
-
 
 
             </div>
@@ -443,12 +454,10 @@ Network read timeout.
           <div class="collapse multi-collapse" id="collapseProperty8">
             <div class="border-bottom py-2">
 
-
 <p> </p>
 <p> The time in seconds that the ollama interface object will wait for a
  server response before closing the connection with an error.
 </p>
-
 
 
             </div>
@@ -474,13 +483,11 @@ Network write timeout.
           <div class="collapse multi-collapse" id="collapseProperty9">
             <div class="border-bottom py-2">
 
-
 <p> </p>
 <p> The time in seconds that the ollama interface object will wait for a
  request to be successfully sent to the server before closing the
  connection with an error.
 </p>
-
 
 
             </div>
@@ -506,7 +513,6 @@ Custom options.
           <div class="collapse multi-collapse" id="collapseProperty10">
             <div class="border-bottom py-2">
 
-
 <p> </p>
 <p> A structure containing fields as optional parameters to be passed to a
  model for inference at runtime.  By default, this is an empty structure,
@@ -515,7 +521,6 @@ Custom options.
  <code>setOptions</code> method for more information about the custom parameters
  you can specify.
 </p>
-
 
 
             </div>
@@ -541,7 +546,6 @@ System message.
           <div class="collapse multi-collapse" id="collapseProperty11">
             <div class="border-bottom py-2">
 
-
 <p> </p>
 <p> A character vector containing the system message, which may be used to
  provide crucial context and instructions that guide how the model behaves
@@ -553,7 +557,6 @@ System message.
  message cannot be modified during a chat session.  Use dot notation to
  access and/or modify the default value of the system message.
 </p>
-
 
 
             </div>
@@ -579,13 +582,12 @@ Flag for thinking.
           <div class="collapse multi-collapse" id="collapseProperty12">
             <div class="border-bottom py-2">
 
-
 <p> </p>
 <p> A logical scalar or a character vector specifying the thinking status of
- the active model.  By default, the thiking status is set to <code>true</code>
+ the active model.  By default, the thinking status is set to <code>true</code>
  for capable models and to <code>false</code> for models that do not support
- thiking capabilities.  In special cases, where models support categorical
- states of thinking capabilities (such ass the GPT-OSS model family), then
+ thinking capabilities.  In special cases, where models support categorical
+ states of thinking capabilities (such as the GPT-OSS model family), then
  you must specify the thinking status of your choice explicitly, because
  the default <code>true</code> value is ignored by the ollama server.  Unless
  an active model is set, the <code>thinking</code> property is empty.  Use dot
@@ -595,7 +597,6 @@ Flag for thinking.
  an active model that does not have thinking capabilities results to an
  error.
 </p>
-
 
 
             </div>
@@ -621,7 +622,6 @@ Function tools for tool-capable models.
           <div class="collapse multi-collapse" id="collapseProperty13">
             <div class="border-bottom py-2">
 
-
 <p> </p>
 <p> A <code>toolFunction</code> object or a <code>toolRegistry</code> object (merely an
  indexed collection of toolFunction objects), which are available to the
@@ -631,7 +631,6 @@ Function tools for tool-capable models.
  when the active model is tool capable.  Use dot notation to access and/or
  assign a <code>toolFunction</code> object or a <code>toolRegistry</code> object.
 </p>
-
 
 
             </div>
@@ -657,7 +656,6 @@ Flag for displaying thinking.
           <div class="collapse multi-collapse" id="collapseProperty14">
             <div class="border-bottom py-2">
 
-
 <p> </p>
 <p> A logical scalar specifying whether to display thinking text or not.  It
  only applies when <code>thinking</code> is enabled and no output argument is
@@ -668,14 +666,11 @@ Flag for displaying thinking.
 </p>
 
 
-
             </div>
           </div>
         </div>
 
-        <h4 class="d-inline-block my-3">
-          Methods
-        </h4>
+        <p class="lead my-3">The <code>ollama</code> class offers the following public methods:</p>
 
         <div class="container-xl my-1">
           <div class="row">
@@ -700,7 +695,6 @@ Create an ollama interface object.
 <dt><code><h5 class="fs">ollama: <var>llm</var> = <b>ollama</b> (<var>serverURL</var>, <var>model</var>)</code></h5></dt>
 <dt><code><h5 class="fs">ollama: <var>llm</var> = <b>ollama</b> (<var>serverURL</var>, <var>model</var>, <var>mode</var>)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code><var>llm</var> = ollama (<var>serverURL</var>)</code> creates an ollama interface
  object, which allows communication with an ollama server accesible at
@@ -764,7 +758,6 @@ List available models in ollama server.
 <dt><code><h5 class="fs">ollama: <var>list</var> = <b>listModels</b> (<var>llm</var>, <var>outtype</var>)</code></h5></dt>
 <dt><code><h5 class="fs">ollama: <b>listModels</b> (&hellip;)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code><var>list</var> = listModels (<var>llm</var>)</code> returns a cell array of
  character vectors in <var>list</var> with the names of the models, which are
@@ -776,25 +769,24 @@ List available models in ollama server.
  the data type of the output argument <var>list</var>.  <var>outtype</var> must be a
  character vector with any of the following options:
 </p>
- <ul>
+<ul>
 <li> <code>'cellstr'</code> (default) returns <var>list</var> as a cell array of
  character vectors.  Use this option to see available models for selecting
  an active model for inference.
- </li><li> <code>'json'</code> returns <var>list</var> as a character vector containing
+</li><li> <code>'json'</code> returns <var>list</var> as a character vector containing
  the json string response returned from the ollama server.  Use this
  option if you want to access all the details about the models available
  in the ollama server.
- </li><li> <code>'table'</code> returns <var>list</var> as a table with the most
+</li><li> <code>'table'</code> returns <var>list</var> as a table with the most
  important information about the available models in specific table
  variables.
- </li></ul>
+</li></ul>
 
 <p> <code>listModels (&hellip;)</code> will display the output requested according
  to the previous syntaxes to the standard output instead of returning it
  to an output argument.  This syntax is not valid for the <code>'json'</code>
  option, which requires an output argument.
 </p>
-
 
 
             </div>
@@ -824,7 +816,6 @@ List currently running models in ollama server.
 <dt><code><h5 class="fs">ollama: <var>list</var> = <b>listRunningModels</b> (<var>llm</var>, <var>outtype</var>)</code></h5></dt>
 <dt><code><h5 class="fs">ollama: <b>listRunningModels</b> (&hellip;)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code><var>list</var> = listRunningModels (<var>llm</var>)</code> returns a cell array of
  character vectors in <var>list</var> with the names of the models, which are
@@ -836,25 +827,24 @@ List currently running models in ollama server.
  specifies the data type of the output argument <var>list</var>.  <var>outtype</var>
  must be a character vector with any of the following options:
 </p>
- <ul>
+<ul>
 <li> <code>'cellstr'</code> (default) returns <var>list</var> as a cell array of
  character vectors.  Use this option to see which models are currently
  running on the ollama server for better memory management.
- </li><li> <code>'json'</code> returns <var>list</var> as a character vector containing
+</li><li> <code>'json'</code> returns <var>list</var> as a character vector containing
  the json string response returned from the ollama server.  Use this
  option if you want to access all the details about currnently running
  models.
- </li><li> <code>'table'</code> returns <var>list</var> as a table with the most
+</li><li> <code>'table'</code> returns <var>list</var> as a table with the most
  important information about the currently running models in specific
  table variables.
- </li></ul>
+</li></ul>
 
 <p> <code>listModels (&hellip;)</code> will display the output requested according
  to the previous syntaxes to the standard output instead of returning it
  to an output argument.  This syntax is not valid for the <code>'json'</code>
  option, which requires an output argument.
 </p>
-
 
 
             </div>
@@ -882,7 +872,6 @@ Copy model in ollama server.
 <dl>
 <dt><code><h5 class="fs">ollama: <b>copyModel</b> (<var>llm</var>, <var>source</var>, <var>target</var>)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code>copyModel (<var>llm</var>, <var>source</var>, <var>target</var>)</code> copies the model
  specified by <var>source</var> into a new model named after <var>target</var> in
@@ -895,7 +884,6 @@ Copy model in ollama server.
 <p> Alternatively, <var>source</var> may also be an integer scalar value indexing
  an existing model in <code><var>llm</var>.availableModels</code>.
 </p>
-
 
 
             </div>
@@ -923,7 +911,6 @@ Delete model in ollama server.
 <dl>
 <dt><code><h5 class="fs">ollama: <b>deleteModel</b> (<var>llm</var>, <var>target</var>)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code>deleteModel (<var>llm</var>, <var>target</var>)</code> deletes the model specified
  by <var>target</var> in the ollama server interfaced by <var>llm</var>.
@@ -933,7 +920,6 @@ Delete model in ollama server.
  in the <code><var>llm</var>.availableModels</code> property are updated, otherwise,
  an error is returned.
 </p>
-
 
 
             </div>
@@ -961,7 +947,6 @@ Load model in ollama server.
 <dl>
 <dt><code><h5 class="fs">ollama: <b>loadModel</b> (<var>llm</var>, <var>target</var>)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code>loadModel (<var>llm</var>, <var>target</var>)</code> loads the model specified by
  <var>target</var> in the ollama server interfaced by <var>llm</var>.  This syntax
@@ -983,7 +968,6 @@ Load model in ollama server.
  be set active at a time for a given ollama interface object.  The active
  model for for inference will always be the latest loaded model.
 </p>
-
 
 
             </div>
@@ -1011,7 +995,6 @@ Unload model in ollama server.
 <dl>
 <dt><code><h5 class="fs">ollama: <b>unloadModel</b> (<var>llm</var>, <var>target</var>)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code>unloadModel (<var>llm</var>, <var>target</var>)</code> unloads the model specified
  by <var>target</var> from memory of the ollama server interfaced by <var>llm</var>.
@@ -1025,7 +1008,6 @@ Unload model in ollama server.
  object, then the <code>activeModel</code> property is also cleared.  You need
  to set an active model before inference.
 </p>
-
 
 
             </div>
@@ -1053,7 +1035,6 @@ Download model from the ollama library into ollama server.
 <dl>
 <dt><code><h5 class="fs">ollama: <b>pullModel</b> (<var>llm</var>, <var>target</var>)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code>pullModel (<var>llm</var>, <var>target</var>)</code> downloads the model specified
  by <var>target</var> from the ollama library into the ollama server interfaced
@@ -1061,7 +1042,6 @@ Download model from the ollama library into ollama server.
  models in the <code><var>llm</var>.availableModels</code> property.  <var>target</var>
  must be a character vector.
 </p>
-
 
 
             </div>
@@ -1089,7 +1069,6 @@ Set custom options for model inference.
 <dl>
 <dt><code><h5 class="fs">ollama: <b>setOptions</b> (<var>llm</var>, <var>name</var>, <var>value</var>)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code>setOptions (<var>llm</var>, <var>name</var>, <var>value</var>)</code> sets custom
  options to be parsed to the ollama server in order to tailor the
@@ -1102,8 +1081,9 @@ Set custom options for model inference.
 <p> The following options may be customized in any order as paired input
  arguments.
 </p>
- <table>
-<thead><tr><th width="25%"><var>name</var></th><th width="2%"></th><th width="15%"><var>value</var></th><th width="2%"></th><th width="56%"><var>description</var></th></tr></thead>
+<div class="table-responsive">
+<table class="table table-striped table-bordered table-sm">
+<thead class="table-primary"><tr><th width="25%"><var>name</var></th><th width="2%"></th><th width="15%"><var>value</var></th><th width="2%"></th><th width="56%"><var>description</var></th></tr></thead>
 <tr><td width="25%"><code>'num_keep'</code></td><td width="2%"></td><td width="15%">integer</td><td width="2%"></td><td width="56%">Specifies how many
  of the most recent tokens or responses should be kept in memory for
  generating the next output.  Higher values can improve relevance of the
@@ -1166,6 +1146,7 @@ Set custom options for model inference.
  number of threads to use during model generation, allowing you to
  optimize performance based on your CPU&rsquo;s capabilities.</td></tr>
 </table>
+</div>
 
 <p> Specified customized options are preserved in the ollama interface object
  for all subsequent requests for inference until they are altered or reset
@@ -1186,7 +1167,6 @@ Set custom options for model inference.
  The equivalent syntax of <code>setOptions (<var>llm</var>, 'seed', []</code> is
  <code><var>llm</var>.options = {'seed', []}</code>.
 </p>
-
 
 
             </div>
@@ -1214,12 +1194,10 @@ Show custom options.
 <dl>
 <dt><code><h5 class="fs">ollama: <b>showOptions</b> (<var>llm</var>)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code>showOptions (<var>llm</var>)</code> displays any custom options that may be
  specified in the ollama inteface object <var>llm</var>.
 </p>
-
 
 
             </div>
@@ -1247,10 +1225,11 @@ Query a model in ollama server.
 <dl>
 <dt><code><h5 class="fs">ollama: <b>query</b> (<var>llm</var>, <var>prompt</var>)</code></h5></dt>
 <dt><code><h5 class="fs">ollama: <b>query</b> (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <b>query</b> (<var>llm</var>, <var>prompt</var>, <var>format</var>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <b>query</b> (<var>llm</var>, <var>prompt</var>, <var>image</var>, <var>format</var>)</code></h5></dt>
 <dt><code><h5 class="fs">ollama: <var>txt</var> = <b>query</b> (&hellip;)</code></h5></dt>
 <dt><code><h5 class="fs">ollama: <b>query</b> (<var>llm</var>)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code>query (<var>llm</var>, <var>prompt</var>)</code> uses the <code>&quot;api/generate&quot;</code>
  API end point to make a request to the ollama server interfaced by
@@ -1273,6 +1252,22 @@ Query a model in ollama server.
  array of character vectors explicitly containing either multiple
  filenames or mulitple base64 encoded string representations of images.
 </p>
+<p> <code>query (<var>llm</var>, <var>prompt</var>, <var>format</var>)</code> also specifies a
+ schema constraining the model&rsquo;s response to the structure it describes.
+ <var>format</var> must be a scalar structure, which is rendered to a JSON
+ schema with <code>jsonencode</code>, and it may be given either in place of
+ <var>image</var> or following it.  A constrained response can be recovered
+ with <code>jsondecode</code> instead of being parsed by inspection, which is
+ what allows a model to be used as a source of data rather than of text.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example"> format = struct ('type', 'object', ...
+                  'properties', struct ('answer', ...
+                                        struct ('type', 'number')), ...
+                  'required', {{'answer'}});
+ txt = query (llm, 'How many moons has Mars?', format);
+ val = jsondecode (txt).answer;
+</pre></td></tr></table>
+
 <p> <code><var>txt</var> = query (&hellip;)</code> returns the generated text to the
  output argument <var>txt</var> instead of displaying it to the terminal for
  any of the previous syntaxes.
@@ -1288,15 +1283,17 @@ Query a model in ollama server.
  long as it already set in query mode. The table below lists the
  equivalent syntaxes.
 </p>
- <table>
-<thead><tr><th width="50%"><var>method calling</var></th><th width="2%"></th><th width="48%"><var>object subscripted reference</var></th></tr></thead>
-<tr><td width="50%"><code>query (<var>llm</var>, <var>prompt</var>)</code></td><td width="2%"></td><td width="48%"><code><var>llm</var>(<var>prompt</var>)</code></td></tr>
-<tr><td width="50%"><code>query (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></td><td width="2%"></td><td width="48%"><code><var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
-<tr><td width="50%"><code>query (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></td><td width="2%"></td><td width="48%"><code><var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
-<tr><td width="50%"><code><var>txt</var> = query (<var>llm</var>, <var>prompt</var>)</code></td><td width="2%"></td><td width="48%"><code><var>txt</var> = <var>llm</var>(<var>prompt</var>)</code></td></tr>
-<tr><td width="50%"><code><var>txt</var> = query (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></td><td width="2%"></td><td width="48%"><code><var>txt</var> = <var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
+<div class="table-responsive">
+<table class="table table-striped table-bordered table-sm">
+<thead class="table-primary"><tr><th width="50%"><var>method calling</var></th><th width="2%"></th><th width="48%"><var>object subscripted reference</var></th></tr></thead>
+<tr><td width="50%"><code>query (<var>llm</var>, <var>prompt</var>)</code></td><td width="2%"></td><td width="48%"> <code><var>llm</var>(<var>prompt</var>)</code></td></tr>
+<tr><td width="50%"><code>query (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></td><td width="2%"></td><td width="48%"> <code><var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
+<tr><td width="50%"><code>query (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></td><td width="2%"></td><td width="48%"> <code><var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
+<tr><td width="50%"><code><var>txt</var> = query (<var>llm</var>, <var>prompt</var>)</code></td><td width="2%"></td><td width="48%"> <code><var>txt</var> = <var>llm</var>(<var>prompt</var>)</code></td></tr>
+<tr><td width="50%"><code><var>txt</var> = query (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code>
+   <code><var>txt</var> = <var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
 </table>
-
+</div>
 
 
 
@@ -1325,11 +1322,11 @@ Query a model in ollama server.
 <dl>
 <dt><code><h5 class="fs">ollama: <b>chat</b> (<var>llm</var>, <var>prompt</var>)</code></h5></dt>
 <dt><code><h5 class="fs">ollama: <b>chat</b> (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></h5></dt>
+<dt><code><h5 class="fs">ollama: <b>chat</b> (<var>llm</var>, <var>prompt</var>, <var>format</var>)</code></h5></dt>
 <dt><code><h5 class="fs">ollama: <b>chat</b> (<var>llm</var>, {<var>tool_output</var>})</code></h5></dt>
 <dt><code><h5 class="fs">ollama: <var>txt</var> = <b>chat</b> (&hellip;)</code></h5></dt>
 <dt><code><h5 class="fs">ollama: <b>chat</b> (<var>llm</var>)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code>chat (<var>llm</var>, <var>prompt</var>)</code> uses the <code>&quot;api/chat&quot;</code> API
  end point to make a request to the ollama server interfaced by
@@ -1368,46 +1365,47 @@ Query a model in ollama server.
  <code>toolFunction</code> objects contained in a <code>toolRegistry</code>, which
  have been evaluated after a previous <code>&quot;tool_calls&quot;</code> request by the
  model, to the next message.  This syntax requires the <var>tool_output</var>
- input argument to be a  <math>N&times;2</math> cell array of character vectors, in
+ input argument to be a  <math>Nx2</math> cell array of character vectors, in
  which the first column contains the output of each evaluated
  <code>toolFunction</code> object and the second column contains its respective
  function name.  Each row in <var>tool_output</var> corresponds to a separate
- function, when multiple <code>toolFunction</code> objects have been evaluated.
-</code></p>
-<p><code> <code><var>txt</var> = chat (&hellip;)</code> returns the generated text to the
+ function, when multiple <code>toolFunction</code> objects have been evaluated.</code>
+</p>
+<p> <code>chat (<var>llm</var>, <var>prompt</var>, <var>format</var>)</code> also specifies a
+ schema constraining the model&rsquo;s response to the structure it describes,
+ as in the <code>query</code> method.  <var>format</var> must be a scalar structure,
+ which is rendered to a JSON schema with <code>jsonencode</code>, and it may be
+ given either in place of <var>image</var> or following it.
+</p>
+<p> <code><var>txt</var> = chat (&hellip;)</code> returns the generated text to the
  output argument <var>txt</var> instead of displaying it to the terminal for
  any of the previous syntaxes.  If thinking is enabled, then <var>txt</var> is
- a <math>2&times;1</math> cell array of character vectors with the first element
+ a <math>2x1</math> cell array of character vectors with the first element
  containing the final answer and the second element the thinking process.
-</code></p>
-<p><code> <code>chat (<var>llm</var>)</code> does not make a request to the ollama server,
+</p>
+<p> <code>chat (<var>llm</var>)</code> does not make a request to the ollama server,
  but it sets the <code>'mode'</code> property in the ollama interface object
  <var>llm</var> to <code>'chat'</code> for future requests.  Use this syntax to
  switch from another inteface mode to chat mode without making a request
  to the server.  Switching to chat mode does not clear any existing chat
  history in <var>llm</var>.
-</code></p>
-<p><code> An alternative method of calling the <code>chat</code> method is by using
+</p>
+<p> An alternative method of calling the <code>chat</code> method is by using
  direct subscripted reference to the ollama interface object <var>llm</var> as
  long as it already set in chat mode. The table below lists the
  equivalent syntaxes.
-</code></p>
- <table>
-<thead><tr><th width="50%"><code> <var>method calling</var> </code></th><th width="2%"></th><th width="48%"><code> <var>object subscripted reference</var>
- </code></th></tr></thead>
-<tr><td width="50%"><code> <code>chat (<var>llm</var>, <var>prompt</var>)</code> </code></td><td width="2%"></td><td width="48%"><code> <code><var>llm</var>(<var>prompt</var>)</code>
- </code></td></tr>
-<tr><td width="50%"><code> <code>chat (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code> </code></td><td width="2%"></td><td width="48%"><code> <code><var>llm</var>(<var>prompt</var>, <var>image</var>)</code>
- </code></td></tr>
-<tr><td width="50%"><code> <code>chat (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code> </code></td><td width="2%"></td><td width="48%"><code> <code><var>llm</var>(<var>prompt</var>, <var>image</var>)</code>
- </code></td></tr>
-<tr><td width="50%"><code> <code><var>txt</var> = chat (<var>llm</var>, <var>prompt</var>)</code> </code></td><td width="2%"></td><td width="48%"><code> <code><var>txt</var> = <var>llm</var>(<var>prompt</var>)</code>
- </code></td></tr>
-<tr><td width="50%"><code> <code><var>txt</var> = chat (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code>
- </code></td><td width="2%"></td><td width="48%"><code> <code><var>txt</var> = <var>llm</var>(<var>prompt</var>, <var>image</var>)</code>
- </code></td></tr>
+</p>
+<div class="table-responsive">
+<table class="table table-striped table-bordered table-sm">
+<thead class="table-primary"><tr><th width="50%"><var>method calling</var></th><th width="2%"></th><th width="48%"><var>object subscripted reference</var></th></tr></thead>
+<tr><td width="50%"><code>chat (<var>llm</var>, <var>prompt</var>)</code></td><td width="2%"></td><td width="48%"> <code><var>llm</var>(<var>prompt</var>)</code></td></tr>
+<tr><td width="50%"><code>chat (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></td><td width="2%"></td><td width="48%"> <code><var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
+<tr><td width="50%"><code>chat (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code></td><td width="2%"></td><td width="48%"> <code><var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
+<tr><td width="50%"><code><var>txt</var> = chat (<var>llm</var>, <var>prompt</var>)</code></td><td width="2%"></td><td width="48%"> <code><var>txt</var> = <var>llm</var>(<var>prompt</var>)</code></td></tr>
+<tr><td width="50%"><code><var>txt</var> = chat (<var>llm</var>, <var>prompt</var>, <var>image</var>)</code>
+   <code><var>txt</var> = <var>llm</var>(<var>prompt</var>, <var>image</var>)</code></td></tr>
 </table>
-
+</div>
 
 
 
@@ -1437,7 +1435,6 @@ Generate embeddings.
 <dt><code><h5 class="fs">ollama: <var>vectors</var> = <b>embed</b> (<var>llm</var>, <var>input</var>)</code></h5></dt>
 <dt><code><h5 class="fs">ollama: <var>vectors</var> = <b>embed</b> (<var>llm</var>, <var>input</var>, <var>dims</var>)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code><var>vectors</var> = embed (<var>llm</var>, <var>input</var>)</code> generates embedding
  <var>vectors</var> corresponding to the user&rsquo;s <var>input</var>, which can either
@@ -1453,7 +1450,6 @@ Generate embeddings.
  be a positive integer value, which overrides the default settings of the
  embedding model.
 </p>
-
 
 
             </div>
@@ -1481,25 +1477,23 @@ Show response statistics.
 <dl>
 <dt><code><h5 class="fs">ollama: <b>showStats</b> (<var>llm</var>)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code>showStats (<var>llm</var>)</code> displays the response statistics of the last
  response returned from the ollama server intefaced by <var>llm</var>.  The
  type of request (e.g. query, chat, embed) does not alter the displayed
  statistics, which include the following parameters:
 </p>
- <ul>
+<ul>
 <li> total duration: the total time in seconds to process the request
  and return the response.
- </li><li> load duration: the time in seconds to load the user&rsquo;s request into
+</li><li> load duration: the time in seconds to load the user&rsquo;s request into
  the model.
- </li><li> evaluation duration: the time in seconds for the model to generate
+</li><li> evaluation duration: the time in seconds for the model to generate
  the response base on the user&rsquo;s request.
- </li><li> prompt count: the number of tokens comprising the user&rsquo;s request.
- </li><li> evaluation count: the number of tokens comprising the model&rsquo;s
+</li><li> prompt count: the number of tokens comprising the user&rsquo;s request.
+</li><li> evaluation count: the number of tokens comprising the model&rsquo;s
  response.
- </li></ul>
-
+</li></ul>
 
 
 
@@ -1532,7 +1526,6 @@ Display chat history.
 <dt><code><h5 class="fs">ollama: <b>showHistory</b> (<var>llm</var>, <code>'first'</code>)</code></h5></dt>
 <dt><code><h5 class="fs">ollama: <b>showHistory</b> (<var>llm</var>, <var>idx</var>)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code>showHistory (<var>llm</var>)</code> displays the entire chat history stored in
  the ollama interface object <var>llm</var>.  The chat history is displayed in
@@ -1553,7 +1546,7 @@ Display chat history.
 </p>
 <p> <code>showHistory (<var>llm</var>), <var>idx</var></code> displays the user-model
  interactions specified by <var>idx</var>, which must be a scalar or a vector
- of integer values indexing the rows of the <math>N&times;3</math> cell array
+ of integer values indexing the rows of the <math>Nx3</math> cell array
  comprising the <code>chatHistory</code> property in <var>llm</var>.
 </p>
 <p> <code>showHistory</code> is explicitly used for displaying the chat history and
@@ -1561,7 +1554,6 @@ Display chat history.
  history in a cell array, you can access the <code>chatHistory</code> property
  directly, as in <code><var>hdata</var> = <var>llm</var>.chatHistory</code>.
 </p>
-
 
 
             </div>
@@ -1589,7 +1581,6 @@ Clear chat history.
 <dl>
 <dt><code><h5 class="fs">ollama: <b>clearHistory</b> (<var>llm</var>)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code>clearHistory (<var>llm</var>)</code> deletes the entire chat history in the
  ollama interface object <var>llm</var>.  Use this method to initialize a new
@@ -1610,14 +1601,13 @@ Clear chat history.
 </p>
 <p> <code>showHistory (<var>llm</var>), <var>idx</var></code> deletes the user-model
  interactions specified by <var>idx</var>, which must be a scalar or a vector
- of integer values indexing the rows of the <math>N&times;3</math> cell array
+ of integer values indexing the rows of the <math>Nx3</math> cell array
  comprising the <code>chatHistory</code> property in <var>llm</var>.
 </p>
 <p> Note that selectively deleting user-model interactions from the chat
  history also removes any images that may be integrated with the selected
  requests.
 </p>
-
 
 
             </div>

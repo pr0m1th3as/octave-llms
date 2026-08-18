@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
     <script type="text/javascript" async
-      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML">
+      src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_CHTML">
     </script>
     <script type="text/javascript">
       window.addEventListener("load", () => {
@@ -19,6 +19,32 @@
           tog.onclick = () => tog.classList.toggle("show");
           i.parentElement.removeChild(i.previousSibling);
           i.parentElement.insertBefore(tog, i);
+        }
+      });
+      // Open the collapsible demo an "#example" link points to, then scroll to
+      // it.  getElementById (not querySelector) matches ids that contain a dot,
+      // e.g. "Class.method-example1".
+      function openHashTarget () {
+        if (! window.location.hash) { return; }
+        let el = document.getElementById (
+          decodeURIComponent (window.location.hash.slice (1)));
+        if (! el) { return; }
+        if (el.classList.contains ("collapse") &&
+            ! el.classList.contains ("show")) {
+          bootstrap.Collapse.getOrCreateInstance (el).show ();
+        }
+        el.scrollIntoView ();
+      }
+      window.addEventListener ("DOMContentLoaded", openHashTarget);
+      window.addEventListener ("hashchange", openHashTarget);
+      // When the collapsible named by the current URL fragment is collapsed,
+      // drop the fragment (replaceState: no scroll, no history entry).  Otherwise
+      // the fragment would still equal this id, so clicking the same #example
+      // link again fires no "hashchange" and the example would not re-expand.
+      document.addEventListener ("hide.bs.collapse", (e) => {
+        if (e.target.id && window.location.hash === "#" + e.target.id) {
+          history.replaceState (null, "",
+            window.location.pathname + window.location.search);
         }
       });
     </script>
@@ -174,7 +200,6 @@
             </div>
             <div class="card-body">
 <dl><code><h5 class="description">llms: toolFunction</h5></code></dl>
-
 <p> A toolFunction object for tool-calling capable models.
 </p>
 <div class="ms-5">
@@ -183,15 +208,11 @@
  Octave function, which should be executed after a tool call request from
  the model.
 </p>
-
 <p><strong>Source Code: </strong>
   <a href="https://github.com/pr0m1th3as/octave-llms/tree/main/inst/toolFunction.m">toolFunction</a>
 </p>
 </div>
-
-        <h4 class="d-inline-block my-3">
-          Methods
-        </h4>
+        <p class="lead my-3">The <code>toolFunction</code> class offers the following public methods:</p>
 
         <div class="container-xl my-1">
           <div class="row">
@@ -214,7 +235,6 @@ Create a tool function for LLMs.
 <dl>
 <dt><code><h5 class="fs">toolFunction: <var>tool</var> = <b>toolFunction</b> (<var>name</var>, <var>description</var>, <var>handle</var>)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code><var>tool</var> = toolFunction (<var>name</var>, <var>description</var>,
  <var>handle</var>)</code> creates a <code>toolFunction</code> object, which comprises an
@@ -230,7 +250,6 @@ Create a tool function for LLMs.
  evaluation.  Use the <code>evalFunction</code> to evaluate the underlying
  function handle according to the input arguments specified by the LLM.
 </p>
-
 
 
             </div>
@@ -259,7 +278,6 @@ Add an input parameter to the tool function.
 <dt><code><h5 class="fs">toolFunction: <var>tool</var> = <b>addParameters</b> (<var>tool</var>, <var>propName</var>, <var>propType</var>, <var>propDescription</var>)</code></h5></dt>
 <dt><code><h5 class="fs">toolFunction: <var>tool</var> = <b>addParameters</b> (<var>tool</var>, <var>propName</var>, <var>propType</var>, <var>propDescription</var>, <var>enum</var>)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code>addParameters</code> appends the parameters of a single input argument
  into the <code>toolFunction</code> object so that the LLM can understand the
@@ -269,22 +287,21 @@ Add an input parameter to the tool function.
 <p> <code>addParameters</code> requires at least four input arguments (and may
  accept an optional fifth argument), which are as described below:
 </p>
- <ol>
+<ol>
 <li> <var>tool</var> (required) A <code>toolFunction</code> object that the
  parameters will be appended to.
- </li><li> <var>propName</var> (required) A character vector specifying the name of
+</li><li> <var>propName</var> (required) A character vector specifying the name of
  the input argument in the undelying function handle to be evaluated.
- </li><li> <var>propType</var> (required) A character vector specifying the data
+</li><li> <var>propType</var> (required) A character vector specifying the data
  type of the value corresponding to the input argument specified above.
- </li><li> <var>propDescription</var> (required) A character vector describing the
+</li><li> <var>propDescription</var> (required) A character vector describing the
  input argument so that the LLM can understand what value to assign for
  evaluation.
- </li><li> <var>enum</var> (optional) A cell array of character vectors specifying
+</li><li> <var>enum</var> (optional) A cell array of character vectors specifying
  a list of acceptable values that the LLM may chooce from to supply as an
  input argument.  Alternatively, <var>enum</var> can be a cell array of numeric
  or logical values.
- </li></ol>
-
+</li></ol>
 
 
 
@@ -313,7 +330,6 @@ Evaluate the tool function.
 <dl>
 <dt><code><h5 class="fs">toolFunction: <var>tool_output</var> = <b>evalFunction</b> (<var>tool</var>, <var>tool_call</var>)</code></h5></dt>
 </dl>
-
 <p> </p>
 <p> <code><var>tool_output</var> = evalFunction (<var>tool</var>, <var>tool_call</var>)</code>
  evaluates the function handle of the <code>toolFunction</code> object
@@ -321,11 +337,10 @@ Evaluate the tool function.
  LLM&rsquo;s tool calling response specified in <var>tool_call</var>, which can be a
  character vector containing the appropriate JSON string message or its
  equivalent to a scalar structure.  The returned <var>tool_output</var> is a
- <math>1&times;2</math> cell array of character vectors, in which the first element
+ <math>1x2</math> cell array of character vectors, in which the first element
  contains the output of the evaluated <code>toolFunction</code> object and the
  second element contains its corresponding function name.
 </p>
-
 
 
             </div>

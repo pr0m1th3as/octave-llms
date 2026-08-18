@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
     <script type="text/javascript" async
-      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML">
+      src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_CHTML">
     </script>
     <script type="text/javascript">
       window.addEventListener("load", () => {
@@ -19,6 +19,32 @@
           tog.onclick = () => tog.classList.toggle("show");
           i.parentElement.removeChild(i.previousSibling);
           i.parentElement.insertBefore(tog, i);
+        }
+      });
+      // Open the collapsible demo an "#example" link points to, then scroll to
+      // it.  getElementById (not querySelector) matches ids that contain a dot,
+      // e.g. "Class.method-example1".
+      function openHashTarget () {
+        if (! window.location.hash) { return; }
+        let el = document.getElementById (
+          decodeURIComponent (window.location.hash.slice (1)));
+        if (! el) { return; }
+        if (el.classList.contains ("collapse") &&
+            ! el.classList.contains ("show")) {
+          bootstrap.Collapse.getOrCreateInstance (el).show ();
+        }
+        el.scrollIntoView ();
+      }
+      window.addEventListener ("DOMContentLoaded", openHashTarget);
+      window.addEventListener ("hashchange", openHashTarget);
+      // When the collapsible named by the current URL fragment is collapsed,
+      // drop the fragment (replaceState: no scroll, no history entry).  Otherwise
+      // the fragment would still equal this id, so clicking the same #example
+      // link again fires no "hashchange" and the example would not re-expand.
+      document.addEventListener ("hide.bs.collapse", (e) => {
+        if (e.target.id && window.location.hash === "#" + e.target.id) {
+          history.replaceState (null, "",
+            window.location.pathname + window.location.search);
         }
       });
     </script>
@@ -176,8 +202,6 @@
 <dl>
 <dt><code><h5 class="fs">llms: [<var>txt</var>, <var>err</var>] = <b>__ollama__</b> (<var>Name</var>, <var>Value</var>)</code></h5></dt>
 </dl>
-
-
 <p>Base fuction for ollama class. 
 </p>
 <div class="ms-5">
@@ -202,10 +226,11 @@
 </li><li> <code>'imageFile'</code> A character vector or a cell array of character vectors with the filename(s) of the image(s) to be included in a request.
 </li><li> <code>'imageBase64'</code> A character vector or a cell array of character vectors with the base64 encoded string(s) of the image(s) to be included in a request.
 </li><li> <code>'options'</code> A scalar structures whose fields with be included as optional model parameters in a request.
-</li><li> <code>'message'</code> An <math>N&times;3</math> cell array containing the message history of a chat session to be used for the subsequent chat request.
+</li><li> <code>'message'</code> An <math>Nx3</math> cell array containing the message history of a chat session to be used for the subsequent chat request.
 </li><li> <code>'systemMessage'</code> A character vector for setting a custom system message for the model during a request.
 </li><li> <code>'think'</code> A character vector for setting the thinking mode of the model during a request.
 </li><li> <code>'tools'</code> A character vector for sending a <code>toolFunction</code> or a <code>toolRegistry</code> in JSON format to the mode during a request.
+</li><li> <code>'format'</code> A character vector with a JSON schema, which constrains the model&rsquo;s response to the structure it describes.
 </li><li> <code>'input'</code> A cell array of character vectors to generate embeddings for.
 </li><li> <code>'dimensions'</code> An nonnegative integer scalar value specifying the dimensions of the generated embeddings.
 </li></ul>
@@ -224,7 +249,6 @@
 <p><strong>Source Code: </strong>
   <a href="https://github.com/pr0m1th3as/octave-llms/tree/main/src/__ollama__.cc">__ollama__</a>
 </div>
-
 
             </div>
           </div>
