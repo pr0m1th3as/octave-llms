@@ -4,8 +4,9 @@
 
 1. [About](#1-about)
 2. [Documentation](#2-documentation)
-3. [Installation](#3-installation)
-4. [Quick Guide](#4-quick-guide)
+3. [Where it is going](#3-where-it-is-going)
+4. [Installation](#4-installation)
+5. [Quick Guide](#5-quick-guide)
 
 ## 1. About
 
@@ -28,7 +29,16 @@ package_texi2html ("llms")
 ```
 
 
-## 3. Installation
+## 3. Where it is going
+
+[`ROADMAP.md`](ROADMAP.md) sets out what is planned and why, ordered by what
+unblocks what: self-tests and structured output first, then the semantic
+analysis stack over the `statistics` package, then the agent framework, and
+finally the two composed into local models fluent enough in Octave to be useful.
+It is equally explicit about what is out of scope — no training, no hosted APIs,
+no reimplementation of `statistics` — each with the reason it was ruled out.
+
+## 4. Installation
 To install the latest release, you need Octave (>=9.1.0) installed on your system. Install it by typing:
 ```
 pkg install -forge llms
@@ -42,7 +52,7 @@ Load the package by typing
 pkg load llms
 ```
 
-## 4. Quick Guide
+## 5. Quick Guide
 
 Make sure you have an ollama server instance running either locally
 ```
