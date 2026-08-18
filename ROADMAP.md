@@ -34,15 +34,24 @@ complete: the backend constructs genuine `tool`-role messages carrying the
 function name, so a full turn — prompt, tool call, evaluation, result, prompt
 again — is representable. That is the difficult half of an agent and it is done.
 
-**The package has no built-in self-tests.** This is the first thing the roadmap
-fixes, and it is not an abstract concern. The tool-calling path shipped in 0.1.4
-broken by four independent defects, each sufficient on its own to stop it, and
-every one of them on a branch that only executes when tools are in use. The
-paths without tools worked perfectly, which is exactly why it went out. A
-package that talks to a network service is easy to excuse from testing and
-should not be: option validation, parameter type checking, response decoding,
-property access control and every error branch are all reachable with no server
-running at all.
+**Self-tests have started, and they are not finished.** `toolFunction`,
+`toolRegistry` and the two constructor branches of `ollama` that raise before
+the server is contacted now carry 49 built-in self-tests in
+`inst/tests/*.m-tst`, covering normal use, the encoded tool schema, and every
+error branch those classes raise.
+
+The rest of the `ollama` class is not covered, for a structural reason worth
+stating plainly: **its constructor contacts the server**, so no `ollama` object
+can be built without one and almost nothing in the class is reachable offline.
+Closing that gap means either a seam that allows a fake transport or a suite
+that is honest about requiring a running server. Until then the class is
+verified by live runs, which is weaker.
+
+The cost of having had none is on record. The tool-calling path shipped in
+0.1.4 broken by six independent defects, each sufficient on its own to stop it,
+and every one on a branch that only executes when tools are in use. The paths
+without tools worked perfectly, which is exactly why it went out. Four of the
+six were reachable only by running against a real server.
 
 ## Scope
 
@@ -66,13 +75,11 @@ Everything below is checked against those three lines.
 Two pieces of foundation. Neither is glamorous and everything after depends on
 both.
 
-**Built-in self-tests.** The offline surface first, since it is most of the
-package: `setOptions` validation over every option it accepts, `toolFunction`
-parameter and type checking, `evalFunction`'s decoding of a tool call, the
-`subsref` and `subsasgn` property gating, and every `error` branch in the class.
-Network-dependent paths are isolated behind the single backend call and can be
-covered separately. This goes first for the reason any test suite goes first: it
-protects everything after it, and the alternative is the defect record above.
+**Built-in self-tests.** Started: the tool classes and their every error
+branch are covered. What remains is the `ollama` class itself — `setOptions`
+validation over every option it accepts, the `subsref` and `subsasgn` property
+gating, and response decoding — none of which is reachable while the
+constructor requires a live server. That seam is the real work of this item.
 
 **Structured output.** Ollama accepts a JSON schema as a `format` parameter and
 will constrain its response to it. Nothing in the package plumbs it through —

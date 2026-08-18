@@ -1,0 +1,113 @@
+## Copyright (C) 2026 Andreas Bertsatos <abertsatos@biol.uoa.gr>
+##
+## This file is part of the llms package for GNU Octave.
+##
+## This program is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free Software
+## Foundation; either version 3 of the License, or (at your option) any later
+## version.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+## FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+## details.
+##
+## You should have received a copy of the GNU General Public License along with
+## this program; if not, see <http://www.gnu.org/licenses/>.
+
+## Constructor stores its three inputs.
+%!test
+%! t = toolFunction ('add', 'Add two numbers.', @plus);
+%! assert (t.name, 'add');
+%! assert (t.description, 'Add two numbers.');
+%! assert (func2str (t.handle), func2str (@plus));
+%!error<toolFunction: FNAME must be non-empty character vector.> toolFunction (1, 'd', @plus)
+%!error<toolFunction: FNAME must be non-empty character vector.> toolFunction ('', 'd', @plus)
+%!error<toolFunction: FNAME must be non-empty character vector.> toolFunction ({'n'}, 'd', @plus)
+%!error<toolFunction: DESCRIPTION must be non-empty character vector.> toolFunction ('n', 1, @plus)
+%!error<toolFunction: DESCRIPTION must be non-empty character vector.> toolFunction ('n', '', @plus)
+%!error<toolFunction: FHANDLE must be a function handle.> toolFunction ('n', 'd', 1)
+%!error<toolFunction: FHANDLE must be a function handle.> toolFunction ('n', 'd', 'plus')
+
+## A parameter reaches the encoded schema, and 'required' sits inside
+## 'parameters' where the Ollama tool schema puts it.
+%!test
+%! t = toolFunction ('add', 'Add two numbers.', @plus);
+%! t = addParameters (t, 'a', 'number', 'first addend');
+%! s = encodeFunction (t);
+%! assert (s.type, 'function');
+%! assert (s.function.name, 'add');
+%! assert (s.function.parameters.type, 'object');
+%! assert (s.function.parameters.properties.a.type, 'number');
+%! assert (s.function.parameters.properties.a.description, 'first addend');
+%! assert (s.function.parameters.required, {'a'});
+%! assert (! isfield (s.function, 'required'));
+%!test
+%! t = toolFunction ('add', 'Add two numbers.', @plus);
+%! t = addParameters (t, 'a', 'number', 'first addend');
+%! t = addParameters (t, 'b', 'number', 'second addend');
+%! s = encodeFunction (t);
+%! assert (fieldnames (s.function.parameters.properties), {'a'; 'b'});
+%! assert (s.function.parameters.required, {'a'; 'b'});
+%!test
+%! t = toolFunction ('conv', 'Convert a temperature.', @(unit) unit);
+%! t = addParameters (t, 'unit', 'string', 'The unit', {'celsius', 'fahrenheit'});
+%! s = encodeFunction (t);
+%! assert (s.function.parameters.properties.unit.enum, {'celsius', 'fahrenheit'});
+%!test
+%! t = toolFunction ('now', 'The current time.', @clock);
+%! s = encodeFunction (t);
+%! assert (s.function.parameters.properties, struct ());
+%! assert (isempty (s.function.parameters.required));
+%!error<toolFunction.addParameters: PROPNAME must be a nonempty character vector.> addParameters (toolFunction ('n', 'd', @plus), 1, 'number', 'd')
+%!error<toolFunction.addParameters: PROPNAME must be a nonempty character vector.> addParameters (toolFunction ('n', 'd', @plus), '', 'number', 'd')
+%!error<toolFunction.addParameters: PROPTYPE must be a nonempty character vector.> addParameters (toolFunction ('n', 'd', @plus), 'a', 1, 'd')
+%!error<toolFunction.addParameters: PROPTYPE must be a nonempty character vector.> addParameters (toolFunction ('n', 'd', @plus), 'a', '', 'd')
+%!error<toolFunction.addParameters: PROPDESCRIPTION must be a nonempty character vector.> addParameters (toolFunction ('n', 'd', @plus), 'a', 'number', 1)
+%!error<toolFunction.addParameters: PROPDESCRIPTION must be a nonempty character vector.> addParameters (toolFunction ('n', 'd', @plus), 'a', 'number', '')
+%!error<toolFunction.addParameters: ENUM must be a cell array of nonempty character vectors.> addParameters (toolFunction ('n', 'd', @plus), 'a', 'number', 'd', 'notacell')
+%!error<toolFunction.addParameters: ENUM must be a cell array of nonempty character vectors.> addParameters (toolFunction ('n', 'd', @plus), 'a', 'number', 'd', {'ok', ''})
+%!error<toolFunction.addParameters: ENUM must be a cell array of nonempty character vectors.> addParameters (toolFunction ('n', 'd', @plus), 'a', 'number', 'd', {'ok', {1}})
+
+## A tool call is evaluated from its JSON string or from the equivalent struct.
+## Ollama 0.32.1 identifies a call with 'id'; the OpenAI form uses 'type'.  Both
+## carry the call in a 'function' field, which is all that is required.
+%!test
+%! t = toolFunction ('add', 'Add two numbers.', @plus);
+%! t = addParameters (t, 'a', 'number', 'first addend');
+%! t = addParameters (t, 'b', 'number', 'second addend');
+%! o = evalFunction (t, '{"id":"c1","function":{"name":"add","arguments":{"a":17,"b":25}}}');
+%! assert (o, {'42', 'add'});
+%!test
+%! t = toolFunction ('add', 'Add two numbers.', @plus);
+%! t = addParameters (t, 'a', 'number', 'first addend');
+%! t = addParameters (t, 'b', 'number', 'second addend');
+%! o = evalFunction (t, '{"type":"function","function":{"name":"add","arguments":{"a":1,"b":2}}}');
+%! assert (o, {'3', 'add'});
+%!test
+%! t = toolFunction ('add', 'Add two numbers.', @plus);
+%! t = addParameters (t, 'a', 'number', 'first addend');
+%! t = addParameters (t, 'b', 'number', 'second addend');
+%! c = jsondecode ('{"id":"c1","function":{"name":"add","arguments":{"a":4,"b":6}}}', 'makeValidName', false);
+%! assert (evalFunction (t, c), {'10', 'add'});
+## A call naming another function returns no output rather than raising, so a
+## registry may offer the same call to each of its tools in turn.
+%!test
+%! t = toolFunction ('add', 'Add two numbers.', @plus);
+%! t = addParameters (t, 'a', 'number', 'first addend');
+%! assert (evalFunction (t, '{"id":"c1","function":{"name":"other","arguments":{"a":1}}}'), '');
+%!error<toolFunction.evalFunction: unless a struct TOOL_CALL must be a nonempty character vector.> evalFunction (toolFunction ('n', 'd', @plus), 1)
+%!error<toolFunction.evalFunction: unless a struct TOOL_CALL must be a nonempty character vector.> evalFunction (toolFunction ('n', 'd', @plus), '')
+%!error<toolFunction.evalFunction: invalid JSON string.> evalFunction (toolFunction ('n', 'd', @plus), 'not json')
+%!error<toolFunction.evalFunction: invalid TOOL_CALL structure.> evalFunction (toolFunction ('n', 'd', @plus), struct ('a', 1))
+%!error<toolFunction.evalFunction: invalid TOOL_CALL structure.> evalFunction (toolFunction ('n', 'd', @plus), '{"id":"c1"}')
+
+## Subscripted reference reaches the three readable properties and refuses the
+## two indexing types the class does not define.
+%!test
+%! t = toolFunction ('add', 'Add two numbers.', @plus);
+%! assert (t.name, 'add');
+%!error<toolFunction.subsref: '\(\)}' invalid indexing.> ...
+%! t = toolFunction ('n', 'd', @plus); t(1);
+%!error<toolFunction.subsref: '{}' invalid indexing.> ...
+%! t = toolFunction ('n', 'd', @plus); t{1};

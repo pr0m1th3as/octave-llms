@@ -1,0 +1,74 @@
+## Copyright (C) 2026 Andreas Bertsatos <abertsatos@biol.uoa.gr>
+##
+## This file is part of the llms package for GNU Octave.
+##
+## This program is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free Software
+## Foundation; either version 3 of the License, or (at your option) any later
+## version.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+## FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+## details.
+##
+## You should have received a copy of the GNU General Public License along with
+## this program; if not, see <http://www.gnu.org/licenses/>.
+
+## Constructor collects the tool names, and an empty registry is legal.
+%!test
+%! t1 = toolFunction ('add', 'Add two numbers.', @plus);
+%! t2 = toolFunction ('sub', 'Subtract two numbers.', @minus);
+%! R = toolRegistry (t1, t2);
+%! assert (R.names, {'add', 'sub'});
+%!test
+%! R = toolRegistry ();
+%! assert (isa (R, 'toolRegistry'));
+%!error<toolRegistry: all inputs must be 'toolFunction' objects.> toolRegistry (1)
+%!error<toolRegistry: all inputs must be 'toolFunction' objects.> toolRegistry (toolFunction ('n', 'd', @plus), 'notatool')
+%!error<toolRegistry: input 'toolFunction' objects must have unique names.> toolRegistry (toolFunction ('n', 'd', @plus), toolFunction ('n', 'e', @minus))
+
+## The registry encodes as an array of tool schemas, one per tool, whatever
+## parameters each of them declares.
+%!test
+%! t1 = toolFunction ('add', 'Add two numbers.', @plus);
+%! t1 = addParameters (t1, 'a', 'number', 'first addend');
+%! t2 = toolFunction ('now', 'The current time.', @clock);
+%! s = encodeRegistry (toolRegistry (t1, t2));
+%! assert (numel (s), 2);
+%! assert (s(1).function.name, 'add');
+%! assert (s(1).function.parameters.required, {'a'});
+%! assert (s(2).function.name, 'now');
+%! assert (isempty (s(2).function.parameters.required));
+
+## A call is dispatched to the tool that owns the name.
+%!test
+%! t1 = toolFunction ('add', 'Add two numbers.', @plus);
+%! t1 = addParameters (t1, 'a', 'number', 'first addend');
+%! t1 = addParameters (t1, 'b', 'number', 'second addend');
+%! t2 = toolFunction ('sub', 'Subtract two numbers.', @minus);
+%! t2 = addParameters (t2, 'a', 'number', 'minuend');
+%! t2 = addParameters (t2, 'b', 'number', 'subtrahend');
+%! R = toolRegistry (t1, t2);
+%! assert (evalFunction (R, '{"id":"c1","function":{"name":"add","arguments":{"a":17,"b":25}}}'), {'42', 'add'});
+%! assert (evalFunction (R, '{"id":"c2","function":{"name":"sub","arguments":{"a":30,"b":8}}}'), {'22', 'sub'});
+%!test
+%! t1 = toolFunction ('add', 'Add two numbers.', @plus);
+%! t1 = addParameters (t1, 'a', 'number', 'first addend');
+%! t1 = addParameters (t1, 'b', 'number', 'second addend');
+%! R = toolRegistry (t1);
+%! c = jsondecode ('{"id":"c1","function":{"name":"add","arguments":{"a":4,"b":6}}}', 'makeValidName', false);
+%! assert (evalFunction (R, c), {'10', 'add'});
+%!error<toolRegistry.evalFunction: unless a struct TOOL_CALL must be a nonempty character vector.> evalFunction (toolRegistry (toolFunction ('n', 'd', @plus)), 1)
+%!error<toolRegistry.evalFunction: invalid JSON string.> evalFunction (toolRegistry (toolFunction ('n', 'd', @plus)), 'not json')
+%!error<toolRegistry.evalFunction: invalid TOOL_CALL structure.> evalFunction (toolRegistry (toolFunction ('n', 'd', @plus)), struct ('a', 1))
+%!error<toolRegistry.evalFunction: unavailable toolFunction: 'nope'> evalFunction (toolRegistry (toolFunction ('n', 'd', @plus)), '{"id":"c1","function":{"name":"nope","arguments":{}}}')
+
+## Paren indexing selects a sub-registry and brace indexing a single tool.
+%!test
+%! t1 = toolFunction ('add', 'Add two numbers.', @plus);
+%! t2 = toolFunction ('sub', 'Subtract two numbers.', @minus);
+%! R = toolRegistry (t1, t2);
+%! assert (R(1).names, {'add'});
+%! assert (isa (R{2}, 'toolFunction'));
+%! assert (R{2}.name, 'sub');

@@ -1,0 +1,24 @@
+## Copyright (C) 2026 Andreas Bertsatos <abertsatos@biol.uoa.gr>
+##
+## This file is part of the llms package for GNU Octave.
+##
+## This program is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free Software
+## Foundation; either version 3 of the License, or (at your option) any later
+## version.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+## FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+## details.
+##
+## You should have received a copy of the GNU General Public License along with
+## this program; if not, see <http://www.gnu.org/licenses/>.
+
+## The ollama class contacts the server in its constructor, so an object cannot
+## be built without one and only the two branches that raise before that call
+## are reachable offline.  Everything else in the class is exercised against a
+## live server.
+%!error<ollama: unsupported mode option 'bogus'.> ollama ('http://127.0.0.1:1', '', 'bogus')
+%!error<ollama: invalid serverURL input.> ollama (42)
+%!error<ollama: invalid serverURL input.> ollama ({'http://127.0.0.1:1'})
