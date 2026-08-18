@@ -53,8 +53,10 @@ classdef ollama < handle
     ## Inference mode.
     ##
     ## Specifies the inference mode that the ollama interface object will use
-    ## to send requests to the ollama server.  Currently, only @qcode{'query'}
-    ## and @qcode{'chat'} modes are implemented.
+    ## to send requests to the ollama server.  Currently, the @qcode{'query'},
+    ## @qcode{'chat'}, and @qcode{'embed'} modes are implemented.  The
+    ## @qcode{'embed'} mode is set by @code{loadModel} when the loaded model
+    ## has embedding capabilities.
     ##
     ## @end deftp
     mode = 'query';
@@ -183,10 +185,10 @@ classdef ollama < handle
     ## Flag for thinking.
     ##
     ## A logical scalar or a character vector specifying the thinking status of
-    ## the active model.  By default, the thiking status is set to @qcode{true}
+    ## the active model.  By default, the thinking status is set to @qcode{true}
     ## for capable models and to @qcode{false} for models that do not support
-    ## thiking capabilities.  In special cases, where models support categorical
-    ## states of thinking capabilities (such ass the GPT-OSS model family), then
+    ## thinking capabilities.  In special cases, where models support categorical
+    ## states of thinking capabilities (such as the GPT-OSS model family), then
     ## you must specify the thinking status of your choice explicitly, because
     ## the default @qcode{true} value is ignored by the ollama server.  Unless
     ## an active model is set, the @qcode{thinking} property is empty.  Use dot
@@ -1819,86 +1821,86 @@ classdef ollama < handle
 
         case '.'
           if (! ischar (s.subs))
-            error ("ollama.subsref: '.' indexing requires a character vector.");
+            error ("ollama.subsasgn: '.' indexing requires a character vector.");
           endif
           switch (s.subs)
             case 'mode'
-              error ("ollama.subsref: 'mode' is read only.");
+              error ("ollama.subsasgn: 'mode' is read only.");
             case 'serverURL'
-              error ("ollama.subsref: 'serverURL' is set a construction.");
+              error ("ollama.subsasgn: 'serverURL' is set a construction.");
             case 'runningModels'
-              error ("ollama.subsref: 'runningModels' is read only.");
+              error ("ollama.subsasgn: 'runningModels' is read only.");
             case 'availableModels'
-              error ("ollama.subsref: 'availableModels' is read only.");
+              error ("ollama.subsasgn: 'availableModels' is read only.");
             case 'responseStats'
-              error ("ollama.subsref: 'responseStats' is read only.");
+              error ("ollama.subsasgn: 'responseStats' is read only.");
             case 'chatHistory'
-              error ("ollama.subsref: 'chatHistory' is read only.");
+              error ("ollama.subsasgn: 'chatHistory' is read only.");
             case 'activeModel'
               loadModel (this, val);
             case 'readTimeout'
               if (isscalar (val) && val > 0 && fix (val) == val)
                 this.readTimeout = val;
               else
-                error (strcat ("ollama.subsref: 'readTimeout' must be", ...
+                error (strcat ("ollama.subsasgn: 'readTimeout' must be", ...
                                " a scalar with positive integer value."));
               endif
             case 'writeTimeout'
               if (isscalar (val) && val > 0 && fix (val) == val)
                 this.writeTimeout = val;
               else
-                error (strcat ("ollama.subsref: 'writeTimeout' must be", ...
+                error (strcat ("ollama.subsasgn: 'writeTimeout' must be", ...
                                " a scalar with positive integer value."));
               endif
             case 'options'
               if (iscell (val) && numel (val) == 2)
                 setOptions (this, val{1}, val{2});
               else
-                error (strcat ("ollama.subsref: 'options' must be", ...
+                error (strcat ("ollama.subsasgn: 'options' must be", ...
                                " a 2-element cell array."));
               endif
             case 'systemMessage'
               if (ischar (val) && isvector (val))
                 if (strcmp (this.mode, 'chat') && ! isempty (this.chatHistory))
-                  error (strcat ("ollama.subsref: 'systemMessage' cannot", ...
+                  error (strcat ("ollama.subsasgn: 'systemMessage' cannot", ...
                                  " be modifed during a chat session."));
                 endif
                 this.systemMessage = val;
               else
-                error ("ollama.subsref: 'system' must be a character vector.");
+                error ("ollama.subsasgn: 'system' must be a character vector.");
               endif
             case 'thinking'
-              if (isscalar (val) && islogical (val) || ischar (val) && ivector (val))
+              if (isscalar (val) && islogical (val) || ischar (val) && isvector (val))
                 if (isempty (this.activeModel))
-                  error (strcat ("ollama.subsref: cannot assign 'thinking'", ...
+                  error (strcat ("ollama.subsasgn: cannot assign 'thinking'", ...
                                  " without an active model."));
                 endif
                 ## Query active model for information and assign
                 ## value only if model is capable of thinking
                 if (! checkThinking (this))
-                  error (strcat ("ollama.subsref: currently active", ...
+                  error (strcat ("ollama.subsasgn: currently active", ...
                                  " model does not support 'thinking'"));
                 endif
                 this.thinking = val;
               else
-                error (strcat ("ollama.subsref: 'thinking' must be either", ...
+                error (strcat ("ollama.subsasgn: 'thinking' must be either", ...
                                " a logical scalar or a character vector."));
               endif
             case 'tools'
               if (isa (val, 'toolFunction') || isa (val, 'toolRegistry'))
                 if (isempty (this.activeModel))
-                  error (strcat ("ollama.subsref: cannot assign", ...
+                  error (strcat ("ollama.subsasgn: cannot assign", ...
                                  " 'tools' without an active model."));
                 endif
                 ## Query active model for information and assign
                 ## value only if model is capable of thinking
                 if (! checkToolCalling (this))
-                  error (strcat ("ollama.subsref: currently active", ...
+                  error (strcat ("ollama.subsasgn: currently active", ...
                                  " model does not support 'tools'"));
                 endif
                 this.tools = val;
               else
-                error (strcat ("ollama.subsref: 'tool' must be either a", ...
+                error (strcat ("ollama.subsasgn: 'tool' must be either a", ...
                                " 'toolFunction' or a 'toolRegistry' object."));
               endif
             otherwise
@@ -1917,9 +1919,9 @@ classdef ollama < handle
       [out, err] = __ollama__ ('modelInfo', this.activeModel, ...
                                'serverURL', this.serverURL);
       if (err)
-        error ("ollama: could not get MODEL info for '%s'", model);
+        error ("ollama: could not get MODEL info for '%s'", this.activeModel);
       else
-        ## Search the capabilities field for thiking
+        ## Search the capabilities field for embedding
         if (ismember ('embedding', jsondecode (out).capabilities))
           out = true;
         else
@@ -1933,9 +1935,9 @@ classdef ollama < handle
       [out, err] = __ollama__ ('modelInfo', this.activeModel, ...
                                'serverURL', this.serverURL);
       if (err)
-        error ("ollama: could not get MODEL info for '%s'", model);
+        error ("ollama: could not get MODEL info for '%s'", this.activeModel);
       else
-        ## Search the capabilities field for thiking
+        ## Search the capabilities field for thinking
         if (ismember ('thinking', jsondecode (out).capabilities))
           out = true;
         else
@@ -1949,9 +1951,9 @@ classdef ollama < handle
       [out, err] = __ollama__ ('modelInfo', this.activeModel, ...
                                'serverURL', this.serverURL);
       if (err)
-        error ("ollama: could not get MODEL info for '%s'", model);
+        error ("ollama: could not get MODEL info for '%s'", this.activeModel);
       else
-        ## Search the capabilities field for thiking
+        ## Search the capabilities field for tools
         if (ismember ('tools', jsondecode (out).capabilities))
           out = true;
         else
