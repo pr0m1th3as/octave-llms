@@ -632,6 +632,12 @@ at once.\n\
         error ("__ollama__: 'tools' value must be a character vector.");
       }
       tools = args(p+1).string_value ();
+      // Parsing happens in the request, which cannot report back, so the
+      // tool list is validated here while an error can still be raised.
+      if (tools != "NA" && ! json::accept (tools))
+      {
+        error ("__ollama__: 'tools' value must be valid JSON.");
+      }
     }
     else if (args(p).string_value () == "format")
     {

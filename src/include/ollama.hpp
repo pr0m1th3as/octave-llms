@@ -291,7 +291,7 @@ namespace ollama
                 else (*this)["think"] = think;
 
                 if (!sysmsg.empty()) (*this)["system"] = sysmsg;
-                if (tools != "NA") (*this)["tools"] = tools;
+                if (tools != "NA") (*this)["tools"] = json::parse(tools);
 
                 if (options!=nullptr) (*this)["options"] = options["options"];
                 if (format != "NA") (*this)["format"] = json::parse(format);
