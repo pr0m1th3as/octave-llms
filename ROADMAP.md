@@ -21,7 +21,7 @@ the roadmap treats it that way.
 
 ## Where the package stands
 
-Version 0.1.4 provides an `ollama` handle class with fifteen public methods and
+Version 0.2.0 provides an `ollama` handle class with fifteen public methods and
 fourteen properties, covering the server-management endpoints, single-turn
 `query`, multi-turn `chat`, and `embed`; the `toolFunction` and `toolRegistry`
 classes for describing Octave functions to a model and dispatching its calls
@@ -29,16 +29,18 @@ back; and `fig2base64` for putting an Octave figure into a prompt to a
 vision-capable model. All of it crosses a single `__ollama__` backend built on a
 customised `ollama.hpp`, so there is one place where the wire protocol lives.
 
-The transport layer is in good shape and the tool-calling wire format is
-complete: the backend constructs genuine `tool`-role messages carrying the
-function name, so a full turn — prompt, tool call, evaluation, result, prompt
-again — is representable. That is the difficult half of an agent and it is done.
+**Two of milestone 1's three pieces are delivered.** Structured output shipped
+in 0.2.0: a scalar structure passed to `query` or `chat` is sent as a JSON
+schema constraining the reply, which then decodes with `jsondecode` rather than
+being parsed by inspection. And tool calling *works*, which it had not in any
+earlier release — a full turn, from prompt through tool call and evaluation to
+the answer, now completes against a live server.
 
 **Self-tests have started, and they are not finished.** `toolFunction`,
 `toolRegistry` and the two constructor branches of `ollama` that raise before
-the server is contacted now carry 49 built-in self-tests in
-`inst/tests/*.m-tst`, covering normal use, the encoded tool schema, and every
-error branch those classes raise.
+the server is contacted carry 55 built-in self-tests in `inst/tests/*.m-tst`,
+covering normal use, the encoded tool schema, and every error branch those
+classes raise.
 
 The rest of the `ollama` class is not covered, for a structural reason worth
 stating plainly: **its constructor contacts the server**, so no `ollama` object
@@ -70,39 +72,34 @@ deliberate:
 
 Everything below is checked against those three lines.
 
-## Milestone 1 — ground to build on (0.2.0)
+## Milestone 1 — ground to build on (0.3.0)
 
-Two pieces of foundation. Neither is glamorous and everything after depends on
-both.
+Structured output is delivered; see above. Two pieces remain, and everything
+after depends on both.
 
-**Built-in self-tests.** Started: the tool classes and their every error
-branch are covered. What remains is the `ollama` class itself — `setOptions`
-validation over every option it accepts, the `subsref` and `subsasgn` property
-gating, and response decoding — none of which is reachable while the
-constructor requires a live server. That seam is the real work of this item.
+**A seam under the `ollama` class.** The class's constructor contacts the
+server, so no object can be built without one and almost nothing in the class is
+reachable by a test: `setOptions` validation over every option it accepts, the
+`subsref` and `subsasgn` property gating, `query` and `chat` argument handling,
+and response decoding are all currently verified only by live runs against a
+real server, which is weaker than a suite and cannot run in CI.
 
-**Structured output.** Ollama accepts a JSON schema as a `format` parameter and
-will constrain its response to it. Nothing in the package plumbs it through —
-not the class, not the backend, not the vendored header.
-
-This is the single most valuable missing primitive, because it is the difference
-between a model that produces prose and a model that produces *data*. Ask five
-thousand survey responses to be classified without it, and the result is text to
-be parsed with regular expressions: unreproducible, silently lossy, and
-impossible to validate. With it, the model becomes a function with a declared
-return type, and its output goes into a statistical pipeline directly. Every
-quantitative use of a language model in this package depends on it.
-
-The cost is small. `ollama::request` derives from `nlohmann::json` and exposes
-`operator[]`, so the wire change is a single assignment; the work is in the
-class surface and in deciding how an Octave user writes a schema.
+This is the real work of the testing item, and it is a design question rather
+than a typing one — either a transport that can be substituted, or a suite
+honest about requiring a server, or both at different layers. It goes first
+because the defects it would have caught are on record: two of the six that
+broke tool calling live in `ollama.chat` and are guarded by nothing today.
 
 **Per-call accounting.** `responseStats` holds only the most recent response. A
 single query is fine; an agent run is a dozen calls whose cost is currently
 unmeasurable, and a corpus ingest is thousands. A transcript carrying tokens and
 duration per call replaces it, without changing what `showStats` shows.
 
-## Milestone 2 — the semantic analysis stack (0.3.0)
+Note that this changes a documented public property, so it is a breaking change
+and wants a release of its own rather than a place in a bug-fix bundle. That is
+why it did not ship in 0.2.0.
+
+## Milestone 2 — the semantic analysis stack (0.4.0)
 
 The mathematics of semantic analysis is already available: `statistics` supplies
 exact and approximate nearest-neighbour search, clustering, dimensionality
@@ -133,7 +130,7 @@ implicit; results carrying their documents, their scores and their provenance.
 Taken together this is retrieval-augmented generation, in Octave, over a corpus
 you assembled — and it is also what milestone 4 needs.
 
-## Milestone 3 — the agent framework (0.4.0)
+## Milestone 3 — the agent framework (0.5.0)
 
 The primitives exist. What is missing is the thing that drives them.
 
@@ -158,7 +155,7 @@ that is the right foundation, but argument coercion and an optional confirmation
 hook belong with it, and the policy should be settled before agents become easy
 to build rather than after.
 
-## Milestone 4 — Octave-fluent assistance (0.5.0)
+## Milestone 4 — Octave-fluent assistance (0.6.0)
 
 No local model is fluent in Octave today. They produce MATLAB-flavoured guesses,
 call functions that do not exist, and are confidently wrong about which package
