@@ -197,7 +197,13 @@ namespace ollama
                 (*this)["role"] = role;
                 (*this)["content"] = content;
                 if (!thinking.empty()) (*this)["thinking"] = thinking;
-                if (!tool_calls.empty()) (*this)["tool_calls"] = tool_calls;
+                if (!tool_calls.empty())
+                {
+                    // The API expects an array; a single call decodes as an object
+                    json calls = json::parse(tool_calls);
+                    if (! calls.is_array()) calls = json::array({calls});
+                    (*this)["tool_calls"] = calls;
+                }
                 if (!tool_name.empty()) (*this)["tool_name"] = tool_name;
             }
             message(const std::string& role, const std::string& content, const std::vector<ollama::image>& images): json()

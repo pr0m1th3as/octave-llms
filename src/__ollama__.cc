@@ -774,6 +774,7 @@ at once.\n\
   {
     // Check first that model is available to avoid error
     vector<string> models = ollama::list_models ();
+    bool found_model = false;
     try
     {
       for (int m = 0; m < models.size (); m++)
@@ -783,7 +784,14 @@ at once.\n\
           json m_info = ollama::show_model_info (modelInfoName);
           retval(0) = m_info.dump ();
           retval(1) = false;
+          found_model = true;
         }
+      }
+      // Without a match nothing above assigns the first output argument
+      if (! found_model)
+      {
+        retval(0) = "model '" + modelInfoName + "' is not available on the server.";
+        retval(1) = true;
       }
     }
     catch (ollama::exception& err)

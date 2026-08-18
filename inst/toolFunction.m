@@ -199,7 +199,7 @@ classdef toolFunction
         end_try_catch
       endif
       ## Validate tool call is properly structured for this function
-      if (! all (ismember (fieldnames (tool_call), {'type', 'function'})))
+      if (! isfield (tool_call, 'function'))
         error ("toolFunction.evalFunction: invalid TOOL_CALL structure.");
       endif
       if (! strcmp (tool_call.function.name, this.name))

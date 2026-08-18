@@ -109,7 +109,7 @@ classdef toolRegistry
         end_try_catch
       endif
       ## Validate tool call is properly structured for functions
-      if (! all (ismember (fieldnames (tool_call), {'type', 'function'})))
+      if (! isfield (tool_call, 'function'))
         error ("toolRegistry.evalFunction: invalid TOOL_CALL structure.");
       endif
       tool_output = {};

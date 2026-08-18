@@ -1368,7 +1368,7 @@ classdef ollama < handle
       ## Grab tool_calls (if any)
       tool_calls = '';
       if (! isempty (this.tools))
-        if (ismember (fieldnames (this.responseStats.message), 'tool_calls'))
+        if (isfield (this.responseStats.message, 'tool_calls'))
           tool_calls = this.responseStats.message.tool_calls;
         endif
       endif
@@ -1380,7 +1380,11 @@ classdef ollama < handle
         else
           message{end,3}(2) = '';
         endif
-        message{end,3}(3) = jsonencode (tool_calls);
+        if (isempty (tool_calls))
+          message{end,3}(3) = '';
+        else
+          message{end,3}(3) = jsonencode (tool_calls);
+        endif
       else
         message(end,3) = strtrim (this.responseStats.message.content);
       endif
