@@ -1243,11 +1243,11 @@ classdef ollama < handle
           if (isvector (prompt) && ischar (prompt))
             message(end, 1) = prompt;
           elseif (columns (prompt) == 2 && iscellstr (prompt))
-            message(end, 1) = prompt;
+            message{end, 1} = prompt;
           else
-            error ("ollama.chat: first input argument must be either", ...
-                   " a character vector or a two-column cell array", ...
-                   " of character vectors.");
+            error (strcat ("ollama.chat: first input argument must be", ...
+                           " either a character vector or a two-column", ...
+                           " cell array of character vectors."));
           endif
         endif
       endif
@@ -1293,9 +1293,9 @@ classdef ollama < handle
       if (isempty (this.tools))
         tools = "NA";
       elseif (isa (this.tools, 'toolFunction'))
-        tools = jsonencode ({encodeFunction(this.tool)});
+        tools = jsonencode ({encodeFunction(this.tools)});
       else # it must be a toolRegistry
-        tools = jsonencode (encodeRegistry(this.tool));
+        tools = jsonencode (encodeRegistry(this.tools));
       endif
       ## Run inference
       [out, err] = __ollama__ ('model', this.activeModel, ...
@@ -1321,7 +1321,11 @@ classdef ollama < handle
       ## Add response to chat history
       if (this.thinking || ! isempty (tool_calls))
         message{end,3}(1) = strtrim (this.responseStats.message.content);
-        message{end,3}(2) = strtrim (this.responseStats.message.thinking);
+        if (isfield (this.responseStats.message, 'thinking'))
+          message{end,3}(2) = strtrim (this.responseStats.message.thinking);
+        else
+          message{end,3}(2) = '';
+        endif
         message{end,3}(3) = jsonencode (tool_calls);
       else
         message(end,3) = strtrim (this.responseStats.message.content);
