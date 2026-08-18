@@ -258,7 +258,7 @@ namespace ollama
             // Thinking is parsed as a string to support GPT-OSS which accepts "low", "medium", or "high".
             // Standard "true"/"false" values are converted to boolean values internally
             // A generation request may contain options and images
-            request(const std::string& model, const std::string& prompt, const std::string& think, const std::string& sysmsg, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>()): request()
+            request(const std::string& model, const std::string& prompt, const std::string& think, const std::string& sysmsg, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>(), const std::string& format="NA"): request()
             {
                 (*this)["model"] = model;
                 (*this)["prompt"] = prompt;
@@ -271,6 +271,7 @@ namespace ollama
                 if (!sysmsg.empty()) (*this)["system"] = sysmsg;
                 if (options!=nullptr) (*this)["options"] = options["options"];
                 if (!images.empty()) (*this)["images"] = images;
+                if (format != "NA") (*this)["format"] = json::parse(format);
 
                 type = message_type::generation;
             }
@@ -279,7 +280,7 @@ namespace ollama
             // Thinking is parsed as a string to support GPT-OSS which accepts "low", "medium", or "high".
             // Standard "true"/"false" values are converted to boolean values internally
             // A chat request may contain options and tools
-            request(const std::string& model, const ollama::messages& messages, const std::string& think, const std::string& sysmsg, const std::string& tools, const json& options=nullptr, const std::string& keep_alive_duration="5m"): request()
+            request(const std::string& model, const ollama::messages& messages, const std::string& think, const std::string& sysmsg, const std::string& tools, const json& options=nullptr, const std::string& keep_alive_duration="5m", const std::string& format="NA"): request()
             {
                 (*this)["model"] = model;
                 (*this)["messages"] = messages.to_json();
@@ -293,6 +294,7 @@ namespace ollama
                 if (tools != "NA") (*this)["tools"] = tools;
 
                 if (options!=nullptr) (*this)["options"] = options["options"];
+                if (format != "NA") (*this)["format"] = json::parse(format);
                 (*this)["keep_alive"] = keep_alive_duration;
                 type = message_type::chat;
 
@@ -428,9 +430,9 @@ class Ollama
         return generate(request);
     }
 
-    ollama::response generate(const std::string& model, const std::string& prompt, const std::string& think, const std::string& sysmsg, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>())
+    ollama::response generate(const std::string& model, const std::string& prompt, const std::string& think, const std::string& sysmsg, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>(), const std::string& format="NA")
     {
-        ollama::request request(model, prompt, think, sysmsg, options, images);
+        ollama::request request(model, prompt, think, sysmsg, options, images, format);
         return generate(request);
     }
 
@@ -459,9 +461,9 @@ class Ollama
         return response;
     }
 
-    ollama::response chat(const std::string& model, const ollama::messages& messages, const std::string& think, const std::string& sysmsg, const std::string& tools, json options=nullptr, const std::string& keep_alive_duration="5m")
+    ollama::response chat(const std::string& model, const ollama::messages& messages, const std::string& think, const std::string& sysmsg, const std::string& tools, json options=nullptr, const std::string& keep_alive_duration="5m", const std::string& format="NA")
     {
-        ollama::request request(model, messages, think, sysmsg, tools, options, keep_alive_duration);
+        ollama::request request(model, messages, think, sysmsg, tools, options, keep_alive_duration, format);
         return chat(request);
     }
 
@@ -862,9 +864,9 @@ namespace ollama
         return ollama.generate(model, prompt, context, think, sysmsg, options, images);
     }
 
-    inline ollama::response generate(const std::string& model, const std::string& prompt, const std::string& think, const std::string& sysmsg, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>())
+    inline ollama::response generate(const std::string& model, const std::string& prompt, const std::string& think, const std::string& sysmsg, const json& options=nullptr, const std::vector<std::string>& images=std::vector<std::string>(), const std::string& format="NA")
     {
-        return ollama.generate(model, prompt, think, sysmsg, options, images);
+        return ollama.generate(model, prompt, think, sysmsg, options, images, format);
     }
 
     inline ollama::response generate(ollama::request& request)
@@ -872,9 +874,9 @@ namespace ollama
         return ollama.generate(request);
     }
 
-    inline ollama::response chat(const std::string& model, const ollama::messages& messages, const std::string& think, const std::string& sysmsg, const std::string& tools, const json& options=nullptr, const std::string& keep_alive_duration="5m")
+    inline ollama::response chat(const std::string& model, const ollama::messages& messages, const std::string& think, const std::string& sysmsg, const std::string& tools, const json& options=nullptr, const std::string& keep_alive_duration="5m", const std::string& format="NA")
     {
-        return ollama.chat(model, messages, think, sysmsg, tools, options, keep_alive_duration);
+        return ollama.chat(model, messages, think, sysmsg, tools, options, keep_alive_duration, format);
     }
 
     inline ollama::response chat(ollama::request& request)

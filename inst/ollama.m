@@ -973,6 +973,8 @@ classdef ollama < handle
     ## -*- texinfo -*-
     ## @deftypefn  {ollama} {} query (@var{llm}, @var{prompt})
     ## @deftypefnx {ollama} {} query (@var{llm}, @var{prompt}, @var{image})
+    ## @deftypefnx {ollama} {} query (@var{llm}, @var{prompt}, @var{format})
+    ## @deftypefnx {ollama} {} query (@var{llm}, @var{prompt}, @var{image}, @var{format})
     ## @deftypefnx {ollama} {@var{txt} =} query (@dots{})
     ## @deftypefnx {ollama} {} query (@var{llm})
     ##
@@ -998,6 +1000,25 @@ classdef ollama < handle
     ## base64 encoded strings.  For multiple images, @var{image} must be a cell
     ## array of character vectors explicitly containing either multiple
     ## filenames or mulitple base64 encoded string representations of images.
+    ##
+    ## @code{query (@var{llm}, @var{prompt}, @var{format})} also specifies a
+    ## schema constraining the model's response to the structure it describes.
+    ## @var{format} must be a scalar structure, which is rendered to a JSON
+    ## schema with @code{jsonencode}, and it may be given either in place of
+    ## @var{image} or following it.  A constrained response can be recovered
+    ## with @code{jsondecode} instead of being parsed by inspection, which is
+    ## what allows a model to be used as a source of data rather than of text.
+    ##
+    ## @example
+    ## @group
+    ## format = struct ('type', 'object', ...
+    ##                  'properties', struct ('answer', ...
+    ##                                        struct ('type', 'number')), ...
+    ##                  'required', @{@{'answer'@}@});
+    ## txt = query (llm, 'How many moons has Mars?', format);
+    ## val = jsondecode (txt).answer;
+    ## @end group
+    ## @end example
     ##
     ## @code{@var{txt} = query (@dots{})} returns the generated text to the
     ## output argument @var{txt} instead of displaying it to the terminal for
@@ -1049,8 +1070,19 @@ classdef ollama < handle
         endif
         args = {'prompt', prompt};
       endif
+      ## A trailing scalar structure specifies an output format schema
+      nargs = nargin;
+      fmtargs = {};
+      if (nargin > 2 && isstruct (varargin{end}))
+        [schema, err] = __schema__ (varargin{end});
+        if (! isempty (err))
+          error ("ollama.query: %s", err);
+        endif
+        fmtargs = {'format', schema};
+        nargs -= 1;
+      endif
       ## Validate any images
-      if (nargin > 2)
+      if (nargs > 2)
         image = varargin{2};
         if (! ischar (image) && ! iscellstr (image) && ! isvector (image))
           error (strcat ("ollama.query: IMAGE must be either a character", ...
@@ -1077,6 +1109,8 @@ classdef ollama < handle
         endif
         args = [args, {type, image}];
       endif
+      ## Append output format schema (if any)
+      args = [args, fmtargs];
       ## Get thinking status
       if (islogical (this.thinking))
         if (this.thinking)
@@ -1131,6 +1165,7 @@ classdef ollama < handle
     ## -*- texinfo -*-
     ## @deftypefn  {ollama} {} chat (@var{llm}, @var{prompt})
     ## @deftypefnx {ollama} {} chat (@var{llm}, @var{prompt}, @var{image})
+    ## @deftypefnx {ollama} {} chat (@var{llm}, @var{prompt}, @var{format})
     ## @deftypefnx {ollama} {} chat (@var{llm}, @{@var{tool_output}@})
     ## @deftypefnx {ollama} {@var{txt} =} chat (@dots{})
     ## @deftypefnx {ollama} {} chat (@var{llm})
@@ -1179,6 +1214,12 @@ classdef ollama < handle
     ## @qcode{toolFunction} object and the second column contains its respective
     ## function name.  Each row in @var{tool_output} corresponds to a separate
     ## function, when multiple @qcode{toolFunction} objects have been evaluated.
+    ##
+    ## @code{chat (@var{llm}, @var{prompt}, @var{format})} also specifies a
+    ## schema constraining the model's response to the structure it describes,
+    ## as in the @code{query} method.  @var{format} must be a scalar structure,
+    ## which is rendered to a JSON schema with @code{jsonencode}, and it may be
+    ## given either in place of @var{image} or following it.
     ##
     ## @code{@var{txt} = chat (@dots{})} returns the generated text to the
     ## output argument @var{txt} instead of displaying it to the terminal for
@@ -1251,8 +1292,19 @@ classdef ollama < handle
           endif
         endif
       endif
+      ## A trailing scalar structure specifies an output format schema
+      nargs = nargin;
+      fmtargs = {};
+      if (nargin > 2 && isstruct (varargin{end}))
+        [schema, err] = __schema__ (varargin{end});
+        if (! isempty (err))
+          error ("ollama.chat: %s", err);
+        endif
+        fmtargs = {'format', schema};
+        nargs -= 1;
+      endif
       ## Validate any images
-      if (nargin > 2)
+      if (nargs > 2)
         image = varargin{2};
         if (! ischar (image) && ! iscellstr (image) && ! isvector (image))
           error (strcat ("ollama.chat: IMAGE must be either a character", ...
@@ -1305,7 +1357,7 @@ classdef ollama < handle
                                'options', this.options, ...
                                'message', message, ...
                                'systemMessage', this.systemMessage, ...
-                               'think', think, 'tools', tools);
+                               'think', think, 'tools', tools, fmtargs{:});
       if (err)
         error ("ollama.chat: %s", out);
       endif
@@ -2036,4 +2088,19 @@ function __json__ (tool_calls)
       endfor
     endfor
   endif
+endfunction
+
+## Validate an output format schema and render it to a JSON string
+function [schema, err] = __schema__ (fmt)
+  schema = '';
+  err = '';
+  if (! isstruct (fmt) || ! isscalar (fmt))
+    err = "FORMAT must be a scalar structure.";
+    return;
+  endif
+  if (isempty (fieldnames (fmt)))
+    err = "FORMAT must not be an empty structure.";
+    return;
+  endif
+  schema = jsonencode (fmt);
 endfunction

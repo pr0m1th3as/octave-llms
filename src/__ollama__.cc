@@ -85,6 +85,8 @@ message for the model during a request.\n\
 model during a request.\n\
 @item @qcode{'tools'} A character vector for sending a @qcode{toolFunction} or \
 a @qcode{toolRegistry} in JSON format to the mode during a request.\n\
+@item @qcode{'format'} A character vector with a JSON schema, which constrains \
+the model's response to the structure it describes.\n\
 @item @qcode{'input'} A cell array of character vectors to generate embeddings \
 for.\n\
 @item @qcode{'dimensions'} An nonnegative integer scalar value specifying the \
@@ -118,6 +120,7 @@ at once.\n\
   retval(1) = ! running;
   // Initialize variables for inference
   string tools = "NA";
+  string format = "NA";
   string model = "";
   string prompt = "";
   bool has_prompt = false;
@@ -630,6 +633,21 @@ at once.\n\
       }
       tools = args(p+1).string_value ();
     }
+    else if (args(p).string_value () == "format")
+    {
+      // Check parameter value
+      if (! args(p+1).is_string ())
+      {
+        error ("__ollama__: 'format' value must be a character vector.");
+      }
+      format = args(p+1).string_value ();
+      // Parsing happens in the request, which cannot report back, so the
+      // schema is validated here while an error can still be raised.
+      if (! json::accept (format))
+      {
+        error ("__ollama__: 'format' value must be a valid JSON schema.");
+      }
+    }
     else if (args(p).string_value () == "input")
     {
       // Check parameter value
@@ -849,7 +867,8 @@ at once.\n\
     try
     {
       ollama::response response;
-      response = ollama::generate (model, prompt, think, sysmsg, options, images);
+      response = ollama::generate (model, prompt, think, sysmsg, options, images,
+                                   format);
       string txt = response.as_json_string ();
       retval(0) = txt;
       retval(1) = false;
@@ -866,7 +885,8 @@ at once.\n\
     try
     {
       ollama::response response;
-      response = ollama::chat (model, messages, think, sysmsg, tools, options);
+      response = ollama::chat (model, messages, think, sysmsg, tools, options,
+                               "5m", format);
       string txt = response.as_json_string ();
       retval(0) = txt;
       retval(1) = false;
