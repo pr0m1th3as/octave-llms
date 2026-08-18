@@ -22,6 +22,11 @@ Summary of important user-visible changes for llms 0.2.0:
  ** New: 55 built-in self-tests covering `toolFunction`, `toolRegistry` and the
     two `ollama` constructor branches that are reachable without a server.
 
+ ** A tool result that is not already text is rendered on a single row.  A
+    vector came back with its elements stacked as separate rows, so `[1 2 3]`
+    reached the model as `123` and a logical array as unreadable text.
+    Evaluating a tool no longer requires the `datatypes` package to be loaded.
+
  ** A tool call from a model without thinking capabilities no longer aborts.
 
  ** `llm.thinking = 'high'` works; it called an undefined function.

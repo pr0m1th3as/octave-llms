@@ -217,7 +217,12 @@ classdef toolFunction
       endif
       fargs = cellfun (@(fnames) tool_call.function.arguments.(fnames), ...
                        ModelArgs, 'UniformOutput', false);
-      result = char (string (this.handle (fargs{:})));
+      result = this.handle (fargs{:});
+      if (! ischar (result))
+        ## 'mat2str' keeps a non-scalar result on one row, which 'char' of a
+        ## string array does not, and it renders a logical as true/false.
+        result = mat2str (result);
+      endif
       tool_output = {result, this.name};
     endfunction
 

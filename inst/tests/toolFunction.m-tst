@@ -94,6 +94,25 @@
 %! t = addParameters (t, 'b', 'number', 'second addend');
 %! c = jsondecode ('{"id":"c1","function":{"name":"add","arguments":{"a":4,"b":6}}}', 'makeValidName', false);
 %! assert (evalFunction (t, c), {'10', 'add'});
+## A result that is not already text is rendered on a single row, whatever its
+## size or class.  This is also what keeps the class free of any dependency on
+## a package being loaded to evaluate a tool.
+%!test
+%! t = toolFunction ('vec', 'Return a vector.', @(n) [1 2 3] * n);
+%! t = addParameters (t, 'n', 'number', 'a multiplier');
+%! o = evalFunction (t, '{"id":"c1","function":{"name":"vec","arguments":{"n":1}}}');
+%! assert (o, {'[1 2 3]', 'vec'});
+%! assert (rows (o{1}), 1);
+%!test
+%! t = toolFunction ('gt', 'Compare two numbers.', @(a, b) a > b);
+%! t = addParameters (t, 'a', 'number', 'first');
+%! t = addParameters (t, 'b', 'number', 'second');
+%! o = evalFunction (t, '{"id":"c1","function":{"name":"gt","arguments":{"a":3,"b":1}}}');
+%! assert (o, {'true', 'gt'});
+%!test
+%! t = toolFunction ('name', 'Return text.', @() 'Athens');
+%! o = evalFunction (t, '{"id":"c1","function":{"name":"name","arguments":{}}}');
+%! assert (o, {'Athens', 'name'});
 ## A call naming another function returns no output rather than raising, so a
 ## registry may offer the same call to each of its tools in turn.
 %!test
