@@ -10,9 +10,9 @@
 
 ## 1. About
 
-The **llms** package is a preliminary attempt to integrate support for LLM inference through the Octave language.  The package currently contains a single handle class which provides an interface to an Ollama server, which can be accessed either locally or over a network.  The handle class, named `ollama` (as one would guess), relies on a customized version of the [`ollama.hpp`](https://github.com/jmont-dev/ollama-hpp) header only library writen by James Montgomery {[@jmont-dev](https://github.com/jmont-dev)}, the [`httplib`](https://github.com/yhirose/cpp-httplib) header library created by Yuji Hirose {[@yhirose](https://github.com/yhirose)}, the [`json.hpp`](https://github.com/nlohmann/json) header library written by Niels Lohmann {[@nlohmann](https://github.com/nlohmann)}, the [`Base64.hpp`](https://gist.github.com/tomykaira/f0fd86b6c73063283afe550bc5d77594) written by [@tomykaira](https://gist.github.com/tomykaira), and the [`fpng`](https://github.com/richgel999/fpng) library created by Rich Geldreich {[@richgel999](https://github.com/richgel999)}.
+The **llms** package is a preliminary attempt to integrate support for LLM inference through the Octave language.  It provides the `ollama` handle class, which interfaces an Ollama server accessible either locally or over a network, and the `toolFunction` and `toolRegistry` classes, which describe Octave functions to a model and evaluate the calls it makes to them.  Inference runs in `query` mode for a single turn, in `chat` mode for a conversation, and in `embed` mode to generate embedding vectors; a reply can be constrained to a JSON schema so that it decodes as data rather than being parsed as text.  The `ollama` class relies on a customized version of the [`ollama.hpp`](https://github.com/jmont-dev/ollama-hpp) header only library writen by James Montgomery {[@jmont-dev](https://github.com/jmont-dev)}, the [`httplib`](https://github.com/yhirose/cpp-httplib) header library created by Yuji Hirose {[@yhirose](https://github.com/yhirose)}, the [`json.hpp`](https://github.com/nlohmann/json) header library written by Niels Lohmann {[@nlohmann](https://github.com/nlohmann)}, the [`Base64.hpp`](https://gist.github.com/tomykaira/f0fd86b6c73063283afe550bc5d77594) written by [@tomykaira](https://gist.github.com/tomykaira), and the [`fpng`](https://github.com/richgel999/fpng) library created by Rich Geldreich {[@richgel999](https://github.com/richgel999)}.
 
-This package requires a recent GNU Octave (>=9.1) and the [`datatypes (>=1.1.6)`](https://github.com/pr0m1th3as/datatypes) package.  Of course, it further requires an  [Ollama](https://ollama.org/) server to handle the inference. Besides the `ollama` class, the package also provides a function, namely `fig2base64`, to facilitate embedding Octave figures as images to the prompts send to vision-capable models. This is a work in progress, not every end point of the Ollama server's API has been implemented yet, but those already available work and have been tested with various models running either locally or over the network.
+This package requires a recent GNU Octave (>=9.1) and the [`datatypes (>=1.1.6)`](https://github.com/pr0m1th3as/datatypes) package.  Of course, it further requires an  [Ollama](https://ollama.org/) server to handle the inference. The package also provides a function, namely `fig2base64`, to facilitate embedding Octave figures as images to the prompts send to vision-capable models. This is a work in progress, not every end point of the Ollama server's API has been implemented yet, but those already available work and have been tested with various models running either locally or over the network.  Where it is headed is set out in [`ROADMAP.md`](ROADMAP.md).
 
 ## 2. Documentation
 All methods and properties of the `ollama` handle class are documented with [texinfo](https://www.gnu.org/software/texinfo/) format, which can be accessed from the Octave command with the `help` function.  Use dot notation to access the help of a particular method. For example:
@@ -305,4 +305,58 @@ or clear the chat history and start over
 >> showHistory (A)
 No chat history to show. Start a chat first.
 ```
+### Structured output
+
+Pass a scalar structure as a trailing argument and the model's reply is constrained to the JSON schema it describes, so the result decodes instead of having to be parsed.
+```
+>> format = struct ('type', 'object', ...
+                    'properties', struct ('answer', struct ('type', 'number')), ...
+                    'required', {{'answer'}});
+>> txt = query (A, "How many moons has Mars?", format)
+txt = { "answer" : 2 }
+>> jsondecode (txt).answer
+ans = 2
+```
+Without a schema the same question answers in prose: `Mars has two known moons: Phobos and Deimos.`
+
+### Tool calling
+
+Describe an Octave function to the model with `toolFunction`, and collect several of them in a `toolRegistry`. Tool calling is available in `chat` mode and requires a model with tool capabilities.
+```
+>> t = toolFunction ('add_numbers', 'Add two numbers and return their sum.', @(a, b) a + b);
+>> t = addParameters (t, 'a', 'number', 'The first number');
+>> t = addParameters (t, 'b', 'number', 'The second number');
+>> A.tools = t;
+>> out = chat (A, "What is 1743 plus 2891? Use the add_numbers tool.");
+>> out{3}
+ans = {"id":"call_fv4rg59s","function":{"index":0,"name":"add_numbers","arguments":{"a":1743,"b":2891}}}
+```
+Evaluate the call and pass its output back to continue the conversation.
+```
+>> tool_output = evalFunction (t, out{3})
+tool_output =
+{
+  [1,1] = 4634
+  [1,2] = add_numbers
+}
+>> chat (A, tool_output)
+Response:
+
+The result of adding 1743 and 2891 is **4634**.
+```
+
+### Embeddings
+
+Load a model with embedding capabilities and `loadModel` switches the interface to `embed` mode.
+```
+>> B = ollama ("http://192.168.5.18:11434");
+>> loadModel (B, 'embeddinggemma:300m');
+>> v = embed (B, {'the cat sat on the mat', 'a feline rested on a rug'});
+>> size (v)
+ans =
+
+   2   768
+```
+The result is an ordinary numeric matrix, which is what every distance, clustering and classification function in the [`statistics`](https://github.com/gnu-octave/statistics) package already takes.
+
 This is a proof-of-concept side project. Leave a comment if you would like this kind of functionality for GNU Octave.  In the meantime, both [GNU Octave](https://octave.org/) and its extensive list of [Octave Packages](https://gnu-octave.github.io/packages/) are human-coded with loads of unit-testing and properly documented. Go visit if you are interested for some serious academic or production work.

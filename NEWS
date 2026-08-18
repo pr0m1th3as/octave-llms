@@ -1,0 +1,41 @@
+Summary of important user-visible changes for llms 0.2.0:
+---------------------------------------------------------
+
+ This release makes tool calling work, which it could not in any previous
+ version, and adds structured output so that a model's reply can be constrained
+ to a JSON schema and decoded rather than parsed.  The package also gains its
+ first built-in self-tests.
+
+ ** Tool calling works.  Six defects stood in the way, each sufficient on its
+    own: `chat` read a property that does not exist as soon as tools were
+    assigned, tool output could not be passed back into a conversation, the
+    encoded tool list went on the wire as a JSON string instead of an array,
+    `required` sat outside the parameter schema so a model saw every argument
+    as optional, the reply's `tool_calls` field was never read, and a tool call
+    was rejected for carrying an `id` rather than a `type`.
+
+ ** New: structured output.  `query` and `chat` accept a scalar structure as a
+    trailing argument, which is sent as a JSON schema constraining the model's
+    reply.  The reply is then recovered with `jsondecode` instead of being
+    parsed by inspection.
+
+ ** New: 55 built-in self-tests covering `toolFunction`, `toolRegistry` and the
+    two `ollama` constructor branches that are reachable without a server.
+
+ ** A tool call from a model without thinking capabilities no longer aborts.
+
+ ** `llm.thinking = 'high'` works; it called an undefined function.
+
+ ** `loadModel` reports a model that is not available on the server instead of
+    failing with "element number 1 undefined in return list".
+
+ ** The model capability checks name the active model when the server cannot
+    return its information; they referenced an undefined variable.
+
+ ** Assignment errors name `subsasgn` rather than `subsref`.
+
+ ** `help ollama.mode` documents the `'embed'` mode, which `loadModel` sets for
+    a model with embedding capabilities.
+
+ ** `toolFunction` and `toolRegistry` diagnose an invalid call and an
+    unrecognized property instead of failing with an internal error.
