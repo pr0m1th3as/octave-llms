@@ -12,7 +12,7 @@
 
 The **llms** package is a preliminary attempt to integrate support for LLM inference through the Octave language.  It provides the `ollama` handle class, which interfaces an Ollama server accessible either locally or over a network, and the `toolFunction` and `toolRegistry` classes, which describe Octave functions to a model and evaluate the calls it makes to them.  Inference runs in `query` mode for a single turn, in `chat` mode for a conversation, and in `embed` mode to generate embedding vectors; a reply can be constrained to a JSON schema so that it decodes as data rather than being parsed as text.  The `ollama` class relies on a customized version of the [`ollama.hpp`](https://github.com/jmont-dev/ollama-hpp) header only library writen by James Montgomery {[@jmont-dev](https://github.com/jmont-dev)}, the [`httplib`](https://github.com/yhirose/cpp-httplib) header library created by Yuji Hirose {[@yhirose](https://github.com/yhirose)}, the [`json.hpp`](https://github.com/nlohmann/json) header library written by Niels Lohmann {[@nlohmann](https://github.com/nlohmann)}, the [`Base64.hpp`](https://gist.github.com/tomykaira/f0fd86b6c73063283afe550bc5d77594) written by [@tomykaira](https://gist.github.com/tomykaira), and the [`fpng`](https://github.com/richgel999/fpng) library created by Rich Geldreich {[@richgel999](https://github.com/richgel999)}.
 
-This package requires a recent GNU Octave (>=9.1) and the [`datatypes (>=1.1.6)`](https://github.com/pr0m1th3as/datatypes) package.  Of course, it further requires an  [Ollama](https://ollama.org/) server to handle the inference. The package also provides a function, namely `fig2base64`, to facilitate embedding Octave figures as images to the prompts send to vision-capable models. This is a work in progress, not every end point of the Ollama server's API has been implemented yet, but those already available work and have been tested with various models running either locally or over the network.  Where it is headed is set out in [`ROADMAP.md`](ROADMAP.md).
+This package requires a recent GNU Octave (>=11.1) and the [`datatypes (>=1.3.3)`](https://github.com/pr0m1th3as/datatypes) package.  Of course, it further requires an  [Ollama](https://ollama.org/) server to handle the inference. The package also provides a function, namely `fig2base64`, to facilitate embedding Octave figures as images to the prompts send to vision-capable models. This is a work in progress, not every end point of the Ollama server's API has been implemented yet, but those already available work and have been tested with various models running either locally or over the network.  Where it is headed is set out in [`ROADMAP.md`](ROADMAP.md).
 
 ## 2. Documentation
 All methods and properties of the `ollama` handle class are documented with [texinfo](https://www.gnu.org/software/texinfo/) format, which can be accessed from the Octave command with the `help` function.  Use dot notation to access the help of a particular method. For example:
@@ -39,7 +39,7 @@ It is equally explicit about what is out of scope — no training, no hosted API
 no reimplementation of `statistics` — each with the reason it was ruled out.
 
 ## 4. Installation
-To install the latest release, you need Octave (>=9.1.0) installed on your system. Install it by typing:
+To install the latest release, you need Octave (>=11.1.0) and the [`datatypes`](https://github.com/pr0m1th3as/datatypes) package (>=1.3.3) installed on your system. Install it by typing:
 ```
 pkg install -forge llms
 ```
@@ -95,7 +95,7 @@ The following models are available in the ollama server:
     {'llava:7b'     }
     {'gemma3:latest'}
 ```
-If the [`datatypes`](https://github.com/pr0m1th3as/datatypes) package is available, you can also list available models in a table
+You can also list the available models in a table
 ```
 >> listModels (A, 'table')
 The following models are available in the ollama server:

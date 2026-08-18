@@ -21,6 +21,10 @@ the roadmap treats it that way.
 
 ## Where the package stands
 
+The package requires GNU Octave 11.1 or later and `datatypes` 1.3.3 or later,
+raised in 0.2.0 from 9.1 and 1.1.6. That puts it on the same base as
+`datatypes` and `statistics`, which matters for milestone 2 below.
+
 Version 0.2.0 provides an `ollama` handle class with fifteen public methods and
 fourteen properties, covering the server-management endpoints, single-turn
 `query`, multi-turn `chat`, and `embed`; the `toolFunction` and `toolRegistry`
@@ -106,6 +110,12 @@ exact and approximate nearest-neighbour search, clustering, dimensionality
 reduction and classification, and `embed` already returns the matrix they all
 take. What is missing is everything between a directory of documents and that
 matrix.
+
+One question this milestone opens is whether the package should depend on
+`statistics` for approximate nearest-neighbour search rather than carry its own.
+Raising the requirement to Octave 11.1 removed the version barrier — that is
+what `statistics` already asks for — so the choice is now about weight alone,
+and it is deliberately left open until the store is designed.
 
 **A vector store with structural provenance.** An embedding is meaningless
 without knowing which model and which dimensionality produced it. Two models'

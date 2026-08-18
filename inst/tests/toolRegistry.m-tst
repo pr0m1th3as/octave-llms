@@ -20,7 +20,7 @@
 %! t1 = toolFunction ('add', 'Add two numbers.', @plus);
 %! t2 = toolFunction ('sub', 'Subtract two numbers.', @minus);
 %! R = toolRegistry (t1, t2);
-%! assert (R.names, {'add', 'sub'});
+%! assert_equal (R.names, {'add', 'sub'});
 %!test
 %! R = toolRegistry ();
 %! assert (isa (R, 'toolRegistry'));
@@ -35,10 +35,10 @@
 %! t1 = addParameters (t1, 'a', 'number', 'first addend');
 %! t2 = toolFunction ('now', 'The current time.', @clock);
 %! s = encodeRegistry (toolRegistry (t1, t2));
-%! assert (numel (s), 2);
-%! assert (s(1).function.name, 'add');
-%! assert (s(1).function.parameters.required, {'a'});
-%! assert (s(2).function.name, 'now');
+%! assert_equal (numel (s), 2);
+%! assert_equal (s(1).function.name, 'add');
+%! assert_equal (s(1).function.parameters.required, {'a'});
+%! assert_equal (s(2).function.name, 'now');
 %! assert (isempty (s(2).function.parameters.required));
 
 ## A call is dispatched to the tool that owns the name.
@@ -50,15 +50,15 @@
 %! t2 = addParameters (t2, 'a', 'number', 'minuend');
 %! t2 = addParameters (t2, 'b', 'number', 'subtrahend');
 %! R = toolRegistry (t1, t2);
-%! assert (evalFunction (R, '{"id":"c1","function":{"name":"add","arguments":{"a":17,"b":25}}}'), {'42', 'add'});
-%! assert (evalFunction (R, '{"id":"c2","function":{"name":"sub","arguments":{"a":30,"b":8}}}'), {'22', 'sub'});
+%! assert_equal (evalFunction (R, '{"id":"c1","function":{"name":"add","arguments":{"a":17,"b":25}}}'), {'42', 'add'});
+%! assert_equal (evalFunction (R, '{"id":"c2","function":{"name":"sub","arguments":{"a":30,"b":8}}}'), {'22', 'sub'});
 %!test
 %! t1 = toolFunction ('add', 'Add two numbers.', @plus);
 %! t1 = addParameters (t1, 'a', 'number', 'first addend');
 %! t1 = addParameters (t1, 'b', 'number', 'second addend');
 %! R = toolRegistry (t1);
 %! c = jsondecode ('{"id":"c1","function":{"name":"add","arguments":{"a":4,"b":6}}}', 'makeValidName', false);
-%! assert (evalFunction (R, c), {'10', 'add'});
+%! assert_equal (evalFunction (R, c), {'10', 'add'});
 %!error<toolRegistry.evalFunction: unless a struct TOOL_CALL must be a nonempty character vector.> evalFunction (toolRegistry (toolFunction ('n', 'd', @plus)), 1)
 %!error<toolRegistry.evalFunction: invalid JSON string.> evalFunction (toolRegistry (toolFunction ('n', 'd', @plus)), 'not json')
 %!error<toolRegistry.evalFunction: invalid TOOL_CALL structure.> evalFunction (toolRegistry (toolFunction ('n', 'd', @plus)), struct ('a', 1))
@@ -69,8 +69,8 @@
 %! t1 = toolFunction ('add', 'Add two numbers.', @plus);
 %! t2 = toolFunction ('sub', 'Subtract two numbers.', @minus);
 %! R = toolRegistry (t1, t2);
-%! assert (R(1).names, {'add'});
+%! assert_equal (R(1).names, {'add'});
 %! assert (isa (R{2}, 'toolFunction'));
-%! assert (R{2}.name, 'sub');
+%! assert_equal (R{2}.name, 'sub');
 %!error<toolRegistry.subsref: unrecognized property: 'bogus'> ...
 %! R = toolRegistry (toolFunction ('n', 'd', @plus)); R.bogus;

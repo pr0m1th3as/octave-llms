@@ -6,6 +6,9 @@ Summary of important user-visible changes for llms 0.2.0:
  to a JSON schema and decoded rather than parsed.  The package also gains its
  first built-in self-tests.
 
+ ** The package now requires Octave 11.1 or later and `datatypes` 1.3.3 or
+    later, raised from 9.1 and 1.1.6.
+
  ** Tool calling works.  Six defects stood in the way, each sufficient on its
     own: `chat` read a property that does not exist as soon as tools were
     assigned, tool output could not be passed back into a conversation, the
