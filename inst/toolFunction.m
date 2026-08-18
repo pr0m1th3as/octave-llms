@@ -230,7 +230,7 @@ classdef toolFunction
       funStruct.function.description = this.description;
       funStruct.function.parameters.type = "object";
       funStruct.function.parameters.properties = this.parameters;
-      funStruct.function.required = fieldnames (this.parameters);
+      funStruct.function.parameters.required = fieldnames (this.parameters);
     endfunction
 
     ## Class specific subscripted reference
