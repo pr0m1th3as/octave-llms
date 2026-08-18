@@ -1,5 +1,9 @@
 # Large Language Models for GNU Octave
 
+**Requires** GNU Octave **>= 11.1** &nbsp;|&nbsp; [`datatypes`](https://github.com/pr0m1th3as/datatypes) **>= 1.3.3** &nbsp;|&nbsp; a running [Ollama](https://ollama.org/) server
+
+**Where it is going:** [`ROADMAP.md`](ROADMAP.md)
+
 **Content:**
 
 1. [About](#1-about)
