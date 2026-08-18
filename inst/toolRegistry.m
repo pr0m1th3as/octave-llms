@@ -157,6 +157,9 @@ classdef toolRegistry
           switch (s.subs)
             case 'names'
               out = this.names;
+            otherwise
+              error ("toolRegistry.subsref: unrecognized property: '%s'", ...
+                     s.subs);
           endswitch
       endswitch
 

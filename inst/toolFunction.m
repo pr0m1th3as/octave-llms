@@ -94,8 +94,9 @@ classdef toolFunction
     ##
     ## @end deftypefn
     function this = toolFunction (fname, description, handle)
-      if (nargin != 3)
-        print_usage;
+      if (nargin < 3)
+        error (strcat ("toolFunction: FNAME, DESCRIPTION, and FHANDLE", ...
+                       " are required."));
       endif
       if (validateString (fname))
         error ("toolFunction: FNAME must be non-empty character vector.");
@@ -144,8 +145,9 @@ classdef toolFunction
     ##
     ## @end deftypefn
     function this = addParameters (this, propName, propType, propDescription, enum = [])
-      if (nargin < 4 || nargin > 5)
-        print_usage;
+      if (nargin < 4)
+        error (strcat ("toolFunction.addParameters: PROPNAME, PROPTYPE,", ...
+                       " and PROPDESCRIPTION are required."));
       endif
       if (validateString (propName))
         error (strcat ("toolFunction.addParameters: PROPNAME must", ...
@@ -239,7 +241,7 @@ classdef toolFunction
       s = s(1);
       switch (s.type)
         case '()'
-          error ("toolFunction.subsref: '()}' invalid indexing.");
+          error ("toolFunction.subsref: '()' invalid indexing.");
         case '{}'
           error ("toolFunction.subsref: '{}' invalid indexing.");
         case '.'
@@ -250,6 +252,9 @@ classdef toolFunction
               out = this.description;
             case 'handle'
               out = this.handle;
+            otherwise
+              error ("toolFunction.subsref: unrecognized property: '%s'", ...
+                     s.subs);
           endswitch
       endswitch
 

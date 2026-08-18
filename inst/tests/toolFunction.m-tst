@@ -28,6 +28,8 @@
 %!error<toolFunction: DESCRIPTION must be non-empty character vector.> toolFunction ('n', '', @plus)
 %!error<toolFunction: FHANDLE must be a function handle.> toolFunction ('n', 'd', 1)
 %!error<toolFunction: FHANDLE must be a function handle.> toolFunction ('n', 'd', 'plus')
+%!error<toolFunction: FNAME, DESCRIPTION, and FHANDLE are required.> toolFunction ('n')
+%!error<toolFunction: FNAME, DESCRIPTION, and FHANDLE are required.> toolFunction ('n', 'd')
 
 ## A parameter reaches the encoded schema, and 'required' sits inside
 ## 'parameters' where the Ollama tool schema puts it.
@@ -59,6 +61,8 @@
 %! s = encodeFunction (t);
 %! assert (s.function.parameters.properties, struct ());
 %! assert (isempty (s.function.parameters.required));
+%!error<toolFunction.addParameters: PROPNAME, PROPTYPE, and PROPDESCRIPTION are required.> addParameters (toolFunction ('n', 'd', @plus), 'a')
+%!error<toolFunction.addParameters: PROPNAME, PROPTYPE, and PROPDESCRIPTION are required.> addParameters (toolFunction ('n', 'd', @plus), 'a', 'number')
 %!error<toolFunction.addParameters: PROPNAME must be a nonempty character vector.> addParameters (toolFunction ('n', 'd', @plus), 1, 'number', 'd')
 %!error<toolFunction.addParameters: PROPNAME must be a nonempty character vector.> addParameters (toolFunction ('n', 'd', @plus), '', 'number', 'd')
 %!error<toolFunction.addParameters: PROPTYPE must be a nonempty character vector.> addParameters (toolFunction ('n', 'd', @plus), 'a', 1, 'd')
@@ -107,7 +111,9 @@
 %!test
 %! t = toolFunction ('add', 'Add two numbers.', @plus);
 %! assert (t.name, 'add');
-%!error<toolFunction.subsref: '\(\)}' invalid indexing.> ...
+%!error<toolFunction.subsref: '\(\)' invalid indexing.> ...
 %! t = toolFunction ('n', 'd', @plus); t(1);
 %!error<toolFunction.subsref: '{}' invalid indexing.> ...
 %! t = toolFunction ('n', 'd', @plus); t{1};
+%!error<toolFunction.subsref: unrecognized property: 'bogus'> ...
+%! t = toolFunction ('n', 'd', @plus); t.bogus;

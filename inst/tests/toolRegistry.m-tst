@@ -72,3 +72,5 @@
 %! assert (R(1).names, {'add'});
 %! assert (isa (R{2}, 'toolFunction'));
 %! assert (R{2}.name, 'sub');
+%!error<toolRegistry.subsref: unrecognized property: 'bogus'> ...
+%! R = toolRegistry (toolFunction ('n', 'd', @plus)); R.bogus;
