@@ -69,6 +69,12 @@ classdef toolFunction
     ##
     ## @end deftp
     handle = [];
+
+    ## Names carrying a default value.  A parameter with a default is optional:
+    ## it is left out of the schema's required list, and a call that omits it is
+    ## completed from here rather than dispatched with a gap in its arguments.
+    defaults = struct ();
+
   endproperties
 
   methods (GetAccess = public)
@@ -116,6 +122,7 @@ classdef toolFunction
     ## -*- texinfo -*-
     ## @deftypefn  {toolFunction} {@var{tool} =} addParameters (@var{tool}, @var{propName}, @var{propType}, @var{propDescription})
     ## @deftypefnx {toolFunction} {@var{tool} =} addParameters (@var{tool}, @var{propName}, @var{propType}, @var{propDescription}, @var{enum})
+    ## @deftypefnx {toolFunction} {@var{tool} =} addParameters (@dots{}, @var{Name}, @var{Value})
     ##
     ## Add an input parameter to the tool function.
     ##
@@ -143,8 +150,34 @@ classdef toolFunction
     ## or logical values.
     ## @end enumerate
     ##
+    ## Anything beyond the fourth argument may also be given as @var{Name},
+    ## @var{Value} pairs, which is the preferred form: the reader of a tool
+    ## declaration is a language model, and a model handles named arguments
+    ## reliably where it handles positional ones by luck.  The same holds for
+    ## whoever writes the declaration.
+    ##
+    ## @multitable @columnfractions 0.18 0.02 0.80
+    ## @headitem @var{Name} @tab @tab @var{Value}
+    ##
+    ## @item @qcode{"enum"} @tab @tab As @var{enum} above.
+    ##
+    ## @item @qcode{"default"} @tab @tab The value the parameter takes when the
+    ## model's tool call leaves it out.  A parameter with a default is
+    ## @strong{optional}: it is omitted from the @qcode{required} list of the
+    ## encoded schema, it is advertised to the model so that leaving it out is
+    ## an informed choice, and a call that omits it is completed from the
+    ## default rather than dispatched with a gap in its arguments.  When
+    ## @qcode{"enum"} is also given, the default must be one of its values.
+    ## @end multitable
+    ##
+    ## Defaults are how optionality is expressed here, in preference to letting
+    ## a call arrive with an argument missing.  The function handle is called
+    ## positionally, so an absent argument in the middle of the list would
+    ## silently shift every later one into the wrong place; filling it from a
+    ## declared default means the handle is always called with a complete list.
+    ##
     ## @end deftypefn
-    function this = addParameters (this, propName, propType, propDescription, enum = [])
+    function this = addParameters (this, propName, propType, propDescription, varargin)
       if (nargin < 4)
         error (strcat ("toolFunction.addParameters: PROPNAME, PROPTYPE,", ...
                        " and PROPDESCRIPTION are required."));
@@ -161,6 +194,41 @@ classdef toolFunction
         error (strcat ("toolFunction.addParameters: PROPDESCRIPTION", ...
                        " must be a nonempty character vector."));
       endif
+      ## A lone cell is the original positional ENUM; anything else opens the
+      ## name/value list.  A model reads named arguments reliably and positional
+      ## ones by luck, and the same is true of whoever writes the declaration.
+      enum = [];
+      dflt = [];
+      hasDefault = false;
+      if (numel (varargin) == 1)
+        ## A lone fifth argument can only be the original positional ENUM: a
+        ## name/value list needs a pair.  Validated below, so the error it
+        ## raises is the one this call has always raised.
+        enum = varargin{1};
+      elseif (! isempty (varargin))
+        if (mod (numel (varargin), 2) != 0)
+          error (strcat ("toolFunction.addParameters: optional arguments", ...
+                         " must be given as NAME, VALUE pairs."));
+        endif
+        for i = 1:2:numel (varargin)
+          key = varargin{i};
+          if (! (ischar (key) && isvector (key)))
+            error (strcat ("toolFunction.addParameters: optional argument", ...
+                           " names must be character vectors."));
+          endif
+          switch (lower (key))
+            case 'enum'
+              enum = varargin{i+1};
+            case 'default'
+              dflt = varargin{i+1};
+              hasDefault = true;
+            otherwise
+              error (strcat ("toolFunction.addParameters: unrecognized", ...
+                             " optional argument '%s'."), key);
+          endswitch
+        endfor
+      endif
+
       this.parameters.(propName).type = propType;
       this.parameters.(propName).description = propDescription;
       if (! isempty (enum))
@@ -169,6 +237,16 @@ classdef toolFunction
                          " cell array of nonempty character vectors."));
         endif
         this.parameters.(propName).enum = enum;
+      endif
+      if (hasDefault)
+        if (! isempty (enum) && ! any (cellfun (@(e) isequal (e, dflt), enum)))
+          error (strcat ("toolFunction.addParameters: DEFAULT must be one", ...
+                         " of the values listed in ENUM."));
+        endif
+        ## Also declared in the schema, where it tells the model what it gets
+        ## if it says nothing, which is what makes omitting it a decision
+        this.parameters.(propName).default = dflt;
+        this.defaults.(propName) = dflt;
       endif
     endfunction
 
@@ -229,22 +307,41 @@ classdef toolFunction
       ## which is the order the function handle takes them in.  Comparing the
       ## two lists directly made a correct call fail whenever the model happened
       ## to emit the arguments in a different order, and fail silently.
-      if (numel (ModelArgs) != numel (toolFArgs)
-          || ! isempty (setdiff (ModelArgs, toolFArgs)))
+      reqArgs = toolFArgs(! ismember (toolFArgs, fieldnames (this.defaults)));
+      unknown = setdiff (ModelArgs, toolFArgs);
+      missing = setdiff (reqArgs, ModelArgs);
+      if (! isempty (unknown) || ! isempty (missing))
         ## A mismatch used to return nothing at all, so the tool result never
         ## reached the model: it had asked for a call, nothing ran, and the
         ## conversation carried on as though it had not happened, leaving it to
         ## guess or repeat itself.  The error goes back as the tool result
         ## instead, which is the only form a model can act on.
-        tool_output = {sprintf(strcat ("Error: tool '%s' takes the arguments", ...
-                                       " %s, but the call supplied %s. Call it", ...
-                                       " again with exactly those arguments."), ...
-                               this.name, argList (toolFArgs), ...
-                               argList (ModelArgs)), this.name};
+        if (! isempty (unknown))
+          msg = sprintf (strcat ("Error: tool '%s' does not take %s. Its", ...
+                                 " parameters are %s. Call it again using", ...
+                                 " only those."), this.name, ...
+                         argList (unknown), ...
+                         paramList (toolFArgs, fieldnames (this.defaults)));
+        else
+          msg = sprintf (strcat ("Error: tool '%s' is missing %s. Its", ...
+                                 " parameters are %s. Call it again", ...
+                                 " supplying them."), this.name, ...
+                         argList (missing), ...
+                         paramList (toolFArgs, fieldnames (this.defaults)));
+        endif
+        tool_output = {msg, this.name};
         return;
       endif
-      fargs = cellfun (@(fnames) tool_call.function.arguments.(fnames), ...
-                       toolFArgs, 'UniformOutput', false);
+      ## Every omitted argument is filled from its default, so the handle is
+      ## always called with a complete positional list and never with a gap
+      fargs = cell (numel (toolFArgs), 1);
+      for i = 1:numel (toolFArgs)
+        if (isfield (tool_call.function.arguments, toolFArgs{i}))
+          fargs{i} = tool_call.function.arguments.(toolFArgs{i});
+        else
+          fargs{i} = this.defaults.(toolFArgs{i});
+        endif
+      endfor
       result = this.handle (fargs{:});
       if (! ischar (result))
         ## 'mat2str' keeps a non-scalar result on one row, which 'char' of a
@@ -265,7 +362,9 @@ classdef toolFunction
       funStruct.function.description = this.description;
       funStruct.function.parameters.type = "object";
       funStruct.function.parameters.properties = this.parameters;
-      funStruct.function.parameters.required = fieldnames (this.parameters);
+      names = fieldnames (this.parameters);
+      funStruct.function.parameters.required = ...
+                              names(! ismember (names, fieldnames (this.defaults)));
     endfunction
 
     ## Class specific subscripted reference
@@ -300,6 +399,19 @@ classdef toolFunction
   endmethods
 
 endclassdef
+
+## Name the parameters for a diagnostic, marking the ones that may be omitted.
+## The lists are passed in rather than the object: this is a local function, so
+## reaching a private property through it would go via the class's own subsref,
+## which exposes only the public ones.
+function str = paramList (names, dflt)
+  for i = 1:numel (names)
+    if (ismember (names{i}, dflt))
+      names{i} = [names{i} " (optional)"];
+    endif
+  endfor
+  str = argList (names);
+endfunction
 
 ## Name a set of arguments for a diagnostic the model has to act on
 function str = argList (names)

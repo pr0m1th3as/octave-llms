@@ -146,8 +146,8 @@
 %! o = evalFunction (t, '{"function":{"name":"add","arguments":{"a":1}}}');
 %! assert_equal (size (o), [1, 2]);
 %! assert_equal (o{2}, 'add');
-%! assert (! isempty (strfind (o{1}, "takes the arguments a, b")));
-%! assert (! isempty (strfind (o{1}, "supplied a.")));
+%! assert (! isempty (strfind (o{1}, "is missing b.")));
+%! assert (! isempty (strfind (o{1}, "parameters are a, b.")));
 
 %!test
 %! ## An unexpected argument is named too, so the model can drop it.
@@ -155,7 +155,7 @@
 %! t = addParameters (t, 'a', 'number', 'first addend');
 %! t = addParameters (t, 'b', 'number', 'second addend');
 %! o = evalFunction (t, '{"function":{"name":"add","arguments":{"a":1,"b":2,"c":3}}}');
-%! assert (! isempty (strfind (o{1}, "supplied a, b, c.")));
+%! assert (! isempty (strfind (o{1}, "does not take c.")));
 
 %!test
 %! ## No arguments at all is reported in words rather than as an empty list.
@@ -163,7 +163,7 @@
 %! t = addParameters (t, 'a', 'number', 'first addend');
 %! t = addParameters (t, 'b', 'number', 'second addend');
 %! o = evalFunction (t, '{"function":{"name":"add","arguments":{}}}');
-%! assert (! isempty (strfind (o{1}, "supplied no arguments.")));
+%! assert (! isempty (strfind (o{1}, "is missing a, b.")));
 
 %!test
 %! ## The handle is not evaluated when the arguments do not match.
@@ -181,3 +181,64 @@
 %! t = addParameters (t, 'b', 'number', 'subtrahend');
 %! assert_equal (evalFunction (t, '{"function":{"name":"sub","arguments":{"a":10,"b":4}}}'), {'6', 'sub'});
 %! assert_equal (evalFunction (t, '{"function":{"name":"sub","arguments":{"b":4,"a":10}}}'), {'6', 'sub'});
+
+%!test
+%! ## A parameter given a default is optional: it leaves the required list, and
+%! ## the default is advertised so the model knows what silence buys it.
+%! t = toolFunction ('greet', 'Greet someone.', @(name, greeting) [greeting ', ' name]);
+%! t = addParameters (t, 'name', 'string', 'who to greet');
+%! t = addParameters (t, 'greeting', 'string', 'the greeting', 'default', 'Hello');
+%! s = encodeFunction (t);
+%! assert_equal (s.function.parameters.required, {'name'});
+%! assert_equal (s.function.parameters.properties.greeting.default, 'Hello');
+
+%!test
+%! ## An omitted optional argument is filled from its default, so the handle is
+%! ## called with a complete positional list and never with a gap.
+%! t = toolFunction ('greet', 'Greet someone.', @(name, greeting) [greeting ', ' name]);
+%! t = addParameters (t, 'name', 'string', 'who to greet');
+%! t = addParameters (t, 'greeting', 'string', 'the greeting', 'default', 'Hello');
+%! o = evalFunction (t, '{"function":{"name":"greet","arguments":{"name":"Ada"}}}');
+%! assert_equal (o, {'Hello, Ada', 'greet'});
+
+%!test
+%! ## Supplying it overrides the default.
+%! t = toolFunction ('greet', 'Greet someone.', @(name, greeting) [greeting ', ' name]);
+%! t = addParameters (t, 'name', 'string', 'who to greet');
+%! t = addParameters (t, 'greeting', 'string', 'the greeting', 'default', 'Hello');
+%! o = evalFunction (t, '{"function":{"name":"greet","arguments":{"greeting":"Hi","name":"Ada"}}}');
+%! assert_equal (o, {'Hi, Ada', 'greet'});
+
+%!test
+%! ## A required argument is still required when another one is optional, and
+%! ## the diagnostic marks which is which.
+%! t = toolFunction ('greet', 'Greet someone.', @(name, greeting) [greeting ', ' name]);
+%! t = addParameters (t, 'name', 'string', 'who to greet');
+%! t = addParameters (t, 'greeting', 'string', 'the greeting', 'default', 'Hello');
+%! o = evalFunction (t, '{"function":{"name":"greet","arguments":{"greeting":"Hi"}}}');
+%! assert (! isempty (strfind (o{1}, 'is missing name.')));
+%! assert (! isempty (strfind (o{1}, 'greeting (optional)')));
+
+%!test
+%! ## Every parameter optional means nothing is required.
+%! t = toolFunction ('now', 'The time.', @(fmt) fmt);
+%! t = addParameters (t, 'fmt', 'string', 'format', 'default', 'iso');
+%! s = encodeFunction (t);
+%! assert (isempty (s.function.parameters.required));
+%! assert_equal (evalFunction (t, '{"function":{"name":"now","arguments":{}}}'), {'iso', 'now'});
+
+%!test
+%! ## enum and default given as name/value pairs, and the default must be one
+%! ## of the listed values or the declaration is inconsistent.
+%! t = toolFunction ('conv', 'Convert.', @(unit) unit);
+%! t = addParameters (t, 'unit', 'string', 'The unit', 'enum', {'c', 'f'}, 'default', 'c');
+%! s = encodeFunction (t);
+%! assert_equal (s.function.parameters.properties.unit.enum, {'c', 'f'});
+%! assert_equal (s.function.parameters.properties.unit.default, 'c');
+
+%!error<toolFunction.addParameters: DEFAULT must be one of the values listed in ENUM.> ...
+%! addParameters (toolFunction ('n', 'd', @plus), 'u', 'string', 'd', 'enum', {'a'}, 'default', 'z')
+%!error<toolFunction.addParameters: optional arguments must be given as NAME, VALUE pairs.> ...
+%! addParameters (toolFunction ('n', 'd', @plus), 'u', 'string', 'd', 'enum', {'a'}, 'default')
+%!error<toolFunction.addParameters: unrecognized optional argument 'bogus'.> ...
+%! addParameters (toolFunction ('n', 'd', @plus), 'u', 'string', 'd', 'bogus', 1)

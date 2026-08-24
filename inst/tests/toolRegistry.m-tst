@@ -85,4 +85,4 @@
 %! o = evalFunction (r, '{"function":{"name":"addup","arguments":{"a":1}}}');
 %! assert_equal (size (o), [1, 2]);
 %! assert_equal (o{2}, 'addup');
-%! assert (! isempty (strfind (o{1}, 'takes the arguments a, b')));
+%! assert (! isempty (strfind (o{1}, 'is missing b.')));
