@@ -277,6 +277,7 @@ Add an input parameter to the tool function.
 <dl>
 <dt><code><h5 class="fs">toolFunction: <var>tool</var> = <b>addParameters</b> (<var>tool</var>, <var>propName</var>, <var>propType</var>, <var>propDescription</var>)</code></h5></dt>
 <dt><code><h5 class="fs">toolFunction: <var>tool</var> = <b>addParameters</b> (<var>tool</var>, <var>propName</var>, <var>propType</var>, <var>propDescription</var>, <var>enum</var>)</code></h5></dt>
+<dt><code><h5 class="fs">toolFunction: <var>tool</var> = <b>addParameters</b> (&hellip;, <var>Name</var>, <var>Value</var>)</code></h5></dt>
 </dl>
 <p> </p>
 <p> <code>addParameters</code> appends the parameters of a single input argument
@@ -303,6 +304,32 @@ Add an input parameter to the tool function.
  or logical values.
 </li></ol>
 
+<p> Anything beyond the fourth argument may also be given as <var>Name</var>,
+ <var>Value</var> pairs, which is the preferred form: the reader of a tool
+ declaration is a language model, and a model handles named arguments
+ reliably where it handles positional ones by luck.  The same holds for
+ whoever writes the declaration.
+</p>
+<div class="table-responsive">
+<table class="table table-striped table-bordered table-sm">
+<thead class="table-primary"><tr><th width="18%"><var>Name</var></th><th width="2%"></th><th width="80%"><var>Value</var></th></tr></thead>
+<tr><td width="18%"><code>&quot;enum&quot;</code></td><td width="2%"></td><td width="80%">As <var>enum</var> above.</td></tr>
+<tr><td width="18%"><code>&quot;default&quot;</code></td><td width="2%"></td><td width="80%">The value the parameter takes when the
+ model&rsquo;s tool call leaves it out.  A parameter with a default is
+ <strong>optional</strong>: it is omitted from the <code>required</code> list of the
+ encoded schema, it is advertised to the model so that leaving it out is
+ an informed choice, and a call that omits it is completed from the
+ default rather than dispatched with a gap in its arguments.  When
+ <code>&quot;enum&quot;</code> is also given, the default must be one of its values.</td></tr>
+</table>
+</div>
+
+<p> Defaults are how optionality is expressed here, in preference to letting
+ a call arrive with an argument missing.  The function handle is called
+ positionally, so an absent argument in the middle of the list would
+ silently shift every later one into the wrong place; filling it from a
+ declared default means the handle is always called with a complete list.
+</p>
 
 
             </div>
@@ -340,6 +367,18 @@ Evaluate the tool function.
  <math>1x2</math> cell array of character vectors, in which the first element
  contains the output of the evaluated <code>toolFunction</code> object and the
  second element contains its corresponding function name.
+</p>
+<p> If <var>tool_call</var> names this tool but supplies arguments that do not
+ match its parameters, the first element carries a diagnostic naming the
+ expected and the supplied arguments instead of the function&rsquo;s output.
+ The function handle is not evaluated.  This is deliberate: the model must
+ be told what was wrong with its call, because a result it never receives
+ is one it cannot correct, and it will otherwise repeat the call or invent
+ an answer.  The order of the supplied arguments is not significant, the
+ members of a JSON object being unordered.
+</p>
+<p> If <var>tool_call</var> names a different tool, an empty character vector is
+ returned so that a caller can dispatch over several tools.
 </p>
 
 
