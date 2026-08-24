@@ -42,9 +42,16 @@ the answer, now completes against a live server.
 
 **Self-tests have started, and they are not finished.** `toolFunction`,
 `toolRegistry` and the two constructor branches of `ollama` that raise before
-the server is contacted carry 55 built-in self-tests in `inst/tests/*.m-tst`,
-covering normal use, the encoded tool schema, and every error branch those
-classes raise.
+the server is contacted carry 73 built-in self-tests in `inst/tests/*.m-tst`,
+covering normal use, the encoded tool schema, optional parameters and every
+error branch those classes raise.
+
+**0.2.1 fixed four defects that only appeared once the package was used**, and
+the split in what could be tested is the argument for the seam below: the two
+`toolFunction` defects gained fifteen self-tests between them, while the two
+`ollama` defects gained none, because no object can be built without a server.
+They were verified by live runs instead, which is weaker and leaves nothing
+behind.
 
 The rest of the `ollama` class is not covered, for a structural reason worth
 stating plainly: **its constructor contacts the server**, so no `ollama` object
