@@ -1670,17 +1670,19 @@ classdef ollama < handle
       Hidx = rows (H);
       if (strcmp (idx, 'all'))
         this.chatHistory = {};
+        return;
       elseif (strcmp (idx, 'first'))
-        index = 1;
+        drop = 1;
       elseif (strcmp (idx, 'last'))
-        index = Hidx;
-      elseif (isnumeric (idx) && isvector (idx) && all (diff (idx) == 0) &&
-              all (fix (idx) == idx) && all (idx > 0) && all (idx <= Hidx))
-        index = idx;
+        drop = Hidx;
+      elseif (isnumeric (idx) && isvector (idx) && all (fix (idx) == idx) &&
+              all (idx > 0) && all (idx <= Hidx) &&
+              numel (unique (idx)) == numel (idx))
+        drop = idx;
       else
         error ("ollama.clearHistory: invalid IDX input.");
       endif
-      this.chatHistory(index,:) = [];
+      this.chatHistory(drop,:) = [];
     endfunction
 
   endmethods
