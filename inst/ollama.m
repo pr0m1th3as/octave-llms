@@ -1793,14 +1793,16 @@ classdef ollama < handle
               out = this.writeTimeout;
             case 'options'
               out = this.options;
-            case 'system'
-              out = this.system;
+            case 'systemMessage'
+              out = this.systemMessage;
+            case 'muteThinking'
+              out = this.muteThinking;
             case 'thinking'
               out = this.thinking;
             case 'tools'
               out = this.tools;
             otherwise
-              error ("ollama.subsref: unrecongized property: '%s'", s.subs);
+              error ("ollama.subsref: unrecognized property: '%s'", s.subs);
           endswitch
       endswitch
 
@@ -1873,7 +1875,15 @@ classdef ollama < handle
                 endif
                 this.systemMessage = val;
               else
-                error ("ollama.subsasgn: 'system' must be a character vector.");
+                error (strcat ("ollama.subsasgn: 'systemMessage' must be", ...
+                               " a character vector."));
+              endif
+            case 'muteThinking'
+              if (isscalar (val) && islogical (val))
+                this.muteThinking = val;
+              else
+                error (strcat ("ollama.subsasgn: 'muteThinking' must be", ...
+                               " a logical scalar."));
               endif
             case 'thinking'
               if (isscalar (val) && islogical (val) || ischar (val) && isvector (val))
@@ -1910,7 +1920,7 @@ classdef ollama < handle
                                " 'toolFunction' or a 'toolRegistry' object."));
               endif
             otherwise
-              error ("ollama.subsasgn: unrecongized property: %s", s.subs);
+              error ("ollama.subsasgn: unrecognized property: %s", s.subs);
           endswitch
       endswitch
 
