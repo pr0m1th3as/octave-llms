@@ -74,3 +74,15 @@
 %! assert_equal (R{2}.name, 'sub');
 %!error<toolRegistry.subsref: unrecognized property: 'bogus'> ...
 %! R = toolRegistry (toolFunction ('n', 'd', @plus)); R.bogus;
+
+%!test
+%! ## Through a registry, a mismatched call used to yield an empty cell, so the
+%! ## tool result never reached the model at all.  It now carries the reason.
+%! t1 = toolFunction ('addup', 'add two numbers', @(a, b) a + b);
+%! t1 = addParameters (t1, 'a', 'number', 'first addend');
+%! t1 = addParameters (t1, 'b', 'number', 'second addend');
+%! r = toolRegistry (t1);
+%! o = evalFunction (r, '{"function":{"name":"addup","arguments":{"a":1}}}');
+%! assert_equal (size (o), [1, 2]);
+%! assert_equal (o{2}, 'addup');
+%! assert (! isempty (strfind (o{1}, 'takes the arguments a, b')));

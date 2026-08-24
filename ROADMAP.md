@@ -137,6 +137,24 @@ one.
 **Retrieval.** Query by text rather than by vector, with the embedding step
 implicit; results carrying their documents, their scores and their provenance.
 
+**A sketch existed and was discarded.** An untracked `inst/vectordb.m` was kept
+as a reminder and removed on 2026-08-24; its docstrings were verbatim copies
+from `toolFunction` describing the wrong things, so nothing in it was worth
+keeping as text. Its skeleton is recorded here because it answers, or at least
+leans on, questions this milestone leaves open:
+
+- a `vectordb` classdef **backed by SQLite**, opening a named database in the
+  constructor and reading its vectors back with `SELECT embeddings FROM
+  vectordb`, rather than a flat file;
+- properties `name`, `embeddings` as a numeric matrix and `documents` as a cell
+  array, with `HNSWindex` and `HNSWopts` hidden beside them;
+- methods `append (vec, doc)` and `createIndex (varargin)`.
+
+The hidden `HNSWindex` is the interesting part: it points at leaning on
+`statistics` for approximate nearest-neighbour search rather than carrying an
+implementation here, which is the choice this milestone deliberately left open
+above. It is a hint about intent, not a decision that has been taken.
+
 Taken together this is retrieval-augmented generation, in Octave, over a corpus
 you assembled — and it is also what milestone 4 needs.
 
@@ -236,3 +254,18 @@ These apply to every milestone and are not restated in them.
   is a parameter nobody will find.
 - Anything a model can invoke passes through the registry allowlist. No path
   from a model's response to evaluation may bypass it.
+
+- **Name and value beats position, for the reader that matters.** The consumer
+  of a tool declaration is a language model, and a model handles named
+  arguments reliably where it handles positional ones by luck. That governs the
+  schemas this package emits and equally its own API for building them:
+  `addParameters (tool, name, type, description, 'default', 0)` says what it
+  means, where a sixth positional argument does not.
+
+- **A schema's `required` is advisory to a model, not binding.** Measured
+  2026-08-24 while evaluating tool descriptions against a local model: an
+  argument declared required was omitted in four runs out of five. Dispatch will
+  therefore be handed incomplete argument sets whatever the schema says, so
+  coping with a missing argument is robustness rather than a feature, and it is
+  why optional parameters are to be expressed as **declared defaults** that fill
+  the gap rather than as gaps the caller must skip.

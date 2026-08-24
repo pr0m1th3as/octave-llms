@@ -187,6 +187,18 @@ classdef toolFunction
     ## contains the output of the evaluated @qcode{toolFunction} object and the
     ## second element contains its corresponding function name.
     ##
+    ## If @var{tool_call} names this tool but supplies arguments that do not
+    ## match its parameters, the first element carries a diagnostic naming the
+    ## expected and the supplied arguments instead of the function's output.
+    ## The function handle is not evaluated.  This is deliberate: the model must
+    ## be told what was wrong with its call, because a result it never receives
+    ## is one it cannot correct, and it will otherwise repeat the call or invent
+    ## an answer.  The order of the supplied arguments is not significant, the
+    ## members of a JSON object being unordered.
+    ##
+    ## If @var{tool_call} names a different tool, an empty character vector is
+    ## returned so that a caller can dispatch over several tools.
+    ##
     ## @end deftypefn
     function tool_output = evalFunction (this, tool_call)
       if (! isstruct (tool_call))
@@ -219,7 +231,16 @@ classdef toolFunction
       ## to emit the arguments in a different order, and fail silently.
       if (numel (ModelArgs) != numel (toolFArgs)
           || ! isempty (setdiff (ModelArgs, toolFArgs)))
-        tool_output = '';
+        ## A mismatch used to return nothing at all, so the tool result never
+        ## reached the model: it had asked for a call, nothing ran, and the
+        ## conversation carried on as though it had not happened, leaving it to
+        ## guess or repeat itself.  The error goes back as the tool result
+        ## instead, which is the only form a model can act on.
+        tool_output = {sprintf(strcat ("Error: tool '%s' takes the arguments", ...
+                                       " %s, but the call supplied %s. Call it", ...
+                                       " again with exactly those arguments."), ...
+                               this.name, argList (toolFArgs), ...
+                               argList (ModelArgs)), this.name};
         return;
       endif
       fargs = cellfun (@(fnames) tool_call.function.arguments.(fnames), ...
@@ -279,6 +300,15 @@ classdef toolFunction
   endmethods
 
 endclassdef
+
+## Name a set of arguments for a diagnostic the model has to act on
+function str = argList (names)
+  if (isempty (names))
+    str = 'no arguments';
+  else
+    str = strjoin (names(:)', ', ');
+  endif
+endfunction
 
 function err = validateString (in)
   if (! (ischar (in) && isvector (in)) || isempty (in))

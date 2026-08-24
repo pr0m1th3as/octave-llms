@@ -136,3 +136,48 @@
 %! t = toolFunction ('n', 'd', @plus); t{1};
 %!error<toolFunction.subsref: unrecognized property: 'bogus'> ...
 %! t = toolFunction ('n', 'd', @plus); t.bogus;
+
+%!test
+%! ## A call naming this tool with the wrong arguments returns a diagnostic,
+%! ## not silence: a result the model never receives is one it cannot correct.
+%! t = toolFunction ('add', 'add two numbers', @(a, b) a + b);
+%! t = addParameters (t, 'a', 'number', 'first addend');
+%! t = addParameters (t, 'b', 'number', 'second addend');
+%! o = evalFunction (t, '{"function":{"name":"add","arguments":{"a":1}}}');
+%! assert_equal (size (o), [1, 2]);
+%! assert_equal (o{2}, 'add');
+%! assert (! isempty (strfind (o{1}, "takes the arguments a, b")));
+%! assert (! isempty (strfind (o{1}, "supplied a.")));
+
+%!test
+%! ## An unexpected argument is named too, so the model can drop it.
+%! t = toolFunction ('add', 'add two numbers', @(a, b) a + b);
+%! t = addParameters (t, 'a', 'number', 'first addend');
+%! t = addParameters (t, 'b', 'number', 'second addend');
+%! o = evalFunction (t, '{"function":{"name":"add","arguments":{"a":1,"b":2,"c":3}}}');
+%! assert (! isempty (strfind (o{1}, "supplied a, b, c.")));
+
+%!test
+%! ## No arguments at all is reported in words rather than as an empty list.
+%! t = toolFunction ('add', 'add two numbers', @(a, b) a + b);
+%! t = addParameters (t, 'a', 'number', 'first addend');
+%! t = addParameters (t, 'b', 'number', 'second addend');
+%! o = evalFunction (t, '{"function":{"name":"add","arguments":{}}}');
+%! assert (! isempty (strfind (o{1}, "supplied no arguments.")));
+
+%!test
+%! ## The handle is not evaluated when the arguments do not match.
+%! called = false;
+%! t = toolFunction ('boom', 'must not run', @(a) error ('handle was evaluated'));
+%! t = addParameters (t, 'a', 'number', 'the one argument');
+%! o = evalFunction (t, '{"function":{"name":"boom","arguments":{"z":1}}}');
+%! assert (! isempty (strfind (o{1}, "Error: tool 'boom'")));
+
+%!test
+%! ## Argument order is not significant: the members of a JSON object are not
+%! ## ordered, and a model supplies them in whatever order it likes.
+%! t = toolFunction ('sub', 'subtract b from a', @(a, b) a - b);
+%! t = addParameters (t, 'a', 'number', 'minuend');
+%! t = addParameters (t, 'b', 'number', 'subtrahend');
+%! assert_equal (evalFunction (t, '{"function":{"name":"sub","arguments":{"a":10,"b":4}}}'), {'6', 'sub'});
+%! assert_equal (evalFunction (t, '{"function":{"name":"sub","arguments":{"b":4,"a":10}}}'), {'6', 'sub'});
