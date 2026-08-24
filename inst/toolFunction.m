@@ -211,12 +211,19 @@ classdef toolFunction
       ## Get input arguments and validate their names and types
       ModelArgs = fieldnames (tool_call.function.arguments);
       toolFArgs = fieldnames (this.parameters);
-      if (! isequal (ModelArgs, toolFArgs))
+      ## The members of a JSON object are unordered, so a model may supply the
+      ## same arguments in any order and often does.  Compare them as sets,
+      ## then read the values back in the order the parameters were declared,
+      ## which is the order the function handle takes them in.  Comparing the
+      ## two lists directly made a correct call fail whenever the model happened
+      ## to emit the arguments in a different order, and fail silently.
+      if (numel (ModelArgs) != numel (toolFArgs)
+          || ! isempty (setdiff (ModelArgs, toolFArgs)))
         tool_output = '';
         return;
       endif
       fargs = cellfun (@(fnames) tool_call.function.arguments.(fnames), ...
-                       ModelArgs, 'UniformOutput', false);
+                       toolFArgs, 'UniformOutput', false);
       result = this.handle (fargs{:});
       if (! ischar (result))
         ## 'mat2str' keeps a non-scalar result on one row, which 'char' of a
