@@ -36,10 +36,31 @@
 %! t2 = toolFunction ('now', 'The current time.', @clock);
 %! s = encodeRegistry (toolRegistry (t1, t2));
 %! assert_equal (numel (s), 2);
-%! assert_equal (s(1).function.name, 'add');
-%! assert_equal (s(1).function.parameters.required, {'a'});
-%! assert_equal (s(2).function.name, 'now');
-%! assert (isempty (s(2).function.parameters.required));
+%! assert_equal (s{1}.function.name, 'add');
+%! assert_equal (s{1}.function.parameters.required, {'a'});
+%! assert_equal (s{2}.function.name, 'now');
+%! assert (isempty (s{2}.function.parameters.required));
+
+## One tool encodes as a JSON array of one, not as an object.  This is what a
+## structure array cannot express: jsonencode writes a 1-by-1 struct as an
+## object, the server rejects it as "cannot unmarshal object into Go struct
+## field ChatRequest.tools", and a single-tool registry never worked.  Two
+## tools passed throughout, which is why nothing caught it.
+%!test
+%! t1 = toolFunction ('add', 'Add two numbers.', @plus);
+%! t1 = addParameters (t1, 'a', 'number', 'first addend');
+%! js = jsonencode (encodeRegistry (toolRegistry (t1)));
+%! assert_equal (js(1), '[');
+%! assert_equal (js(end), ']');
+%! assert_equal (numel (jsondecode (js)), 1);
+%!test
+%! t1 = toolFunction ('add', 'Add two numbers.', @plus);
+%! t2 = toolFunction ('sub', 'Subtract two numbers.', @minus);
+%! js = jsonencode (encodeRegistry (toolRegistry (t1, t2)));
+%! assert_equal (js(1), '[');
+%! assert_equal (numel (jsondecode (js)), 2);
+%!test
+%! assert_equal (jsonencode (encodeRegistry (toolRegistry ())), '[]');
 
 ## A call is dispatched to the tool that owns the name.
 %!test

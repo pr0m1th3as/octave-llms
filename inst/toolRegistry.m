@@ -129,10 +129,15 @@ classdef toolRegistry
 
   methods (Hidden)
 
-    ## Encode toolRegistry into a structure array
-    function regStruct = encodeRegistry (this)
+    ## Encode toolRegistry into a cell array of tool schemas.  A cell, never a
+    ## structure array: jsonencode writes a 1-by-1 struct array as an object
+    ## and only an array of two or more as a JSON array, so a registry holding
+    ## a single tool was sent as an object and rejected by the server with
+    ## "cannot unmarshal object into Go struct field ChatRequest.tools".
+    function regCell = encodeRegistry (this)
+      regCell = cell (1, numel (this.names));
       for i = 1:numel (this.names)
-        regStruct(i) = encodeFunction (this.tools{i});
+        regCell{i} = encodeFunction (this.tools{i});
       endfor
     endfunction
 
