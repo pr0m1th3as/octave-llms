@@ -721,7 +721,7 @@ at once.\n\
       retval(0) = model_pulled;
       retval(1) = false;
     }
-    catch (ollama::exception& err)
+    catch (const std::exception& err)
     {
       string errmsg = err.what ();
       retval(0) = errmsg;
@@ -738,7 +738,7 @@ at once.\n\
       retval(0) = model_copied;
       retval(1) = false;
     }
-    catch (ollama::exception& err)
+    catch (const std::exception& err)
     {
       string errmsg = err.what ();
       retval(0) = errmsg;
@@ -755,7 +755,7 @@ at once.\n\
       retval(0) = model_deleted;
       retval(1) = false;
     }
-    catch (ollama::exception& err)
+    catch (const std::exception& err)
     {
       string errmsg = err.what ();
       retval(0) = errmsg;
@@ -794,7 +794,7 @@ at once.\n\
         retval(1) = true;
       }
     }
-    catch (ollama::exception& err)
+    catch (const std::exception& err)
     {
       string errmsg = err.what ();
       retval(0) = errmsg;
@@ -826,7 +826,7 @@ at once.\n\
         retval(1) = false;
       }
     }
-    catch (ollama::exception& err)
+    catch (const std::exception& err)
     {
       string errmsg = err.what ();
       retval(0) = errmsg;
@@ -858,7 +858,7 @@ at once.\n\
         retval(1) = false;
       }
     }
-    catch (ollama::exception& err)
+    catch (const std::exception& err)
     {
       string errmsg = err.what ();
       retval(0) = errmsg;
@@ -887,7 +887,7 @@ at once.\n\
       retval(0) = txt;
       retval(1) = false;
     }
-    catch (ollama::exception& err)
+    catch (const std::exception& err)
     {
       string errmsg = err.what ();
       retval(0) = errmsg;
@@ -905,7 +905,7 @@ at once.\n\
       retval(0) = txt;
       retval(1) = false;
     }
-    catch (ollama::exception& err)
+    catch (const std::exception& err)
     {
       string errmsg = err.what ();
       retval(0) = errmsg;
@@ -922,7 +922,7 @@ at once.\n\
       retval(0) = txt;
       retval(1) = false;
     }
-    catch (ollama::exception& err)
+    catch (const std::exception& err)
     {
       string errmsg = err.what ();
       retval(0) = errmsg;
