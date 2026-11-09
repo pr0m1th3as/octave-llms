@@ -453,7 +453,7 @@ class Ollama
         ollama::response response;
 
         request["stream"] = false;
-        std::string request_string = request.dump();
+        std::string request_string = request.dump(-1, ' ', false, json::error_handler_t::replace);
         if (ollama::log_requests) std::cout << request_string << std::endl;
 
         if (auto res = this->cli->Post("/api/generate",request_string, "application/json"))
@@ -484,7 +484,7 @@ class Ollama
         ollama::response response;
 
         request["stream"] = false;
-        std::string request_string = request.dump();
+        std::string request_string = request.dump(-1, ' ', false, json::error_handler_t::replace);
         if (ollama::log_requests) std::cout << request_string << std::endl;
 
         if (auto res = this->cli->Post("/api/chat",request_string, "application/json"))
@@ -514,7 +514,7 @@ class Ollama
     {
         ollama::response response;
 
-        std::string request_string = request.dump();
+        std::string request_string = request.dump(-1, ' ', false, json::error_handler_t::replace);
         if (ollama::log_requests) std::cout << request_string << std::endl;
 
         if (auto res = cli->Post("/api/embed", request_string, "application/json"))
@@ -558,7 +558,7 @@ class Ollama
         }
         else request["modelFile"] = modelFile;
 
-        std::string request_string = request.dump();
+        std::string request_string = request.dump(-1, ' ', false, json::error_handler_t::replace);
         if (ollama::log_requests) std::cout << request_string << std::endl;
 
         std::string response;
@@ -583,7 +583,7 @@ class Ollama
     {
         json request;
         request["model"] = model;
-        std::string request_string = request.dump();
+        std::string request_string = request.dump(-1, ' ', false, json::error_handler_t::replace);
         if (ollama::log_requests) std::cout << request_string << std::endl;
         if (load_embeddingModel)
         {
@@ -607,7 +607,7 @@ class Ollama
         json request;
         request["model"] = model;
         request["keep_alive"] = 0;
-        std::string request_string = request.dump();
+        std::string request_string = request.dump(-1, ' ', false, json::error_handler_t::replace);
         auto res = this->cli->Post("/api/generate", request_string, "application/json");
 		json response = json::parse(res->body);
 		if (response.contains ("done")) {return response["done"];}
@@ -706,7 +706,7 @@ class Ollama
         request["name"] = model;
         if (verbose) request["verbose"] = true;
 
-        std::string request_string = request.dump();
+        std::string request_string = request.dump(-1, ' ', false, json::error_handler_t::replace);
         if (ollama::log_requests) std::cout << request_string << std::endl;
 
         if (auto res = cli->Post("/api/show", request_string, "application/json"))
@@ -730,7 +730,7 @@ class Ollama
         request["source"] = source_model;
         request["destination"] = dest_model;
 
-        std::string request_string = request.dump();
+        std::string request_string = request.dump(-1, ' ', false, json::error_handler_t::replace);
         if (ollama::log_requests) std::cout << request_string << std::endl;
 
         if (auto res = cli->Post("/api/copy", request_string, "application/json"))
@@ -748,7 +748,7 @@ class Ollama
         json request;
         request["name"] = model;
 
-        std::string request_string = request.dump();
+        std::string request_string = request.dump(-1, ' ', false, json::error_handler_t::replace);
         if (ollama::log_requests) std::cout << request_string << std::endl;
 
         if (auto res = cli->Delete("/api/delete", request_string, "application/json"))
@@ -768,7 +768,7 @@ class Ollama
         request["insecure"] = allow_insecure;
         request["stream"] = false;
 
-        std::string request_string = request.dump();
+        std::string request_string = request.dump(-1, ' ', false, json::error_handler_t::replace);
         if (ollama::log_requests) std::cout << request_string << std::endl;
 
         if (auto res = cli->Post("/api/pull", request_string, "application/json"))
@@ -791,7 +791,7 @@ class Ollama
         request["insecure"] = allow_insecure;
         request["stream"] = false;
 
-        std::string request_string = request.dump();
+        std::string request_string = request.dump(-1, ' ', false, json::error_handler_t::replace);
         if (ollama::log_requests) std::cout << request_string << std::endl;
 
         if (auto res = cli->Post("/api/push", request_string, "application/json"))
