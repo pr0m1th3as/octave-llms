@@ -1374,16 +1374,16 @@ classdef ollama < handle
       endif
       ## Add response to chat history
       if (this.thinking || ! isempty (tool_calls))
-        message{end,3}(1) = strtrim (this.responseStats.message.content);
+        message{end,3}{1} = strtrim (this.responseStats.message.content);
         if (isfield (this.responseStats.message, 'thinking'))
-          message{end,3}(2) = strtrim (this.responseStats.message.thinking);
+          message{end,3}{2} = strtrim (this.responseStats.message.thinking);
         else
-          message{end,3}(2) = '';
+          message{end,3}{2} = '';
         endif
         if (isempty (tool_calls))
-          message{end,3}(3) = '';
+          message{end,3}{3} = '';
         else
-          message{end,3}(3) = jsonencode (tool_calls);
+          message{end,3}{3} = jsonencode (tool_calls);
         endif
       else
         message(end,3) = strtrim (this.responseStats.message.content);
