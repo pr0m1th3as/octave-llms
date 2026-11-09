@@ -296,7 +296,12 @@ namespace ollama
                 else if (think == "true") (*this)["think"] = true;
                 else (*this)["think"] = think;
 
-                if (!sysmsg.empty()) (*this)["system"] = sysmsg;
+                // Ollama's chat endpoint has no "system" field: the system message is the first message.
+                if (!sysmsg.empty())
+                {
+                    json system_message = {{"role", "system"}, {"content", sysmsg}};
+                    (*this)["messages"].insert((*this)["messages"].begin(), system_message);
+                }
                 if (tools != "NA") (*this)["tools"] = json::parse(tools);
 
                 if (options!=nullptr) (*this)["options"] = options["options"];
